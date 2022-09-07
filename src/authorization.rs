@@ -5,6 +5,8 @@ use getrandom;
 use sha2::{Sha256, Digest};
 use random_string;
 use querystring::stringify;
+use open;
+use urlencoding::encode;
 
 /// Generates the code verifier and code challenge for PKCE 
 /// 
@@ -32,11 +34,13 @@ fn get_authorization_code(client_id: &str, redirect_uri: &str, scope: &str, code
 
     let state = random_string::generate(16, character_set); // generate random string for state variable 
 
+    let encoded_redirect_uri = encode(redirect_uri).into_owned(); // encode redirect uri for url
+
     // define parameters for authorization code request
     let parameters = vec![
         ("response_type", "code"),
         ("client_id", client_id),
-        ("redirect_uri", redirect_uri),
+        ("redirect_uri", &encoded_redirect_uri),
         ("scope", scope),
         ("show_dialog", "true"),
         ("state", &state),
@@ -46,10 +50,15 @@ fn get_authorization_code(client_id: &str, redirect_uri: &str, scope: &str, code
 
     let query_parameters = stringify(parameters); // stringify parameters 
 
-    let body = reqwest::blocking::get(authorization_code_endpoint + &query_parameters)?
-        .text()?;
+    let auth_url = authorization_code_endpoint + &query_parameters; // create authorization url 
 
-    println!("{}", body);
+    // open authorization url in browser for user to authorize application
+    match open::that(auth_url) {
+        Ok(()) => println!("Opened authorization url in browser"),
+        Err(e) => panic!("Failed to open authorization url in browser: {}", e), // panic on inability to open browser (can't authentiate)
+    }
+
+    // let body = reqwest::blocking::get(authorization_code_endpoint + &query_parameters)?;
 
     Ok(())
 }
