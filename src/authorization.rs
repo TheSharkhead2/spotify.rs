@@ -4,9 +4,13 @@ use base64;
 use getrandom;
 use sha2::{Sha256, Digest};
 use random_string;
-use querystring::stringify;
+use querystring::{stringify, querify};
 use open;
 use urlencoding::encode;
+use std::{
+    io::{prelude::*, BufReader},
+    net::{TcpListener, TcpStream},
+};
 
 /// Generates the code verifier and code challenge for PKCE 
 /// 
@@ -28,13 +32,14 @@ fn generate_verifier() -> (String, String) {
     (code_verifier, code_challenge)
 }
 
-fn get_authorization_code(client_id: &str, redirect_uri: &str, scope: &str, code_challenge: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn get_authorization_code(client_id: &str, localhost_port: &str, redirect_uri: &str, scope: &str, code_challenge: &str) -> Result<(), Box<dyn std::error::Error>> {
     let authorization_code_endpoint = "https://accounts.spotify.com/authorize?".to_owned(); // authorization code endpoint
     let character_set = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"; // character set for random string
 
     let state = random_string::generate(16, character_set); // generate random string for state variable 
 
-    let encoded_redirect_uri = encode(redirect_uri).into_owned(); // encode redirect uri for url
+    
+    let encoded_redirect_uri = encode(&redirect_uri).into_owned(); // encode redirect uri for url
 
     // define parameters for authorization code request
     let parameters = vec![
@@ -58,9 +63,61 @@ fn get_authorization_code(client_id: &str, redirect_uri: &str, scope: &str, code
         Err(e) => panic!("Failed to open authorization url in browser: {}", e), // panic on inability to open browser (can't authentiate)
     }
 
+    listen_for_auth_code(localhost_port, &state); // listen for authorization code from redirect uri
+
     // let body = reqwest::blocking::get(authorization_code_endpoint + &query_parameters)?;
 
     Ok(())
+}
+
+fn listen_for_auth_code(port: &str, state: &str) -> () {
+    let listener = TcpListener::bind(String::from("127.0.0.1:") + &port).unwrap(); // listen on specified port for localhost
+
+    // on connection, process information for auth code
+    for stream in listener.incoming() {
+        let stream = stream.unwrap();
+
+        handle_connection(stream, &state);
+    }
+}
+
+fn handle_connection(mut stream: TcpStream, state: &str) -> Option<Result<String, Box<dyn std::error::Error>>> {
+    let buf_reader = BufReader::new(&mut stream);
+
+    // read information from HTTP request and break into lines 
+    let http_request: Vec<_> = buf_reader
+        .lines()
+        .map(|result| result.unwrap())
+        .take_while(|line| !line.is_empty())
+        .collect();
+
+    // look for expected request
+    if &http_request[1][0..13] == "GET /callback" {
+        let query = querify(&http_request[1][0..13]); // get query parameters from request 
+
+        // check if state matches expected state
+        if query[1].0 == "state" && query[1].1 == state {
+            // check if authorization code is present
+            if query[0].0 == "code" {
+                let authorization_code = String::from(query[0].1); // get authorization code
+
+                return Some(Ok(authorization_code)); // return authorization code
+            } else if query[0].0 == "error" {
+                return Some(Err(format!("Authorization error: {}", query[0].1).into())); // return authorization error
+            } else {
+                return Some(Err("Authorization error".into())) // on no code or error present, just error
+            }
+        } else {
+            return Some(Err("Invalid state. Authorization failed".into())) // on invalid state, invalidate authorization
+        }
+
+    } else {
+        return None; // return None if request is not expected
+    }
+
+    println!("Request: {:#?}", http_request);
+
+    None
 }
 
 /// Object that holds information relevant to PKCE authorization
@@ -76,12 +133,14 @@ pub struct ApplicationDetails {
 }
 
 impl ApplicationDetails {
-    pub fn new(redirect_uri: String, scope: String) -> ApplicationDetails {
+    pub fn new(localhost_port: String, scope: String) -> ApplicationDetails {
         let client_id = dotenv::var("CLIENT_ID").unwrap(); // grab client_id from .env
 
         let (code_verifier, code_challenge) = generate_verifier(); // generate code verifier and code challenge
 
-        get_authorization_code(&client_id, &redirect_uri, &scope, &code_challenge);
+        let redirect_uri = format!("http://localhost:{}/callback", &localhost_port); // redirect uri for authorization code endpoint
+
+        get_authorization_code(&client_id, &localhost_port, &redirect_uri, &scope, &code_challenge);
 
         ApplicationDetails {
             client_id: client_id,
