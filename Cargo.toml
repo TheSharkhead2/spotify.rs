@@ -12,6 +12,7 @@ getrandom = "0.2"
 base64 = "0.13"
 sha2 = "0.10"
 random-string = "1.0"
-reqwest = {version = "0.11", features = ["blocking"]}
+reqwest = {version = "0.11", features = ["blocking", "json"]}
 open = "3.0"
 urlencoding = "2.1"
+json = "0.12"

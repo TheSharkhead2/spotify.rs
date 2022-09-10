@@ -12,6 +12,7 @@ use std::{
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
 };
+use json;
 
 /// Generates the code verifier and code challenge for PKCE 
 /// 
@@ -175,6 +176,56 @@ fn handle_connection(mut stream: TcpStream, state: &str) -> Option<Result<String
     }
 }
 
+/// Returns `(access_tokem, refresh_token, expires_in)` tuple. `access_token` is used to access API, `refresh_token` is used to
+/// refresh `access_token` when it expires, and `expires_in` is the number of seconds until `access_token` expires.  
+///
+/// # Arguments
+/// * `authorization_code` - The authorization code received from the authorization request
+/// * `client_id` - The client id of the application
+/// * `code_verifier` - The code verifier used in the authorization request
+/// * `redirect_uri` - The redirect uri used in the authorization request
+/// 
+/// # Panics 
+/// * On request error (to Spotify API)
+/// * On error parsing expires_in from response to int (shouldn't happen)
+/// 
+fn get_access_token(authorization_code: &str, client_id: &str, code_verifier: &str, redirect_uri: &str) -> Result<(String, String, i64), Box<dyn std::error::Error>> {
+    let request_uri = "https://accounts.spotify.com/api/token?"; // token request uri
+
+    let client = reqwest::blocking::Client::new(); 
+
+    let encoded_redirect_uri = encode(&redirect_uri).into_owned(); // encode redirect uri for url
+
+    let query_parameters = vec![
+        ("grant_type", "authorization_code"), 
+        ("code", authorization_code),
+        ("redirect_uri", &encoded_redirect_uri), 
+        ("client_id", client_id), 
+        ("code_verifier", code_verifier)
+    ];
+
+    let query_string = stringify(query_parameters); // stringify query parameters
+
+    let response = client.post(String::from(request_uri) + &query_string)
+        .header("Content-Type",  "application/x-www-form-urlencoded") // set Content-Type header 
+        .header("Content-Length", "0") // set Content-Length header
+        .send()?; // send request
+
+    if response.status().is_success() { // check if response is successful
+        let response_body = json::parse(&response.text().unwrap()).unwrap(); // get response as json
+
+        let access_token = response_body["access_token"].to_string(); // get access token from response
+        let refresh_token = response_body["refresh_token"].to_string(); // get refresh token from response
+        let expires_in_str = response_body["expires_in"].to_string(); // get expires in from response
+        let expires_in: i64 = expires_in_str.parse().unwrap(); // parse expires in to i64
+
+        return Ok((access_token, refresh_token, expires_in)); // return access token, refresh token, and expires in
+        
+    } else {
+        return Err(format!("Error: {}", response.status()).into()); // return error if response is not successful
+    }
+}       
+
 /// Object that holds information relevant to PKCE authorization
 pub struct ApplicationDetails {
     pub client_id: String,
@@ -195,7 +246,14 @@ impl ApplicationDetails {
 
         let redirect_uri = format!("http://localhost:{}/callback", &localhost_port); // redirect uri for authorization code endpoint
 
-        get_authorization_code(&client_id, &localhost_port, &redirect_uri, &scope, &code_challenge);
+        let auth_code_result = get_authorization_code(&client_id, &localhost_port, &redirect_uri, &scope, &code_challenge);
+
+        match auth_code_result {
+            Ok(auth_code) => {
+                println!("{:#?}", get_access_token(&auth_code, &client_id, &code_verifier, &redirect_uri));
+            },
+            Err(e) => panic!("{}", e),
+        }
 
         ApplicationDetails {
             client_id: client_id,
