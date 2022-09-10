@@ -1,5 +1,4 @@
-use dotenv;
-use reqwest::{self, redirect};
+use reqwest;
 use base64;
 use getrandom;
 use sha2::{Sha256, Digest};
@@ -18,7 +17,7 @@ use json;
 /// 
 /// # Panics
 /// When random number generation fails. See [get random docs](https://docs.rs/getrandom/latest/getrandom/#functions)
-fn generate_verifier() -> (String, String) {
+pub fn generate_verifier() -> (String, String) {
     let mut buf = [0u8; 32]; // empty list of 32 bytes 
 
     getrandom::getrandom(&mut buf).unwrap(); // generate random bytes - unwrap to panic on random failure 
@@ -46,7 +45,7 @@ fn generate_verifier() -> (String, String) {
 /// # Panics
 /// When browser fails to open authentication url
 /// 
-fn get_authorization_code(client_id: &str, localhost_port: &str, redirect_uri: &str, scope: &str, code_challenge: &str) -> Result<String, Box<dyn std::error::Error>> {
+pub fn get_authorization_code(client_id: &str, localhost_port: &str, redirect_uri: &str, scope: &str, code_challenge: &str) -> Result<String, Box<dyn std::error::Error>> {
     let authorization_code_endpoint = "https://accounts.spotify.com/authorize?".to_owned(); // authorization code endpoint
     let character_set = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"; // character set for random string
 
@@ -79,7 +78,6 @@ fn get_authorization_code(client_id: &str, localhost_port: &str, redirect_uri: &
 
     // listen for authorization code from redirect uri and parse option result
     if let Some(auth_code) = listen_for_auth_code(localhost_port, &state) {
-        println!("Received authorization code: {}", auth_code);
         Ok(auth_code) // return authorization code
     } else {
         Err("Failed to receive authorization code".into()) // if None is returned, unknown error has occured
@@ -189,7 +187,7 @@ fn handle_connection(mut stream: TcpStream, state: &str) -> Option<Result<String
 /// * On request error (to Spotify API)
 /// * On error parsing expires_in from response to int (shouldn't happen)
 /// 
-fn get_access_token(authorization_code: &str, client_id: &str, code_verifier: &str, redirect_uri: &str) -> Result<(String, String, i64), Box<dyn std::error::Error>> {
+pub fn get_access_token(authorization_code: &str, client_id: &str, code_verifier: &str, redirect_uri: &str) -> Result<(String, String, i64), Box<dyn std::error::Error>> {
     let request_uri = "https://accounts.spotify.com/api/token?"; // token request uri
 
     let client = reqwest::blocking::Client::new(); 
@@ -226,45 +224,4 @@ fn get_access_token(authorization_code: &str, client_id: &str, code_verifier: &s
     }
 }       
 
-/// Object that holds information relevant to PKCE authorization
-pub struct ApplicationDetails {
-    pub client_id: String,
-    redirect_uri: String,
-    scope: String,
-    access_token: Option<String>,
-    refresh_token: Option<String>,
-    expires_at: Option<u32>,
-    code_challenge: String,
-    code_verifier: String,
-}
-
-impl ApplicationDetails {
-    pub fn new(localhost_port: String, scope: String) -> ApplicationDetails {
-        let client_id = dotenv::var("CLIENT_ID").unwrap(); // grab client_id from .env
-
-        let (code_verifier, code_challenge) = generate_verifier(); // generate code verifier and code challenge
-
-        let redirect_uri = format!("http://localhost:{}/callback", &localhost_port); // redirect uri for authorization code endpoint
-
-        let auth_code_result = get_authorization_code(&client_id, &localhost_port, &redirect_uri, &scope, &code_challenge);
-
-        match auth_code_result {
-            Ok(auth_code) => {
-                println!("{:#?}", get_access_token(&auth_code, &client_id, &code_verifier, &redirect_uri));
-            },
-            Err(e) => panic!("{}", e),
-        }
-
-        ApplicationDetails {
-            client_id: client_id,
-            redirect_uri: redirect_uri,
-            scope: scope,
-            access_token: None,
-            refresh_token: None,
-            expires_at: None,
-            code_challenge: code_challenge,
-            code_verifier: code_verifier,
-        }
-    }
-}
 

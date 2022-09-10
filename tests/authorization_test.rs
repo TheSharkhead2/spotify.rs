@@ -1,8 +1,8 @@
-use spotifyrs::authorization::ApplicationDetails;
+use spotifyrs::Spotify;
 
 #[test]
 fn client_id_import() {
-    let details_object = ApplicationDetails::new(
+    let details_object = Spotify::authenticate(
         String::from("8888"),
         String::from("user-read-private user-read-email"),
     );

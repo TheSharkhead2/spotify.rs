@@ -1,4 +1,7 @@
-pub mod authorization;
+mod authorization;
+mod spotify;
+
+pub use spotify::Spotify; // re-export Spotify struct
 
 #[cfg(test)]
 mod tests {
