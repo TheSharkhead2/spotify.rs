@@ -8,6 +8,7 @@ use querystring::{stringify, querify};
 use open;
 use urlencoding::encode;
 use std::{
+    fs,
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
 };
@@ -32,7 +33,19 @@ fn generate_verifier() -> (String, String) {
     (code_verifier, code_challenge)
 }
 
-fn get_authorization_code(client_id: &str, localhost_port: &str, redirect_uri: &str, scope: &str, code_challenge: &str) -> Result<(), Box<dyn std::error::Error>> {
+/// Full code flow for getting authorization code from Spotify to authenticate API use. 
+/// 
+/// # Arguments 
+/// * `client_id` - Spotify developer client id
+/// * `localhost_port` - the port for localhost redirect. Redirect uri should be: http://localhost:{localhost_port}/callback
+/// * `redirect_uri` - redirect_uri for request. Should be: http://localhost:{localhost_port}/callback 
+/// * `scope` - scope of permissions for the request. See [Spotify docs](https://developer.spotify.com/documentation/general/guides/scopes/) for more info
+/// * `code_challenge` - code challenge for PKCE. See [Spotify docs](https://developer.spotify.com/documentation/general/guides/authorization-guide/#authorization-code-flow-with-proof-key-for-code-exchange-pkce) for more info
+/// 
+/// # Panics
+/// When browser fails to open authentication url
+/// 
+fn get_authorization_code(client_id: &str, localhost_port: &str, redirect_uri: &str, scope: &str, code_challenge: &str) -> Result<String, Box<dyn std::error::Error>> {
     let authorization_code_endpoint = "https://accounts.spotify.com/authorize?".to_owned(); // authorization code endpoint
     let character_set = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"; // character set for random string
 
@@ -63,43 +76,89 @@ fn get_authorization_code(client_id: &str, localhost_port: &str, redirect_uri: &
         Err(e) => panic!("Failed to open authorization url in browser: {}", e), // panic on inability to open browser (can't authentiate)
     }
 
-    listen_for_auth_code(localhost_port, &state); // listen for authorization code from redirect uri
-
-    // let body = reqwest::blocking::get(authorization_code_endpoint + &query_parameters)?;
-
-    Ok(())
+    // listen for authorization code from redirect uri and parse option result
+    if let Some(auth_code) = listen_for_auth_code(localhost_port, &state) {
+        println!("Received authorization code: {}", auth_code);
+        Ok(auth_code) // return authorization code
+    } else {
+        Err("Failed to receive authorization code".into()) // if None is returned, unknown error has occured
+    } 
 }
 
-fn listen_for_auth_code(port: &str, state: &str) -> () {
+/// Listens on specified port for the authorization code utilizing `handle_connection()`. This is a modified version of code 
+/// from the [Rust handbook](https://doc.rust-lang.org/book/ch20-01-single-threaded.html). Returns Option<auth_code: String>. 
+/// 
+/// # Arguments 
+/// 
+/// * `port` - The port to listen on
+/// * `state` - The state variable used in authorization request (used to authenticate authorization code)
+/// 
+/// # Panics 
+/// On any authorization error.
+/// 
+fn listen_for_auth_code(port: &str, state: &str) -> Option<String> {
     let listener = TcpListener::bind(String::from("127.0.0.1:") + &port).unwrap(); // listen on specified port for localhost
 
     // on connection, process information for auth code
     for stream in listener.incoming() {
         let stream = stream.unwrap();
 
-        handle_connection(stream, &state);
+        let auth_code = handle_connection(stream, &state); // handle connection and get auth code
+
+        match auth_code {
+            Some(result) => {
+                match result {
+                    Ok(code) => return Some(code),
+                    Err(e) => panic!("Error: {}", e),
+                }
+            },
+            None => continue,
+        }
+
     }
+    None
 }
 
+/// Handles connection to localhost port to do error handling/detection and state validation. Returns authorization code. 
+/// This code is a modified version of what appears in the [Rust handbook](https://doc.rust-lang.org/book/ch20-01-single-threaded.html).
+/// 
+/// # Arguments 
+/// 
+/// * `stream` - TcpStream object to handle connection 
+/// * `state` - the state string used in the authorization request 
+/// 
+/// # Panics
+/// * When http request parsing is unsuccessful 
+/// * On error surrounding sending success webpage to user
+/// 
 fn handle_connection(mut stream: TcpStream, state: &str) -> Option<Result<String, Box<dyn std::error::Error>>> {
     let buf_reader = BufReader::new(&mut stream);
 
     // read information from HTTP request and break into lines 
-    let http_request: Vec<_> = buf_reader
-        .lines()
-        .map(|result| result.unwrap())
-        .take_while(|line| !line.is_empty())
-        .collect();
+    let http_request = buf_reader.lines().next().unwrap().unwrap(); // Get request line from HTTP request
+
+    let http_request_len = http_request.len(); // get length of http request
 
     // look for expected request
-    if &http_request[1][0..13] == "GET /callback" {
-        let query = querify(&http_request[1][0..13]); // get query parameters from request 
+    if &http_request[0..13] == "GET /callback" && &http_request[(http_request_len-9)..] == " HTTP/1.1" {
+        let query = querify(&http_request[14..http_request_len-9]); // get query parameters from request (from 14 to remove "GET /callback?" and to -9 to remove "HTTP/1.1")
 
         // check if state matches expected state
         if query[1].0 == "state" && query[1].1 == state {
             // check if authorization code is present
             if query[0].0 == "code" {
                 let authorization_code = String::from(query[0].1); // get authorization code
+
+                let status_line = "HTTP/1.1 200 OK"; // status line for success response
+                let contents = fs::read_to_string("src/authorization_successful.html").unwrap(); // read html file to display to user
+                let content_length = contents.len(); 
+
+                // create response
+                let response = format!(
+                    "{status_line}\r\nContent-Length: {content_length}\r\n\r\n{contents}"
+                );
+
+                stream.write_all(response.as_bytes()).unwrap(); // write response to stream
 
                 return Some(Ok(authorization_code)); // return authorization code
             } else if query[0].0 == "error" {
@@ -108,16 +167,12 @@ fn handle_connection(mut stream: TcpStream, state: &str) -> Option<Result<String
                 return Some(Err("Authorization error".into())) // on no code or error present, just error
             }
         } else {
-            return Some(Err("Invalid state. Authorization failed".into())) // on invalid state, invalidate authorization
+            return Some(Err(format!("Invalid state. Expected {} got {}. Authorization failed", state, query[1].1).into())) // on invalid state, invalidate authorization
         }
 
     } else {
         return None; // return None if request is not expected
     }
-
-    println!("Request: {:#?}", http_request);
-
-    None
 }
 
 /// Object that holds information relevant to PKCE authorization
