@@ -7,10 +7,10 @@ fn client_id_import() {
         String::from("user-read-private user-read-email"),
     );
 
-    assert_eq!(
-        details_object.client_id,
-        String::from("e02483bb125343f79b9ff4c3c3da74da")
-    )
+    // assert_eq!(
+    //     details_object.client_id,
+    //     String::from("e02483bb125343f79b9ff4c3c3da74da")
+    // )
 }
 
 // #[test]

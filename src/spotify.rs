@@ -1,11 +1,12 @@
 use chrono::{DateTime, Utc, Duration};
 use dotenv;
 
-use crate::authorization::{generate_verifier, get_authorization_code, get_access_token};
+use crate::authorization::{generate_verifier, get_authorization_code, get_access_token, refresh_access_token};
 
+/// Wrapper object for Spotify API
 pub struct Spotify {
-    pub client_id: String,
-    pub scope: String,
+    client_id: String,
+    scope: String,
     access_token: String,
     refresh_token: String,
     expires_at: DateTime<Utc>,
@@ -35,6 +36,34 @@ impl Spotify {
             scope: scope,
             access_token: access_token,
             refresh_token: refresh_token,
+            expires_at: expires_at,
+        }
+    }
+
+    pub fn access_token(&self) -> Result<String, Box<dyn std::error::Error>> {
+        // if access token is expired, return error, otherwise return access token
+        if Utc::now() < self.expires_at {
+            return Ok(self.access_token.clone())
+        } else {
+            
+            return Err("Access token expired".into())
+        }
+    }
+    
+    pub fn refresh(&self) -> Spotify {
+        let (access_token, expires_in) = match refresh_access_token(&self.refresh_token, &self.client_id) {
+            Ok((access_token, expires_in)) => (access_token, expires_in), 
+            Err(e) => panic!("{}", e), // on error panic
+        };
+        
+        let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
+
+        // return new Spotify object with refreshed access token
+        Spotify {
+            client_id: self.client_id.clone(),
+            scope: self.scope.clone(),
+            access_token: access_token,
+            refresh_token: self.refresh_token.clone(),
             expires_at: expires_at,
         }
     }

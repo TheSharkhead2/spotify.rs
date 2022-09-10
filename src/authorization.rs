@@ -224,4 +224,34 @@ pub fn get_access_token(authorization_code: &str, client_id: &str, code_verifier
     }
 }       
 
+pub fn refresh_access_token(refresh_token: &str, client_id: &str) -> Result<(String, i64), Box<dyn std::error::Error>> {
+    let request_uri = "https://accounts.spotify.com/api/token?"; // token request uri
 
+    let client = reqwest::blocking::Client::new(); 
+
+    let query_parameters = vec![
+        ("grant_type", "refresh_token"), 
+        ("refresh_token", refresh_token),
+        ("client_id", client_id), 
+    ];
+
+    let query_string = stringify(query_parameters); // stringify query parameters
+
+    let response = client.post(String::from(request_uri) + &query_string)
+        .header("Content-Type",  "application/x-www-form-urlencoded") // set Content-Type header 
+        .header("Content-Length", "0") // set Content-Length header
+        .send()?; // send request
+
+    if response.status().is_success() { // check if response is successful
+        let response_body = json::parse(&response.text().unwrap()).unwrap(); // get response as json
+
+        let access_token = response_body["access_token"].to_string(); // get access token from response
+        let expires_in_str = response_body["expires_in"].to_string(); // get expires in from response
+        let expires_in: i64 = expires_in_str.parse().unwrap(); // parse expires in to i64
+
+        return Ok((access_token, expires_in)); // return access token and expires in
+        
+    } else {
+        return Err(format!("Error: {}", response.status()).into()); // return error if response is not successful
+    }
+}
