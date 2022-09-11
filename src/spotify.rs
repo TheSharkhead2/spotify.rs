@@ -1,13 +1,112 @@
-use chrono::{DateTime, Utc, Duration};
+use chrono::{DateTime, Utc, Duration, NaiveDate};
 use dotenv;
 use std::fmt;
 
 use crate::authorization::{generate_verifier, get_authorization_code, get_access_token, refresh_access_token};
-use crate::srequest::{spotify_request, RequestMethod};
+
+/// Struct to represent Spotify images (album art, etc.)
+pub struct SpotifyImage {
+    pub url: String,
+    pub height: i32, 
+    pub width: i32,
+}
+
+/// Enum to represent three states of album type 
+pub enum AlbumType {
+    Album,
+    Single,
+    Compilation,
+}
+
+/// Enum to represent reason for album restriction 
+pub enum RestrictionReason {
+    Market,
+    Product,
+    Explicit,
+    None,
+}
+
+// Enum to represent release date precision 
+pub enum ReleaseDatePrecision {
+    Year,
+    Month,
+    Day,
+}
+
+/// struct to hold known external ids for tracks
+pub struct ExternalTrackIds {
+    pub isrc: Option<String>,
+    pub ean: Option<String>,
+    pub upc: Option<String>,
+}
+
+/// Struct to represent Album 
+pub struct Album {
+    pub album_type: AlbumType, // Type of album: album, single, compilation 
+    pub total_tracks: i32, // The number of tracks in album 
+    pub available_markets: Vec<String>, // The markets in which the album is available: ISO 3166-1 alpha-2 country codes (Note: considered in market if at least 1 song is in that market)
+    pub spotify_url: String, // The Spotify URL for the album
+    pub href: String, // A link to the Web API endpoint providing full details of the album
+    pub id: String, // The Spotify ID for the album
+    pub images: Vec<SpotifyImage>, // The cover art for the album in various sizes, widest first
+    pub name: String, // The name of the album. In case of an album takedown, the value may be an empty string
+    pub release_date: NaiveDate, // The date the album was first released 
+    pub release_date_precision: ReleaseDatePrecision, // The precision with which release_date value is known: year, month, or day
+    pub restriction_reason: RestrictionReason, // The reason for an album being restricted. Albums may be restricted if the content is not available in a given market, to the user's subscription type, or when the user's account is set to not play explicit content.
+    pub uri: String, // The Spotify URI for the album  
+    pub artists: Option<Vec<Artist>>, // The artists of the album. Can be None
+    pub tracks: Option<Tracks>, // The tracks of the album. Can be None
+}
+
+/// Struct to represent Artist 
+pub struct Artist {
+    pub spotify_url: String, // The Spotify URL for the artist
+    pub total_followers: i32,  // The total number of followers
+    pub genres: Vec<String>, // A list of the genres the artist is associated with. If not yet classified, the array is empty. 
+    pub href: String, // A link to the Web API endpoint providing full details of the artist
+    pub id: String, // The Spotify ID for the artist
+    pub images: Vec<SpotifyImage>, // Images of the artist in various sizes, widest first
+    pub name: String, // The name of the artist
+    pub popularity: i32, // The popularity of the artist. The value will be between 0 and 100, with 100 being the most popular. The artist's popularity is calculated from the popularity of all the artist's tracks
+    pub uri: String, // The Spotify URI for the artist
+}
+
+/// Struct to represent Track
+pub struct Track {
+    pub album: Option<Album>, // The album on which the track appears. 
+    pub artists: Option<Vec<Artist>>, // The artists who performed the track. 
+    pub available_markets: Vec<String>, // A list of the countries in which the track can be played, identified by their ISO 3166-1 alpha-2 code.
+    pub disc_number: i32, // The disc number (usually 1 unless the album consists of more than one disc)
+    pub duration: i32, // The track length in milliseconds
+    pub explicit: bool, // Whether or not the track has explicit lyrics ( true = yes it does; false = no it does not OR unknown) 
+    pub external_ids: ExternalTrackIds, // Known external IDs for the track 
+    pub spotify_url: String, // The Spotify URL for the track
+    pub href: String, // A link to the Web API endpoint providing full details of the track
+    pub id: String, // The Spotify ID for the track
+    pub restriction_reason: RestrictionReason, // The reason for the track being restricted. If a track is restricted, the reason is usually market or explicit.
+    pub name: String, // The name of the track
+    pub popularity: i32, // The popularity of the track. The value will be between 0 and 100, with 100 being the most popular. 
+    pub preview_url: Option<String>, // A URL to a 30 second preview (MP3 format) of the track.
+    pub track_number: i32, // The number of the track. If an album has several discs, the track number is the number on the specified disc.
+    pub uri: String, // The Spotify URI for the track
+    pub is_local: bool,
+}
+
+/// Struct to represent several Tracks and keep track of offsets and limits 
+pub struct Tracks {
+    pub href: String, // A link to the Web API endpoint returning the full result of the request
+    pub tracks: Vec<Track>, // The requested data
+    pub limit: i32, // The maximum number of items in the response (as set in the query or by default)
+    pub next: Option<String>, // URL to next page of items, None if none 
+    pub offset: i32, // The offset of the items returned (as set in the query or by default)
+    pub previous: Option<String>, // URL to previous page of items, None if none
+    pub total: i32, // The total number of items available to return
+}
 
 /// Error object for Spotify struct
-enum SpotifyError {
+pub enum SpotifyError {
     AccessTokenExpired,
+    RequestError(String),
     // Unknown,
 }
 
@@ -16,6 +115,7 @@ impl fmt::Display for SpotifyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             SpotifyError::AccessTokenExpired => write!(f, "Access token expired, please refresh"),
+            SpotifyError::RequestError(e) => write!(f, "Request error: {}", e),
             // SpotifyError::Unknown => write!(f, "Unknown error"),
         }
     }
@@ -58,7 +158,7 @@ impl Spotify {
         }
     }
 
-    fn access_token(&self) -> Result<String, SpotifyError> {
+    pub fn access_token(&self) -> Result<String, SpotifyError> {
         // if access token is expired, return error, otherwise return access token
         if Utc::now() < self.expires_at {
             return Ok(self.access_token.clone())
