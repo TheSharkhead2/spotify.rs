@@ -2,10 +2,12 @@ use spotifyrs::Spotify;
 
 #[test]
 fn client_id_import() {
-    let details_object = Spotify::authenticate(
+    let spotify = Spotify::authenticate(
         String::from("8888"),
         String::from("user-read-private user-read-email"),
     );
+
+    spotify.get_album(&"4g1ZRSobMefqF6nelkgibi", None);
 
     // assert_eq!(
     //     details_object.client_id,
