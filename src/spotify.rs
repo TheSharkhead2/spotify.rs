@@ -1,7 +1,25 @@
 use chrono::{DateTime, Utc, Duration};
 use dotenv;
+use std::fmt;
 
 use crate::authorization::{generate_verifier, get_authorization_code, get_access_token, refresh_access_token};
+use crate::srequest::{spotify_request, RequestMethod};
+
+/// Error object for Spotify struct
+enum SpotifyError {
+    AccessTokenExpired,
+    // Unknown,
+}
+
+/// Implemntation of formatting such that SpotfiyError can be printed
+impl fmt::Display for SpotifyError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            SpotifyError::AccessTokenExpired => write!(f, "Access token expired, please refresh"),
+            // SpotifyError::Unknown => write!(f, "Unknown error"),
+        }
+    }
+}
 
 /// Wrapper object for Spotify API
 pub struct Spotify {
@@ -40,16 +58,16 @@ impl Spotify {
         }
     }
 
-    pub fn access_token(&self) -> Result<String, Box<dyn std::error::Error>> {
+    fn access_token(&self) -> Result<String, SpotifyError> {
         // if access token is expired, return error, otherwise return access token
         if Utc::now() < self.expires_at {
             return Ok(self.access_token.clone())
         } else {
             
-            return Err("Access token expired".into())
+            return Err(SpotifyError::AccessTokenExpired) // if access token is expired, need new Spotify object, return error so user can refresh
         }
     }
-    
+
     pub fn refresh(&self) -> Spotify {
         let (access_token, expires_in) = match refresh_access_token(&self.refresh_token, &self.client_id) {
             Ok((access_token, expires_in)) => (access_token, expires_in), 

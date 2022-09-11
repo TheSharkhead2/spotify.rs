@@ -1,5 +1,6 @@
 mod authorization;
 mod spotify;
+mod srequest;
 
 pub use spotify::Spotify; // re-export Spotify struct
 
