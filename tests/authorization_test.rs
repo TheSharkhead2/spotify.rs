@@ -7,7 +7,9 @@ fn client_id_import() {
         String::from("user-read-private user-read-email"),
     );
 
-    spotify.get_album(&"4g1ZRSobMefqF6nelkgibi", None);
+    let album_info = spotify.get_album_tracks(&"4R09OvFyz47HfjecIjoEtP", Some("US"), Some(1), None).unwrap();
+
+    println!("{:?}", album_info);
 
     // assert_eq!(
     //     details_object.client_id,

@@ -58,6 +58,20 @@ pub struct Album {
     pub tracks: Option<Tracks>, // The tracks of the album. Can be None
 }
 
+/// Implements Debug trait for Album struct
+impl fmt::Debug for Album {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Album")
+            .field("name", &self.name)
+            .field("total_tracks", &self.total_tracks)
+            .field("id", &self.id)
+            .field("release_date", &self.release_date)
+            .field("artists", &self.artists)
+            .field("tracks", &self.tracks)
+            .finish()
+    }
+}
+
 /// Struct to represent Artist 
 pub struct Artist {
     pub spotify_url: String, // The Spotify URL for the artist
@@ -69,6 +83,16 @@ pub struct Artist {
     pub name: String, // The name of the artist
     pub popularity: i32, // The popularity of the artist. The value will be between 0 and 100, with 100 being the most popular. The artist's popularity is calculated from the popularity of all the artist's tracks
     pub uri: String, // The Spotify URI for the artist
+}
+
+/// Implements Debug trait for Artist struct
+impl fmt::Debug for Artist {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Artist")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .finish()
+    }
 }
 
 /// Struct to represent Track
@@ -92,6 +116,17 @@ pub struct Track {
     pub is_local: bool,
 }
 
+/// Implements Debug trait for Track struct
+impl fmt::Debug for Track {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Track")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("artists", &self.artists)
+            .finish()
+    }
+}
+
 /// Struct to represent several Tracks and keep track of offsets and limits 
 pub struct Tracks {
     pub href: String, // A link to the Web API endpoint returning the full result of the request
@@ -103,10 +138,23 @@ pub struct Tracks {
     pub total: i32, // The total number of items available to return
 }
 
+/// Implements Debug trait for Tracks struct
+impl fmt::Debug for Tracks {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Tracks")
+            .field("tracks", &self.tracks)
+            .field("limit", &self.limit)
+            .field("offset", &self.offset)
+            .field("total", &self.total)
+            .finish()
+    }
+}
+
 /// Error object for Spotify struct
 pub enum SpotifyError {
     AccessTokenExpired,
     RequestError(String),
+    InsufficientScope(Vec<String>),
     // Unknown,
 }
 
@@ -116,6 +164,17 @@ impl fmt::Display for SpotifyError {
         match self {
             SpotifyError::AccessTokenExpired => write!(f, "Access token expired, please refresh"),
             SpotifyError::RequestError(e) => write!(f, "Request error: {}", e),
+            SpotifyError::InsufficientScope(scopes) => write!(f, "Insufficient scope. Need: {:?}", scopes),
+            // SpotifyError::Unknown => write!(f, "Unknown error"),
+        }
+    }
+}
+impl fmt::Debug for SpotifyError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SpotifyError::AccessTokenExpired => write!(f, "Access token expired, please refresh"),
+            SpotifyError::RequestError(e) => write!(f, "Request error: {}", e),
+            SpotifyError::InsufficientScope(scopes) => write!(f, "Insufficient scope. Need: {:?}", scopes),
             // SpotifyError::Unknown => write!(f, "Unknown error"),
         }
     }
