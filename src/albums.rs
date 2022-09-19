@@ -1,6 +1,6 @@
 use crate::srequest::{spotify_request, RequestMethod};
-use crate::spotify::{Spotify, SpotifyError, Album, Tracks};
-use crate::object_formatting::{format_album, format_tracks};
+use crate::spotify::{Spotify, SpotifyError, Album, Tracks, DatedAlbums};
+use crate::object_formatting::{format_album, format_tracks, format_dated_albums};
 
 impl Spotify {
     /// Get an album: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-album
@@ -91,5 +91,47 @@ impl Spotify {
             Err(e) => return Err(e), // on error, return error
         } 
 
+    }
+
+    /// Get albums saved in user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-users-saved-albums
+    /// Required scope: user-library-read
+    pub fn get_saved_albums(&self, limit: Option<u32>, market: Option<&str>, offset: Option<u32>) -> Result<DatedAlbums, SpotifyError> {
+        let mut url_extension = String::from("me/albums/"); // base url
+
+        self.check_scope("user-library-read")?; // check scope
+
+        // if any parameter is supplied, add to request as query parameter
+        if market != None || limit != None || offset != None {
+            url_extension.push_str("?");
+        }
+
+        // if market parameter supplied, add to request as query parameter
+        if let Some(market) = market {
+            url_extension.push_str(&format!("&market={}", market));
+        }
+
+        // if limit parameter supplied, add to request as query parameter
+        if let Some(limit) = limit {
+            url_extension.push_str(&format!("&limit={}", limit));
+        }
+
+        // if offset parameter supplied, add to request as query parameter
+        if let Some(offset) = offset {
+            url_extension.push_str(&format!("&offset={}", offset));
+        }
+
+        match self.access_token() { // get access token
+            Ok(access_token) => {
+                match spotify_request(&access_token, &url_extension, RequestMethod::Get){ // make request
+                    Ok(response) => {
+                        let albums = format_dated_albums(&response); // format albums
+
+                        return Ok(albums)
+                    },
+                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+                }
+            },
+            Err(e) => return Err(e), // on error, return error
+        }
     }
 }

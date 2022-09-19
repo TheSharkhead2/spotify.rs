@@ -4,12 +4,13 @@ use spotifyrs::Spotify;
 fn client_id_import() {
     let spotify = Spotify::authenticate(
         String::from("8888"),
-        String::from("user-read-private user-read-email"),
+        String::from("user-read-private user-read-email user-library-read"),
     );
 
-    let album_info = spotify.get_album_tracks(&"4R09OvFyz47HfjecIjoEtP", Some("US"), Some(1), None).unwrap();
+    // let album_info = spotify.get_album_tracks(&"4R09OvFyz47HfjecIjoEtP", Some("US"), Some(1), None).unwrap();
+    
 
-    println!("{:?}", album_info);
+    println!("{:?}", spotify.get_saved_albums(None, None, None));
 
     // assert_eq!(
     //     details_object.client_id,

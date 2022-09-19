@@ -1,7 +1,7 @@
-use chrono::{NaiveDate};
+use chrono::{NaiveDate, NaiveDateTime};
 use json::{JsonValue::{self, Array, Null}};
 
-use crate::spotify::{SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, Tracks};
+use crate::spotify::{SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, Tracks, Albums, DatedAlbum, DatedAlbums};
 
 /// Take JsonValue object representing image from API request and turn into 
 /// SpotifyImage object (for ease of use).
@@ -83,18 +83,22 @@ pub fn format_album(raw_object: &JsonValue) -> Album {
         Some("year") => ReleaseDatePrecision::Year,
         Some("month") => ReleaseDatePrecision::Month,
         Some("day") => ReleaseDatePrecision::Day,
-        Some(_) => ReleaseDatePrecision::Year, // default to year
-        None => ReleaseDatePrecision::Year, // default to year
+        Some(_) => ReleaseDatePrecision::None, // default to none
+        None => ReleaseDatePrecision::None, // default to none
     };
 
     let release_date = {
-        let date_string = &raw_object["release_date"].to_string(); // get raw string 
-
         // parse string to date based on precision. Panic if unable to do so for whatever reason (hopefully this doens't happen, but it will be a problem for later me if it does)
-        match &release_date_precision {
-            ReleaseDatePrecision::Year => NaiveDate::parse_from_str(date_string, "%Y").unwrap(),
-            ReleaseDatePrecision::Month => NaiveDate::parse_from_str(date_string, "%Y-%m").unwrap(),
-            ReleaseDatePrecision::Day => NaiveDate::parse_from_str(date_string, "%Y-%m-%d").unwrap(),
+        match &raw_object["release_date"] {
+            Null => None, // default to no date
+            date_string => {
+                match release_date_precision {
+                    ReleaseDatePrecision::Year => Some(NaiveDate::parse_from_str(&date_string.to_string(), "%Y").unwrap()),
+                    ReleaseDatePrecision::Month => Some(NaiveDate::parse_from_str(&date_string.to_string(), "%Y-%m").unwrap()),
+                    ReleaseDatePrecision::Day => Some(NaiveDate::parse_from_str(&date_string.to_string(), "%Y-%m-%d").unwrap()),
+                    ReleaseDatePrecision::None => None, // default to no date
+                }
+            }
         }
     };
 
@@ -135,6 +139,122 @@ pub fn format_album(raw_object: &JsonValue) -> Album {
         tracks,
     }
 
+}
+
+/// Takes JsonValue object for DatedAlbum and formats it 
+/// 
+/// # Arguments
+/// * `raw_object` - JsonValue object representing DatedAlbum
+/// 
+pub fn format_dated_album(raw_object: &JsonValue) -> DatedAlbum {
+    let added_at = match &raw_object["added_at"] {
+        Null => None, // default to no date
+        date_string => Some(NaiveDateTime::parse_from_str(&date_string.to_string(), "%Y-%m-%dT%H:%M:%S%.fZ").unwrap()),
+    };
+
+    let album = format_album(&raw_object["album"]);
+
+    DatedAlbum {
+        date_added: added_at,
+        album,
+    }
+}
+
+/// Formats a set of albums from API request into struct for ease of use 
+/// 
+/// # Arguments
+/// * `raw_object` - JsonValue object representing set of albums
+/// 
+pub fn format_dated_albums(raw_object: &JsonValue) -> DatedAlbums {
+    let href = &raw_object["href"].to_string();
+
+    let albums: Vec<DatedAlbum> = match &raw_object["items"] {
+        Array(items) => {items.iter().map(|item| format_dated_album(item)).collect()}, // turn JsonValue Array type to vec of DatedAlbum objects 
+        _ => vec![], // default to empty vec 
+    };
+
+    let limit = match raw_object["limit"].as_i32() {
+        Some(limit) => limit,
+        None => 0, // default to 0
+    };
+
+    let next = match &raw_object["next"] {
+        Null => None,
+        _ => Some(raw_object["next"].to_string()),
+    };
+
+    let offset = match raw_object["offset"].as_i32() {
+        Some(offset) => offset,
+        None => 0, // default to 0
+    };
+
+    let previous = match &raw_object["previous"] {
+        Null => None,
+        _ => Some(raw_object["previous"].to_string()),
+    };
+
+    let total = match raw_object["total"].as_i32() {
+        Some(total) => total,
+        None => 0, // default to 0
+    };
+
+    DatedAlbums {
+        href: href.to_string(),
+        albums,
+        limit,
+        next,
+        offset,
+        previous,
+        total,
+    }
+}
+
+/// Formats array of albums from API request into struct object for ease of use 
+/// 
+/// # Arguments
+/// * `raw_object` - JsonValue object representing array of albums
+///
+pub fn format_albums(raw_object: &JsonValue) -> Albums {
+    let href = &raw_object["href"].to_string();
+    let albums: Vec<Album> = match &raw_object["items"] {
+        Array(items) => {items.iter().map(|item| format_album(item)).collect()}, // turn JsonValue Array type to vec of Album objects 
+        _ => vec![], // default to empty vec 
+    };
+
+    let limit = match raw_object["limit"].as_i32() {
+        Some(limit) => limit,
+        None => 0, // default to 0
+    };
+
+    let next = match &raw_object["next"] {
+        Null => None,
+        _ => Some(raw_object["next"].to_string()),
+    };
+
+    let offset = match raw_object["offset"].as_i32() {
+        Some(offset) => offset,
+        None => 0, // default to 0
+    };
+
+    let previous = match &raw_object["previous"] {
+        Null => None,
+        _ => Some(raw_object["previous"].to_string()),
+    };
+
+    let total = match raw_object["total"].as_i32() {
+        Some(total) => total,
+        None => 0, // default to 0
+    };
+
+    Albums {
+        href: href.to_string(),
+        albums,
+        limit,
+        next,
+        offset,
+        previous,
+        total,
+    }
 }
 
 /// Take JsonValue object representing artist from API request and turn into Artist struct for 

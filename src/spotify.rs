@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc, Duration, NaiveDate};
+use chrono::{DateTime, Utc, Duration, NaiveDate, NaiveDateTime};
 use dotenv;
 use std::fmt;
 
@@ -31,6 +31,7 @@ pub enum ReleaseDatePrecision {
     Year,
     Month,
     Day,
+    None,
 }
 
 /// struct to hold known external ids for tracks
@@ -50,7 +51,7 @@ pub struct Album {
     pub id: String, // The Spotify ID for the album
     pub images: Vec<SpotifyImage>, // The cover art for the album in various sizes, widest first
     pub name: String, // The name of the album. In case of an album takedown, the value may be an empty string
-    pub release_date: NaiveDate, // The date the album was first released 
+    pub release_date: Option<NaiveDate>, // The date the album was first released 
     pub release_date_precision: ReleaseDatePrecision, // The precision with which release_date value is known: year, month, or day
     pub restriction_reason: RestrictionReason, // The reason for an album being restricted. Albums may be restricted if the content is not available in a given market, to the user's subscription type, or when the user's account is set to not play explicit content.
     pub uri: String, // The Spotify URI for the album  
@@ -68,6 +69,67 @@ impl fmt::Debug for Album {
             .field("release_date", &self.release_date)
             .field("artists", &self.artists)
             .field("tracks", &self.tracks)
+            .finish()
+    }
+}
+
+/// Struct to represent Album with "date_added" field 
+pub struct DatedAlbum {
+    pub album: Album, // The album
+    pub date_added: Option<NaiveDateTime>, // The date the album was added to the user's library
+}
+
+/// Implement Debug trait for DatedAlbum struct
+impl fmt::Debug for DatedAlbum {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("DatedAlbum")
+            .field("album", &self.album)
+            .field("date_added", &self.date_added)
+            .finish()
+    }
+}
+
+/// Struct to represent a set of Albums
+pub struct Albums {
+    pub href: String, // A link to the Web API endpoint returning the full result of the request
+    pub albums: Vec<Album>, // The requested data
+    pub limit: i32, // The maximum number of items in the response (as set in the query or by default)
+    pub next: Option<String>, // URL to the next page of items. (null if none)
+    pub offset: i32, // The offset of the items returned (as set in the query or by default)
+    pub previous: Option<String>, // URL to the previous page of items. (null if none)
+    pub total: i32, // The total number of items available to return
+}
+
+impl fmt::Debug for Albums {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Albums")
+            .field("albums", &self.albums)
+            .field("limit", &self.limit)
+            .field("offset", &self.offset)
+            .field("total", &self.total)
+            .finish()
+    }
+}
+
+/// Struct to represent a set of dated Albums 
+pub struct DatedAlbums {
+    pub href: String, // A link to the Web API endpoint returning the full result of the request
+    pub albums: Vec<DatedAlbum>, // The requested data
+    pub limit: i32, // The maximum number of items in the response (as set in the query or by default)
+    pub next: Option<String>, // URL to the next page of items. (null if none)
+    pub offset: i32, // The offset of the items returned (as set in the query or by default)
+    pub previous: Option<String>, // URL to the previous page of items. (null if none)
+    pub total: i32, // The total number of items available to return
+}
+
+/// Implement Debug trait for DatedAlbums struct
+impl fmt::Debug for DatedAlbums {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("DatedAlbums")
+            .field("albums", &self.albums)
+            .field("limit", &self.limit)
+            .field("offset", &self.offset)
+            .field("total", &self.total)
             .finish()
     }
 }
@@ -154,7 +216,7 @@ impl fmt::Debug for Tracks {
 pub enum SpotifyError {
     AccessTokenExpired,
     RequestError(String),
-    InsufficientScope(Vec<String>),
+    InsufficientScope(String),
     // Unknown,
 }
 
@@ -215,6 +277,24 @@ impl Spotify {
             refresh_token: refresh_token,
             expires_at: expires_at,
         }
+    }
+
+    /// Checks to see if required scope is present in current scope 
+    /// 
+    /// # Arguments
+    /// * `scope` - A string slice that holds required scope
+    /// 
+    pub fn check_scope(&self, scope: &str) -> Result<(), SpotifyError> {
+        let scopes: Vec<&str> = self.scope.split_whitespace().collect();
+        let required_scopes: Vec<&str> = scope.split_whitespace().collect();
+
+        let missing_scopes: Vec<&str> = required_scopes.iter().copied().filter(|s| !scopes.contains(s)).collect();
+
+        if missing_scopes.len() > 0 {
+            return Err(SpotifyError::InsufficientScope(missing_scopes.join(" ")));
+        }
+
+        Ok(())
     }
 
     pub fn access_token(&self) -> Result<String, SpotifyError> {
