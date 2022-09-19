@@ -1,5 +1,5 @@
 use reqwest; 
-use json::{self, JsonValue};
+use json::{self, JsonValue, Null};
 
 /// Enum to store types of requests relevant to Spotify API
 pub enum RequestMethod {
@@ -31,15 +31,18 @@ pub fn spotify_request(access_token: &str, url_extension: &str, request_method: 
     let response = match request_method {
         RequestMethod::Get => client.get(&request_url).headers(headers).send()?,
         RequestMethod::Post => client.post(&request_url).headers(headers).send()?,
-        RequestMethod::Put => client.put(&request_url).headers(headers).send()?,
+        RequestMethod::Put => client.put(&request_url).headers(headers).header("Content-Length", "0").send()?,
         RequestMethod::Delete => client.delete(&request_url).headers(headers).send()?,
     };
 
     // if response is successful, read response 
     if response.status().is_success() {
-        let response_body = json::parse(&response.text().unwrap()).unwrap();
+        let response_body = json::parse(&response.text().unwrap());
 
-        return Ok(response_body)
+        match response_body {
+            Ok(response_body) => return Ok(response_body),
+            Err(_) => Ok(Null), // on error just return nothing (temp fix probably)
+        }
 
     } else {
         return Err(format!("{}",response.status()).into()) // should probably do some proper error handling based on response code

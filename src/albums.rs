@@ -134,4 +134,26 @@ impl Spotify {
             Err(e) => return Err(e), // on error, return error
         }
     }
+
+    /// Save albums for current user: https://developer.spotify.com/documentation/web-api/reference/#/operations/save-albums-user
+    /// Required scope: user-library-modify
+    pub fn save_albums(&self, album_ids: Vec<&str>) -> Result<(), SpotifyError> {
+        let album_ids_string = album_ids.join(","); // join album ids into string seperated by commas 
+
+        let url_extension = format!("me/albums?ids={}", album_ids_string); // base url with album ids to add
+
+        self.check_scope("user-library-modify")?; // check scope
+
+        match self.access_token() { // get access token
+            Ok(access_token) => {
+                match spotify_request(&access_token, &url_extension, RequestMethod::Put){ // make request
+                    Ok(_) => {
+                        return Ok(())
+                    },
+                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+                }
+            },
+            Err(e) => return Err(e), // on error, return error
+        }
+    }
 }
