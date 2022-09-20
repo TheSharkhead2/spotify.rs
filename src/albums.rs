@@ -1,10 +1,11 @@
 use crate::srequest::{spotify_request, RequestMethod};
-use crate::spotify::{Spotify, SpotifyError, Album, Tracks, DatedAlbums};
-use crate::object_formatting::{format_album, format_tracks, format_dated_albums};
+use crate::spotify::{Spotify, SpotifyError, Album, Tracks, DatedAlbums, Albums};
+use crate::object_formatting::{format_album, format_tracks, format_dated_albums, format_albums};
 use json::JsonValue::{Array, Boolean};
 
 impl Spotify {
     /// Get an album: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-album
+    /// Required scope: none
     pub fn get_album(&self, album_id: &str, market: Option<&str>) -> Result<Album, SpotifyError> {
         let mut url_extension = format!("albums/{}", album_id); // base url 
 
@@ -28,6 +29,7 @@ impl Spotify {
     }
 
     /// Get several albums: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-multiple-albums
+    /// Required scope: none
     pub fn get_albums(&self, album_ids: &Vec<&str>, market: Option<&str>) -> Result<Vec<Album>, SpotifyError> {
         let mut url_extension = format!("albums/?ids={}", album_ids.join(",")); // base url 
 
@@ -55,6 +57,7 @@ impl Spotify {
     }
 
     /// Get an album's tracks: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-albums-tracks
+    /// Required scope: none
     pub fn get_album_tracks(&self, album_id: &str, market: Option<&str>, limit: Option<u32>, offset: Option<u32>) -> Result<Tracks, SpotifyError> {
         let mut url_extension = format!("albums/{}/tracks", album_id); // base url 
 
@@ -97,7 +100,7 @@ impl Spotify {
     /// Get albums saved in user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-users-saved-albums
     /// Required scope: user-library-read
     pub fn get_saved_albums(&self, limit: Option<u32>, market: Option<&str>, offset: Option<u32>) -> Result<DatedAlbums, SpotifyError> {
-        let mut url_extension = String::from("me/albums/"); // base url
+        let mut url_extension = String::from("me/albums"); // base url
 
         self.check_scope("user-library-read")?; // check scope
 
@@ -214,5 +217,46 @@ impl Spotify {
             },
             Err(e) => return Err(e), // on error, return error
         }
+    }
+
+    /// Get a list of new album releases featured in Spotify: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-new-releases 
+    /// Required scope: none
+    pub fn get_new_releases(&self, country: Option<&str>, limit: Option<u32>, offset: Option<u32>) -> Result<Albums, SpotifyError> {
+        let mut url_extension = String::from("browse/new-releases"); // base url
+
+        // if any parameter is supplied, add to request as query parameter
+        if country != None || limit != None || offset != None {
+            url_extension.push_str("?");
+        }
+
+        // if country parameter supplied, add to request as query parameter
+        if let Some(country) = country {
+            url_extension.push_str(&format!("&country={}", country));
+        }
+
+        // if limit parameter supplied, add to request as query parameter
+        if let Some(limit) = limit {
+            url_extension.push_str(&format!("&limit={}", limit));
+        }
+
+        // if offset parameter supplied, add to request as query parameter
+        if let Some(offset) = offset {
+            url_extension.push_str(&format!("&offset={}", offset));
+        }
+
+        match self.access_token() {
+            Ok(access_token) => {
+                match spotify_request(&access_token, &url_extension, RequestMethod::Get){ // make request
+                    Ok(response) => {
+                        let albums = format_albums(&response["albums"]); // format albums
+        
+                        return Ok(albums)
+                    },
+                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+                }
+            },
+            Err(e) => return Err(e), // on error, return error
+        }
+        
     }
 }
