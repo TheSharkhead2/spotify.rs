@@ -1,6 +1,7 @@
 use crate::srequest::{spotify_request, RequestMethod};
 use crate::spotify::{Spotify, SpotifyError, Album, Tracks, DatedAlbums};
 use crate::object_formatting::{format_album, format_tracks, format_dated_albums};
+use json::JsonValue::{Array, Boolean};
 
 impl Spotify {
     /// Get an album: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-album
@@ -171,6 +172,42 @@ impl Spotify {
                 match spotify_request(&access_token, &url_extension, RequestMethod::Delete){ // make request
                     Ok(_) => {
                         return Ok(())
+                    },
+                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+                }
+            },
+            Err(e) => return Err(e), // on error, return error
+        }
+    }
+
+    /// Checks to see if albums are already saved to user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/check-users-saved-albums
+    /// Required scope: user-library-read
+    pub fn check_saved_albums(&self, album_ids: Vec<&str>) -> Result<Vec<bool>, SpotifyError> {
+        let album_ids_string = album_ids.join(","); // join album ids into string seperated by commas
+
+        let url_extension = format!("me/albums/contains?ids={}", album_ids_string); // base url with album ids to check
+
+        self.check_scope("user-library-read")?; // check scope
+
+        match self.access_token() { // get access token
+            Ok(access_token) => {
+                match spotify_request(&access_token, &url_extension, RequestMethod::Get){ // make request
+                    Ok(response) => {
+                        match response {
+                            Array(response) => { // make sure it is an array
+                                let mut saved_albums = Vec::new(); // vector to hold saved albums
+
+                                for album in response { // iterate through response
+                                    match album {
+                                        Boolean(saved) => saved_albums.push(saved), // add saved status to vector
+                                        _ => return Err(SpotifyError::RequestError("Invalid response".to_string())), // when the type of response isn't recognized, return error
+                                    }
+                                }
+
+                                return Ok(saved_albums) // return saved albums
+                            },
+                            _ => return Err(SpotifyError::RequestError("Invalid response".to_string())),
+                        }
                     },
                     Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
                 }
