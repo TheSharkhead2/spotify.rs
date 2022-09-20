@@ -11,7 +11,8 @@ fn client_id_import() {
     
 
     // println!("{:?}", spotify.get_saved_albums(None, None, None));
-    println!("{:?}", spotify.save_albums(vec!["1xJ7jIK1tT0aVoJw1fPE6r"]));
+    // println!("{:?}", spotify.save_albums(vec!["1xJ7jIK1tT0aVoJw1fPE6r"]));
+    println!("{:?}", spotify.remove_albums(vec!["1xJ7jIK1tT0aVoJw1fPE6r"]));
 
     // assert_eq!(
     //     details_object.client_id,

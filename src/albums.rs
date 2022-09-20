@@ -156,4 +156,26 @@ impl Spotify {
             Err(e) => return Err(e), // on error, return error
         }
     }
+
+    /// Remove saved albums from current user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/remove-albums-user 
+    /// Required scope: user-library-modify
+    pub fn remove_albums(&self, album_ids: Vec<&str>) -> Result<(), SpotifyError> {
+        let album_ids_string = album_ids.join(","); // join album ids into string seperated by commas
+
+        let url_extension = format!("me/albums?ids={}", album_ids_string); // base url with album ids to remove
+
+        self.check_scope("user-library-modify")?; // check scope
+
+        match self.access_token() { // get access token
+            Ok(access_token) => {
+                match spotify_request(&access_token, &url_extension, RequestMethod::Delete){ // make request
+                    Ok(_) => {
+                        return Ok(())
+                    },
+                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+                }
+            },
+            Err(e) => return Err(e), // on error, return error
+        }
+    }
 }
