@@ -14,7 +14,8 @@ fn client_id_import() {
     // println!("{:?}", spotify.save_albums(vec!["1xJ7jIK1tT0aVoJw1fPE6r"]));
     // println!("{:?}", spotify.remove_albums(vec!["1xJ7jIK1tT0aVoJw1fPE6r"]));
     // println!("{:?}", spotify.check_saved_albums(vec!["1xJ7jIK1tT0aVoJw1fPE6r", "4R09OvFyz47HfjecIjoEtP"]));
-    println!("{:?}", spotify.get_new_releases(None, None, None));
+    // println!("{:?}", spotify.get_new_releases(None, None, None));
+    println!("{:?}", spotify.get_artist("59sBwR0jPSTrbMtuTkRPN5"));
 
     // assert_eq!(
     //     details_object.client_id,
