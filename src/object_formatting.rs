@@ -92,11 +92,16 @@ pub fn format_album(raw_object: &JsonValue) -> Album {
         match &raw_object["release_date"] {
             Null => None, // default to no date
             date_string => {
-                match release_date_precision {
-                    ReleaseDatePrecision::Year => Some(NaiveDate::parse_from_str(&date_string.to_string(), "%Y").unwrap()),
-                    ReleaseDatePrecision::Month => Some(NaiveDate::parse_from_str(&date_string.to_string(), "%Y-%m").unwrap()),
-                    ReleaseDatePrecision::Day => Some(NaiveDate::parse_from_str(&date_string.to_string(), "%Y-%m-%d").unwrap()),
+                let date_string_temp = match release_date_precision {
+                    ReleaseDatePrecision::Year => Some(NaiveDate::parse_from_str(&date_string.to_string(), "%Y")),
+                    ReleaseDatePrecision::Month => Some(NaiveDate::parse_from_str(&date_string.to_string(), "%Y-%m")),
+                    ReleaseDatePrecision::Day => Some(NaiveDate::parse_from_str(&date_string.to_string(), "%Y-%m-%d")),
                     ReleaseDatePrecision::None => None, // default to no date
+                }; 
+                match date_string_temp {
+                    Some(Ok(date)) => Some(date),
+                    Some(Err(_)) => None, // default to no date
+                    None => None, // pass through none
                 }
             }
         }
@@ -216,6 +221,7 @@ pub fn format_dated_albums(raw_object: &JsonValue) -> DatedAlbums {
 ///
 pub fn format_albums(raw_object: &JsonValue) -> Albums {
     let href = &raw_object["href"].to_string();
+
     let albums: Vec<Album> = match &raw_object["items"] {
         Array(items) => {items.iter().map(|item| format_album(item)).collect()}, // turn JsonValue Array type to vec of Album objects 
         _ => vec![], // default to empty vec 
