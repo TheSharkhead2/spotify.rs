@@ -52,6 +52,8 @@ impl Spotify {
     pub fn get_user_saved_tracks(&self, limit: Option<u32>, market: Option<&str>, offset: Option<u32>) -> Result<DatedTracks, SpotifyError> {
         let mut url_extension = String::from("me/tracks"); // base url
 
+        self.check_scope("user-library-read")?; // check scope
+
         if limit != None || market != None || offset != None { // if any optional parameters are set, add ? to url
             url_extension.push_str("?");
         }
@@ -74,6 +76,24 @@ impl Spotify {
                     Ok(response) => {
                         return Ok(format_dated_tracks(&response)) // format and return result
                     },
+                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+                }
+            },
+            Err(e) => return Err(e), // On error with access token, return error
+        }
+    }
+
+    /// Save tracks into current user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/save-tracks-user
+    /// Required scope: user-library-modify
+    pub fn save_tracks(&self, track_ids:Vec<&str>) -> Result<(), SpotifyError> {
+        let url_extension = format!("me/tracks?ids={}", track_ids.join(",")); // base url
+
+        self.check_scope("user-library-modify")?; // check scope
+
+        match self.access_token() { // get access token
+            Ok(access_token) => {
+                match spotify_request(&access_token, &url_extension, RequestMethod::Put) { // make request
+                    Ok(_) => return Ok(()), // return Ok if no error
                     Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
                 }
             },

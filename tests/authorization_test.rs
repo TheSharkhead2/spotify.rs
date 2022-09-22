@@ -22,7 +22,8 @@ fn client_id_import() {
     // println!("{:?}", spotify.get_artist_related_artists("6eUKZXaKkcviH0Ku9w2n3V"));
     // println!("{:?}", spotify.get_track("212AgAhFl3RJZGAK0LrMpX"));
     // println!("{:?}", spotify.get_several_tracks(vec!["212AgAhFl3RJZGAK0LrMpX","5QYnNhTKsN3kE7OaqILA1U"], None));
-    println!("{:?}", spotify.get_user_saved_tracks(None, None, None));
+    // println!("{:?}", spotify.get_user_saved_tracks(None, None, None));
+    println!("{:?}", spotify.save_tracks(vec!["1Hg3GtuEEpPT8NU49xC71Z", "1uviKYHZuM4uINK33F7sCt"]));
 
     // assert_eq!(
     //     details_object.client_id,
