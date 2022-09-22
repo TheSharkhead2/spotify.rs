@@ -251,6 +251,49 @@ impl fmt::Debug for DatedTracks {
     }
 }
 
+/// Struct to represent a Track's features
+pub struct FeatureTrack {
+    acousticness: f64, // A confidence measure from 0.0 to 1.0 of whether the track is acoustic. 1.0 represents high confidence the track is acoustic.
+    analysis_url: String, // An HTTP URL to access the full audio analysis of this track.
+    danceability: f64, // Danceability describes how suitable a track is for dancing based on a combination of musical elements including tempo, rhythm stability, beat strength, and overall regularity. A value of 0.0 is least danceable and 1.0 is most danceable.
+    duration_ms: i32, // The duration of the track in milliseconds.
+    energy: f64, // Energy is a measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity. Typically, energetic tracks feel fast, loud, and noisy. For example, death metal has high energy, while a Bach prelude scores low on the scale. Perceptual features contributing to this attribute include dynamic range, perceived loudness, timbre, onset rate, and general entropy.
+    id: String, // The Spotify ID for the track.
+    instrumentalness: f64, // Predicts whether a track contains no vocals. “Ooh” and “aah” sounds are treated as instrumental in this context. Rap or spoken word tracks are clearly “vocal”. The closer the instrumentalness value is to 1.0, the greater likelihood the track contains no vocal content. Values above 0.5 are intended to represent instrumental tracks, but confidence is higher as the value approaches 1.0.
+    key: i32, // The key the track is in. Integers map to pitches using standard Pitch Class notation. E.g. 0 = C, 1 = C♯/D♭, 2 = D, and so on.
+    liveness: f64, // Detects the presence of an audience in the recording. Higher liveness values represent an increased probability that the track was performed live. A value above 0.8 provides strong likelihood that the track is live.
+    loudness: f64, // The overall loudness of a track in decibels (dB). Loudness values are averaged across the entire track and are useful for comparing relative loudness of tracks. Loudness is the quality of a sound that is the primary psychological correlate of physical strength (amplitude). Values typical range between -60 and 0 db.
+    mode: i32, // Mode indicates the modality (major or minor) of a track, the type of scale from which its melodic content is derived. Major is represented by 1 and minor is 0.
+    speechiness: f64, // The presence of spoken words in the track. Values above 0.66 are probably entirely spoken word, 0.33 to 0.66 may contain both speech and music (rap music), and values below 0.33 most likely represent non-speech or other music 
+    tempo: f64, // The overall estimated tempo of a track in beats per minute (BPM). In musical terminology, tempo is the speed or pace of a given piece and derives directly from the average beat duration.
+    time_signature: i32, // An estimated overall time signature of a track. The time signature (meter) is a notational convention to specify how many beats are in each bar (or measure).
+    track_href: String, // A link to the Web API endpoint providing full details of the track.
+    uri: String, // The Spotify URI for the track.
+    valence: f64, // A measure from 0.0 to 1.0 describing the musical positiveness conveyed by a track. Tracks with high valence sound more positive (e.g. happy, cheerful, euphoric), while tracks with low valence sound more negative (e.g. sad, depressed, angry). 
+}
+
+/// Implements Debug trait for FeatureTrack struct
+impl fmt::Debug for FeatureTrack {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("FeatureTrack")
+            .field("acousticness", &self.acousticness)
+            .field("danceability", &self.danceability)
+            .field("duration_ms", &self.duration_ms)
+            .field("energy", &self.energy)
+            .field("id", &self.id)
+            .field("instrumentalness", &self.instrumentalness)
+            .field("key", &self.key)
+            .field("liveness", &self.liveness)
+            .field("loudness", &self.loudness)
+            .field("mode", &self.mode)
+            .field("speechiness", &self.speechiness)
+            .field("tempo", &self.tempo)
+            .field("time_signature", &self.time_signature)
+            .field("valence", &self.valence)
+            .finish()
+    }
+}
+
 /// Error object for Spotify struct
 pub enum SpotifyError {
     AccessTokenExpired,
