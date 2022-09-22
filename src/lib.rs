@@ -1,9 +1,10 @@
 mod authorization;
 mod spotify;
 mod srequest;
+mod object_formatting;
 mod albums;
 mod artists;
-mod object_formatting;
+mod tracks;
 
 pub use spotify::Spotify; // re-export Spotify struct
 
