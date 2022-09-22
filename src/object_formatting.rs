@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use json::{JsonValue::{self, Array, Null}};
 
-use crate::spotify::{SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, Tracks, Albums, DatedAlbum, DatedAlbums};
+use crate::spotify::{SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, Tracks, Albums, DatedAlbum, DatedAlbums, DatedTrack, DatedTracks};
 
 /// Take JsonValue object representing image from API request and turn into 
 /// SpotifyImage object (for ease of use).
@@ -362,6 +362,55 @@ pub fn format_tracks(raw_object: &JsonValue) -> Tracks {
     }
 }
 
+/// Takes JsonValue object representing a set of DatedTracks and formats them 
+/// 
+/// # Arguments
+/// * `raw_object` - JsonValue object representing a set of DatedTracks
+/// 
+pub fn format_dated_tracks(raw_object: &JsonValue) -> DatedTracks {
+    let href = &raw_object["href"].to_string();
+
+    let limit = match raw_object["limit"].as_i32() {
+        Some(limit) => limit,
+        None => 0, // default to 0
+    };
+
+    let next = match raw_object["next"] {
+        Null => None, 
+        _ => Some(raw_object["next"].to_string()), // if not null, assume string next url exists 
+    };
+    
+    let offset = match raw_object["offset"].as_i32() {
+        Some(offset) => offset,
+        None => 0, // default to 0
+    };
+
+    let previous = match raw_object["previous"] {
+        Null => None, 
+        _ => Some(raw_object["previous"].to_string()), // if not null, assume string previous url exists 
+    };
+
+    let total = match raw_object["total"].as_i32() {
+        Some(total) => total,
+        None => 0, // default to 0
+    };
+
+    let tracks = match &raw_object["items"] {
+        Array(tracks) => {tracks.iter().map(|track| format_dated_track(track)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
+        _ => vec![], // default to empty vec 
+    };
+
+    DatedTracks {
+        href: href.to_string(),
+        limit,
+        next,
+        offset,
+        previous,
+        total,
+        tracks,
+    }
+}
+
 /// Format a single track in the form of a JsonValue from API request into struct for ease of use 
 /// 
 /// # Arguments
@@ -458,5 +507,24 @@ pub fn format_track(raw_object: &JsonValue) -> Track {
         track_number,
         uri: uri.to_string(),
         is_local,
+    }
+}
+
+/// Takes JsonValue for DatedTrack and formats it
+/// 
+/// # Arguments
+/// * `raw_object` - JsonValue object representing DatedTrack from API request
+/// 
+pub fn format_dated_track(raw_object: &JsonValue) -> DatedTrack {
+    let added_at = match &raw_object["added_at"] {
+        Null => None, // default to no date
+        date_string => Some(NaiveDateTime::parse_from_str(&date_string.to_string(), "%Y-%m-%dT%H:%M:%S%.fZ").unwrap()),
+    };
+
+    let track = format_track(&raw_object["track"]);
+
+    DatedTrack {
+        date_added: added_at,
+        track,
     }
 }

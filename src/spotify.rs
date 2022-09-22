@@ -189,6 +189,22 @@ impl fmt::Debug for Track {
     }
 }
 
+/// Struct to represent dated track 
+pub struct DatedTrack {
+    pub track: Track, // The track
+    pub date_added: Option<NaiveDateTime>, // The date the track was added to the user's library
+}
+
+/// Implements Debug trait for DatedTrack struct
+impl fmt::Debug for DatedTrack {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("DatedTrack")
+            .field("track", &self.track)
+            .field("date_added", &self.date_added)
+            .finish()
+    }
+}
+
 /// Struct to represent several Tracks and keep track of offsets and limits 
 pub struct Tracks {
     pub href: String, // A link to the Web API endpoint returning the full result of the request
@@ -204,6 +220,29 @@ pub struct Tracks {
 impl fmt::Debug for Tracks {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Tracks")
+            .field("tracks", &self.tracks)
+            .field("limit", &self.limit)
+            .field("offset", &self.offset)
+            .field("total", &self.total)
+            .finish()
+    }
+}
+
+/// Struct to represent several DatedTracks
+pub struct DatedTracks {
+    pub href: String, // A link to the Web API endpoint returning the full result of the request
+    pub tracks: Vec<DatedTrack>, // The requested data
+    pub limit: i32, // The maximum number of items in the response (as set in the query or by default)
+    pub next: Option<String>, // URL to next page of items, None if none 
+    pub offset: i32, // The offset of the items returned (as set in the query or by default)
+    pub previous: Option<String>, // URL to previous page of items, None if none
+    pub total: i32, // The total number of items available to return
+}
+
+/// Implements Debug trait for DatedTracks struct
+impl fmt::Debug for DatedTracks {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("DatedTracks")
             .field("tracks", &self.tracks)
             .field("limit", &self.limit)
             .field("offset", &self.offset)

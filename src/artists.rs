@@ -53,19 +53,19 @@ impl Spotify {
         }
 
         if let Some(include_groups) = include_groups { // if include_groups is set, add to url
-            url_extension.push_str(&format!("include_groups={}&", include_groups.join(",")));
+            url_extension.push_str(&format!("&include_groups={}", include_groups.join(",")));
         }
 
         if let Some(limit) = limit { // if limit is set, add to url
-            url_extension.push_str(&format!("limit={}&", limit));
+            url_extension.push_str(&format!("&limit={}", limit));
         }
 
         if let Some(market) = market { // if market is set, add to url
-            url_extension.push_str(&format!("market={}&", market));
+            url_extension.push_str(&format!("&market={}", market));
         }
 
         if let Some(offset) = offset { // if offset is set, add to url
-            url_extension.push_str(&format!("offset={}&", offset));
+            url_extension.push_str(&format!("&offset={}", offset));
         }
 
         match self.access_token() { // get access token 
