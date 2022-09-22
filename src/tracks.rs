@@ -1,6 +1,7 @@
 use crate::srequest::{spotify_request, RequestMethod};
 use crate::spotify::{Spotify, SpotifyError, Track, DatedTracks};
 use crate::object_formatting::{format_track, format_dated_tracks};
+use json::JsonValue::{Array, Boolean};
 
 impl Spotify {
     /// Get information on a single track: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-track
@@ -112,6 +113,39 @@ impl Spotify {
             Ok(access_token) => {
                 match spotify_request(&access_token, &url_extension, RequestMethod::Delete) { // make request
                     Ok(_) => return Ok(()), // return Ok if no error
+                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+                }
+            },
+            Err(e) => return Err(e), // On error with access token, return error
+        }
+    }
+
+    /// Checks to see if specified tracks are saved in user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/check-users-saved-tracks
+    /// Required scope: user-library-read
+    pub fn check_saved_tracks(&self, track_ids: Vec<&str>) -> Result<Vec<bool>, SpotifyError> {
+        let url_extension = format!("me/tracks/contains?ids={}", track_ids.join(",")); // base url
+
+        self.check_scope("user-library-read")?; // check scope
+
+        match self.access_token() { // get access token
+            Ok(access_token) => {
+                match spotify_request(&access_token, &url_extension, RequestMethod::Get) { // make request
+                    Ok(response) => {
+                        match response {
+                            Array(response) => {
+                                let mut saved_albums = Vec::new(); // vector for all bools 
+
+                                for track in response {
+                                    match track {
+                                        Boolean(saved) => saved_albums.push(saved), // add bool to vector
+                                        _ => return Err(SpotifyError::RequestError("Invalid response".to_string())), // blanket error that shouldn't happen
+                                    }
+                                }
+                                return Ok(saved_albums) // return bool values
+                            },
+                            _ => return Err(SpotifyError::RequestError("Response was not an array".to_string())), // blanket error, shouldn't occur
+                        }
+                    },
                     Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
                 }
             },
