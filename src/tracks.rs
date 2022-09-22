@@ -85,7 +85,7 @@ impl Spotify {
 
     /// Save tracks into current user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/save-tracks-user
     /// Required scope: user-library-modify
-    pub fn save_tracks(&self, track_ids:Vec<&str>) -> Result<(), SpotifyError> {
+    pub fn save_tracks(&self, track_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let url_extension = format!("me/tracks?ids={}", track_ids.join(",")); // base url
 
         self.check_scope("user-library-modify")?; // check scope
@@ -93,6 +93,24 @@ impl Spotify {
         match self.access_token() { // get access token
             Ok(access_token) => {
                 match spotify_request(&access_token, &url_extension, RequestMethod::Put) { // make request
+                    Ok(_) => return Ok(()), // return Ok if no error
+                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+                }
+            },
+            Err(e) => return Err(e), // On error with access token, return error
+        }
+    }
+
+    /// Remove tracks from current user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/remove-tracks-user
+    /// Required scope: user-library-modify
+    pub fn remove_tracks(&self, track_ids: Vec<&str>) -> Result<(), SpotifyError> { 
+        let url_extension = format!("me/tracks?ids={}", track_ids.join(",")); // base url
+
+        self.check_scope("user-library-modify")?; // check scope
+
+        match self.access_token() { // get access token
+            Ok(access_token) => {
+                match spotify_request(&access_token, &url_extension, RequestMethod::Delete) { // make request
                     Ok(_) => return Ok(()), // return Ok if no error
                     Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
                 }
