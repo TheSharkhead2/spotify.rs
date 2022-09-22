@@ -102,4 +102,26 @@ impl Spotify {
             Err(e) => return Err(e), // error on access token error
         }
     }
+
+    /// Get artist's related to specified artist: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-artists-related-artists
+    /// Required scope: none
+    pub fn get_artist_related_artists(&self, artist_id: &str) -> Result<Vec<Artist>, SpotifyError> {
+        let url_extension = format!("artists/{}/related-artists", artist_id); // base url 
+
+        match self.access_token() { // get access token 
+            Ok(access_token) => {
+                match spotify_request(&access_token, &url_extension, RequestMethod::Get) { // make request
+                    Ok(response) => { // format response into vector with formatted artists
+                        let mut artists: Vec<Artist> = Vec::new();
+                        for artist in response["artists"].members() { 
+                            artists.push(format_artist(&artist));
+                        }
+                        return Ok(artists)
+                    },
+                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())), // request error 
+                }
+            },
+            Err(e) => return Err(e), // error on access token error
+        }
+    }
 }
