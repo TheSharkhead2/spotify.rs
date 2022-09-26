@@ -170,7 +170,7 @@ fn handle_connection(mut stream: TcpStream, state: &str) -> Option<Result<String
         }
 
     } else {
-        return None; // return None if request is not expected
+        return None // return None if request is not expected
     }
 }
 

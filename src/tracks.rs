@@ -1,6 +1,6 @@
 use crate::srequest::{spotify_request, RequestMethod};
-use crate::spotify::{Spotify, SpotifyError, Track, DatedTracks};
-use crate::object_formatting::{format_track, format_dated_tracks};
+use crate::spotify::{Spotify, SpotifyError, Track, DatedTracks, FeatureTrack};
+use crate::object_formatting::{format_track, format_dated_tracks, format_feature_track};
 use json::JsonValue::{Array, Boolean};
 
 impl Spotify {
@@ -149,6 +149,35 @@ impl Spotify {
                     Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
                 }
             },
+            Err(e) => return Err(e), // On error with access token, return error
+        }
+    }
+
+    /// Gets audio features for specified track(s): https://developer.spotify.com/documentation/web-api/reference/#/operations/get-several-audio-features
+    /// Required scope: none 
+    pub fn get_tracks_audio_features(&self, track_ids: Vec<&str>) -> Result<Vec<FeatureTrack>, SpotifyError> {
+        let url_extension = format!("audio-features/?ids={}", track_ids.join(",")); // base url
+
+        match self.access_token() { // get access token 
+            Ok(access_token) => {
+                match spotify_request(&access_token, &url_extension, RequestMethod::Get) { // make request 
+                    Ok(response) => {
+                        match &response["audio_features"] {
+                            Array(response) => {
+                                let mut audio_features = Vec::new(); // vector for all audio features
+
+                                for track in response {
+                                        audio_features.push(format_feature_track(&track)); // add audio features to vector
+                                        
+                                };
+                                return Ok(audio_features) // return audio features
+                            },
+                            _ => return Err(SpotifyError::RequestError("Response was not an array".to_string())), // blanket error, shouldn't occur
+                        }
+                    },
+                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+                }
+            }, 
             Err(e) => return Err(e), // On error with access token, return error
         }
     }

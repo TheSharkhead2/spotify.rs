@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use json::{JsonValue::{self, Array, Null}};
 
-use crate::spotify::{SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, Tracks, Albums, DatedAlbum, DatedAlbums, DatedTrack, DatedTracks};
+use crate::spotify::{SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, Tracks, Albums, DatedAlbum, DatedAlbums, DatedTrack, DatedTracks, FeatureTrack};
 
 /// Take JsonValue object representing image from API request and turn into 
 /// SpotifyImage object (for ease of use).
@@ -526,5 +526,105 @@ pub fn format_dated_track(raw_object: &JsonValue) -> DatedTrack {
     DatedTrack {
         date_added: added_at,
         track,
+    }
+}
+
+/// Takes JsonValue representing audio features for a track and formats it into FeatureTrack struct
+/// 
+/// # Arguments
+/// * `raw_object` - JsonValue object representing audio features for a track from API request
+/// 
+pub fn format_feature_track(raw_object: &JsonValue) -> FeatureTrack {
+    let acousticness = match raw_object["acousticness"].as_f64() {
+        Some(acousticness) => acousticness,
+        None => 0.0, // default to 0.0
+    };
+
+    let analysis_url = &raw_object["analysis_url"].to_string();
+
+    let danceability = match raw_object["danceability"].as_f64() {
+        Some(danceability) => danceability,
+        None => 0.0, // default to 0.0
+    };
+
+    let duration = match raw_object["duration_ms"].as_i32() {
+        Some(duration) => duration,
+        None => 0, // default to 0
+    };
+
+    let energy = match raw_object["energy"].as_f64() {
+        Some(energy) => energy,
+        None => 0.0, // default to 0.0
+    };
+
+    let id = &raw_object["id"].to_string();
+
+    let instrumentalness = match raw_object["instrumentalness"].as_f64() {
+        Some(instrumentalness) => instrumentalness,
+        None => 0.0, // default to 0.0
+    };
+
+    let key = match raw_object["key"].as_i32() {
+        Some(key) => key,
+        None => 0, // default to 0
+    };
+
+    let liveness = match raw_object["liveness"].as_f64() {
+        Some(liveness) => liveness,
+        None => 0.0, // default to 0.0
+    };
+
+    let loudness = match raw_object["loudness"].as_f64() {
+        Some(loudness) => loudness,
+        None => 0.0, // default to 0.0
+    };
+
+    let mode = match raw_object["mode"].as_i32() {
+        Some(mode) => mode,
+        None => 0, // default to 0
+    };
+
+    let speechiness = match raw_object["speechiness"].as_f64() {
+        Some(speechiness) => speechiness,
+        None => 0.0, // default to 0.0
+    };
+
+    let tempo = match raw_object["tempo"].as_f64() {
+        Some(tempo) => tempo,
+        None => 0.0, // default to 0.0
+    };
+
+    let time_signature = match raw_object["time_signature"].as_i32() {
+        Some(time_signature) => time_signature,
+        None => 0, // default to 0
+    };
+
+    let track_href = &raw_object["track_href"].to_string();
+
+    let uri = &raw_object["uri"].to_string();
+
+    let valence = match raw_object["valence"].as_f64() {
+        Some(valence) => valence,
+        None => 0.0, // default to 0.0
+    };
+
+    FeatureTrack {
+        acousticness,
+        analysis_url: analysis_url.to_string(),
+        danceability,
+        duration,
+        energy,
+        id: id.to_string(),
+        instrumentalness,
+        key,
+        liveness,
+        loudness,
+        mode,
+        speechiness,
+        tempo,
+        time_signature,
+        track_href: track_href.to_string(),
+        uri: uri.to_string(),
+        valence,
     }
 }
