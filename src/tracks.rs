@@ -1,56 +1,41 @@
-use crate::srequest::{spotify_request, RequestMethod};
+use crate::srequest::RequestMethod;
 use crate::spotify::{Spotify, SpotifyError, Track, DatedTracks, FeatureTrack, AnalysisTrack};
 use crate::object_formatting::{format_track, format_dated_tracks, format_feature_track, format_analysis_track};
-use json::JsonValue::{Array, Boolean};
+use json::JsonValue::Boolean;
 
 impl Spotify {
     /// Get information on a single track: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-track
     /// Required scope: none
-    pub fn get_track(&self, track_id: &str) -> Result<Track, SpotifyError> {
+    pub fn get_track(&mut self, track_id: &str) -> Result<Track, SpotifyError> {
         let url_extension = format!("tracks/{}", track_id);
 
-        match self.access_token() { // Get access token
-            Ok(access_token) => {
-                match spotify_request(&access_token, &url_extension, RequestMethod::Get) { // make request 
-                    Ok(response) => {
-                        return Ok(format_track(&response)) // format and return result
-                    },
-                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
-                }
-            },
-            Err(e) => return Err(e), // On error with access token, return error
-        }
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+
+        return Ok(format_track(&response)); // format and return result
     }
 
     /// Get information on many tracks: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-several-tracks
     /// Required scope: none
-    pub fn get_several_tracks(&self, track_ids: Vec<&str>, market: Option<&str>) -> Result<Vec<Track>, SpotifyError> {
+    pub fn get_several_tracks(&mut self, track_ids: Vec<&str>, market: Option<&str>) -> Result<Vec<Track>, SpotifyError> {
         let mut url_extension = format!("tracks/?ids={}", track_ids.join(",")); // base url with track ids added
 
         if let Some(market) = market { // if market is set, add to url
             url_extension.push_str(&format!("?market={}", market));
         }
 
-        match self.access_token() { // get access token 
-            Ok(access_token) => {
-                match spotify_request(&access_token, &url_extension, RequestMethod::Get) { // make request
-                    Ok(response) => { // format request into vector with formatted tracks
-                        let mut tracks: Vec<Track> = Vec::new();
-                        for track in response["tracks"].members() { 
-                            tracks.push(format_track(&track));
-                        }
-                        return Ok(tracks)
-                    },
-                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
-                }
-            },
-            Err(e) => return Err(e), // On error with access token, return error
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+
+        let mut tracks = Vec::new(); // create vector to store tracks
+        for track in response["tracks"].members() {
+            tracks.push(format_track(&track)); // format track and push to vector
         }
+
+        return Ok(tracks); // return vector of tracks
     }
 
     /// Get user's saved tracks: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-users-saved-tracks
     /// Required scope: user-library-read
-    pub fn get_user_saved_tracks(&self, limit: Option<u32>, market: Option<&str>, offset: Option<u32>) -> Result<DatedTracks, SpotifyError> {
+    pub fn get_user_saved_tracks(&mut self, limit: Option<u32>, market: Option<&str>, offset: Option<u32>) -> Result<DatedTracks, SpotifyError> {
         let mut url_extension = String::from("me/tracks"); // base url
 
         self.check_scope("user-library-read")?; // check scope
@@ -71,154 +56,90 @@ impl Spotify {
             url_extension.push_str(&format!("&offset={}", offset));
         }
 
-        match self.access_token() { // get access token
-            Ok(access_token) => {
-                match spotify_request(&access_token, &url_extension, RequestMethod::Get) { // make request
-                    Ok(response) => {
-                        return Ok(format_dated_tracks(&response)) // format and return result
-                    },
-                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
-                }
-            },
-            Err(e) => return Err(e), // On error with access token, return error
-        }
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+
+        return Ok(format_dated_tracks(&response)); // format and return result
     }
 
     /// Save tracks into current user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/save-tracks-user
     /// Required scope: user-library-modify
-    pub fn save_tracks(&self, track_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub fn save_tracks(&mut self, track_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let url_extension = format!("me/tracks?ids={}", track_ids.join(",")); // base url
 
         self.check_scope("user-library-modify")?; // check scope
 
-        match self.access_token() { // get access token
-            Ok(access_token) => {
-                match spotify_request(&access_token, &url_extension, RequestMethod::Put) { // make request
-                    Ok(_) => return Ok(()), // return Ok if no error
-                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
-                }
-            },
-            Err(e) => return Err(e), // On error with access token, return error
-        }
+        self.spotify_request(&url_extension, RequestMethod::Put)?; // make request
+
+        return Ok(()); // return nothing
     }
 
     /// Remove tracks from current user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/remove-tracks-user
     /// Required scope: user-library-modify
-    pub fn remove_tracks(&self, track_ids: Vec<&str>) -> Result<(), SpotifyError> { 
+    pub fn remove_tracks(&mut self, track_ids: Vec<&str>) -> Result<(), SpotifyError> { 
         let url_extension = format!("me/tracks?ids={}", track_ids.join(",")); // base url
 
         self.check_scope("user-library-modify")?; // check scope
 
-        match self.access_token() { // get access token
-            Ok(access_token) => {
-                match spotify_request(&access_token, &url_extension, RequestMethod::Delete) { // make request
-                    Ok(_) => return Ok(()), // return Ok if no error
-                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
-                }
-            },
-            Err(e) => return Err(e), // On error with access token, return error
-        }
+        self.spotify_request(&url_extension, RequestMethod::Delete)?; // make request
+
+        return Ok(()); // return nothing
     }
 
     /// Checks to see if specified tracks are saved in user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/check-users-saved-tracks
     /// Required scope: user-library-read
-    pub fn check_saved_tracks(&self, track_ids: Vec<&str>) -> Result<Vec<bool>, SpotifyError> {
+    pub fn check_saved_tracks(&mut self, track_ids: Vec<&str>) -> Result<Vec<bool>, SpotifyError> {
         let url_extension = format!("me/tracks/contains?ids={}", track_ids.join(",")); // base url
 
         self.check_scope("user-library-read")?; // check scope
 
-        match self.access_token() { // get access token
-            Ok(access_token) => {
-                match spotify_request(&access_token, &url_extension, RequestMethod::Get) { // make request
-                    Ok(response) => {
-                        match response {
-                            Array(response) => {
-                                let mut saved_albums = Vec::new(); // vector for all bools 
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
-                                for track in response {
-                                    match track {
-                                        Boolean(saved) => saved_albums.push(saved), // add bool to vector
-                                        _ => return Err(SpotifyError::RequestError("Invalid response".to_string())), // blanket error that shouldn't happen
-                                    }
-                                }
-                                return Ok(saved_albums) // return bool values
-                            },
-                            _ => return Err(SpotifyError::RequestError("Response was not an array".to_string())), // blanket error, shouldn't occur
-                        }
-                    },
-                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
-                }
-            },
-            Err(e) => return Err(e), // On error with access token, return error
+        let mut saved_tracks = Vec::new(); // create vector to store saved albums
+
+        for track in response.members() {
+            match track {
+                Boolean(saved) => saved_tracks.push(*saved), // push saved status to vector
+                _ => return Err(SpotifyError::RequestError("Invalid response".to_string())), // return error if invalid response
+            }
         }
+
+        return Ok(saved_tracks); // return vector of saved tracks
     }
 
     /// Gets audio features for specified track(s): https://developer.spotify.com/documentation/web-api/reference/#/operations/get-several-audio-features
     /// Required scope: none 
-    pub fn get_tracks_audio_features(&self, track_ids: Vec<&str>) -> Result<Vec<FeatureTrack>, SpotifyError> {
+    pub fn get_tracks_audio_features(&mut self, track_ids: Vec<&str>) -> Result<Vec<FeatureTrack>, SpotifyError> {
         let url_extension = format!("audio-features/?ids={}", track_ids.join(",")); // base url
 
-        match self.access_token() { // get access token 
-            Ok(access_token) => {
-                match spotify_request(&access_token, &url_extension, RequestMethod::Get) { // make request 
-                    Ok(response) => {
-                        match &response["audio_features"] {
-                            Array(response) => {
-                                let mut audio_features = Vec::new(); // vector for all audio features
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
-                                for track in response {
-                                        audio_features.push(format_feature_track(&track)); // add audio features to vector
-                                        
-                                };
-                                return Ok(audio_features) // return audio features
-                            },
-                            _ => return Err(SpotifyError::RequestError("Response was not an array".to_string())), // blanket error, shouldn't occur
-                        }
-                    },
-                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
-                }
-            }, 
-            Err(e) => return Err(e), // On error with access token, return error
+        let mut feature_tracks = Vec::new(); // create vector to store tracks
+
+        for track in response["audio_features"].members() {
+            feature_tracks.push(format_feature_track(&track)); // format track and push to vector
         }
+
+        return Ok(feature_tracks); // return vector of tracks
     }
 
     /// Gets audio features for specified track: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-features
     /// Required scope: none
-    pub fn get_track_audio_features(&self, track_id: &str) -> Result<FeatureTrack, SpotifyError> {
+    pub fn get_track_audio_features(&mut self, track_id: &str) -> Result<FeatureTrack, SpotifyError> {
         let url_extension = format!("audio-features/{}", track_id); // base url
 
-        match self.access_token() { // get access token
-            Ok(access_token) => {
-                match spotify_request(&access_token, &url_extension, RequestMethod::Get) { // make request
-                    Ok(response) => {
-                        return Ok(format_feature_track(&response)) // format and return result
-                    },
-                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
-                }
-            },
-            Err(e) => return Err(e), // On error with access token, return error
-        }
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+
+        return Ok(format_feature_track(&response)); // format and return track
     }
 
     /// Gets audio analysis for specified track: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-analysis
     /// Required scope: none
-    pub fn get_track_audio_analysis(&self, track_id: &str) -> Result<AnalysisTrack, SpotifyError> {
+    pub fn get_track_audio_analysis(&mut self, track_id: &str) -> Result<AnalysisTrack, SpotifyError> {
         let url_extension = format!("audio-analysis/{}", track_id); // base url
 
-        match self.access_token() { // get access token
-            Ok(access_token) => {
-                match spotify_request(&access_token, &url_extension, RequestMethod::Get) { // make request
-                    Ok(response) => {
-                        return match format_analysis_track(&response) { // format and return result
-                            Ok(track) => Ok(track),
-                            Err(e) => Err(e),
-                        }
-                    },
-                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
-                }
-            },
-            Err(e) => return Err(e), // On error with access token, return error
-        }
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+
+        return Ok(format_analysis_track(&response)?); // format and return track
     }
 
     /// Gets track recommendations based on seed artists, tracks, or genres: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-recommendations
@@ -277,7 +198,7 @@ impl Spotify {
     /// * If ```seed_artists```, ```seed_tracks```, and ```seed_genres``` are all empty. Need to supply a seed value.
     /// * If more than 5 seed values are supplied across `seed_artists`, `seed_tracks`, and `seed_genres`.
     /// 
-    pub fn get_recommendations(&self, seed_artists: Option<Vec<&str>>, seed_genres: Option<Vec<&str>>, seed_tracks: Option<Vec<&str>>, limit: Option<i32>, market: Option<&str>,
+    pub fn get_recommendations(&mut self, seed_artists: Option<Vec<&str>>, seed_genres: Option<Vec<&str>>, seed_tracks: Option<Vec<&str>>, limit: Option<i32>, market: Option<&str>,
         max_acousticness: Option<f64>, min_acousticness: Option<f64>, target_acousticness: Option<f64>, max_danceability: Option<f64>, min_danceability: Option<f64>, target_danceability: Option<f64>,
         max_duration: Option<i32>, min_duration: Option<i32>, target_duration: Option<i32>, max_energy: Option<f64>, min_energy: Option<f64>, target_energy: Option<f64>,
         max_instrumentalness: Option<f64>, min_instrumentalness: Option<f64>, target_instrumentalness: Option<f64>, max_key: Option<i32>, min_key: Option<i32>, target_key: Option<i32>,
@@ -502,19 +423,13 @@ impl Spotify {
             url_extension.push_str(&format!("&target_valence={}", target_valence));
         }
 
-        let access_token = self.access_token()?; // get access token
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
-        match spotify_request(&access_token, &url_extension, RequestMethod::Get) {
-            Ok(response) => {
-                let mut tracks: Vec<Track> = Vec::new(); // blank return vector
-                
-                for track in response["tracks"].members() {
-                    tracks.push(format_track(track)); // format track and push to vector
-                }
-
-                return Ok(tracks)
-            },
-            Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+        let mut tracks = Vec::new(); // create vector to hold tracks
+        for track in response["tracks"].members() {
+            tracks.push(format_track(track)); // format track and push to vector
         }
+
+        return Ok(tracks); // return vector
     }
 }

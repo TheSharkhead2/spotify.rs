@@ -473,7 +473,6 @@ impl fmt::Debug for AnalysisTrack {
 
 /// Error object for Spotify struct
 pub enum SpotifyError {
-    AccessTokenExpired,
     RequestError(String),
     InsufficientScope(String),
     FailedRequest(String),
@@ -481,21 +480,9 @@ pub enum SpotifyError {
 }
 
 /// Implemntation of formatting such that SpotfiyError can be printed
-impl fmt::Display for SpotifyError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            SpotifyError::AccessTokenExpired => write!(f, "Access token expired, please refresh"),
-            SpotifyError::RequestError(e) => write!(f, "Request error: {}", e),
-            SpotifyError::InsufficientScope(scopes) => write!(f, "Insufficient scope. Need: {:?}", scopes),
-            SpotifyError::FailedRequest(e) => write!(f, "Failed request: {}", e),
-            // SpotifyError::Unknown => write!(f, "Unknown error"),
-        }
-    }
-}
 impl fmt::Debug for SpotifyError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            SpotifyError::AccessTokenExpired => write!(f, "Access token expired, please refresh"),
             SpotifyError::RequestError(e) => write!(f, "Request error: {}", e),
             SpotifyError::InsufficientScope(scopes) => write!(f, "Insufficient scope. Need: {:?}", scopes),
             SpotifyError::FailedRequest(e) => write!(f, "Failed request: {}", e),
@@ -559,17 +546,17 @@ impl Spotify {
         Ok(())
     }
 
-    pub fn access_token(&self) -> Result<String, SpotifyError> {
-        // if access token is expired, return error, otherwise return access token
-        if Utc::now() < self.expires_at {
-            return Ok(self.access_token.clone())
-        } else {
-            
-            return Err(SpotifyError::AccessTokenExpired) // if access token is expired, need new Spotify object, return error so user can refresh
+    pub fn access_token(&mut self) -> String {
+        // if access token is expired, refresh it
+        if Utc::now() > self.expires_at { 
+            let (access_token, expires_at) = self.refresh();
+            self.access_token = access_token;
+            self.expires_at = expires_at;  
         }
+        return self.access_token.clone() // return access token
     }
 
-    pub fn refresh(&self) -> Spotify {
+    fn refresh(&self) -> (String, DateTime<Utc>) {
         let (access_token, expires_in) = match refresh_access_token(&self.refresh_token, &self.client_id) {
             Ok((access_token, expires_in)) => (access_token, expires_in), 
             Err(e) => panic!("{}", e), // on error panic
@@ -577,13 +564,7 @@ impl Spotify {
         
         let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
 
-        // return new Spotify object with refreshed access token
-        Spotify {
-            client_id: self.client_id.clone(),
-            scope: self.scope.clone(),
-            access_token: access_token,
-            refresh_token: self.refresh_token.clone(),
-            expires_at: expires_at,
-        }
+        // return access token and time when access token expires
+        (access_token, expires_at)
     }
 }
