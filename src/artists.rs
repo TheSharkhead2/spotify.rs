@@ -1,6 +1,5 @@
 use crate::srequest::RequestMethod;
 use crate::spotify::{Spotify, SpotifyError, Artist, Albums};
-use crate::object_formatting::{format_artist, format_albums};
 
 impl Spotify {
     /// Get information on a single aritst: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-artist 
@@ -10,7 +9,7 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
-        return Ok(format_artist(&response)); // format and return result
+        return Ok(Artist::new(&response)); // format and return result
     }
 
     /// Gets information on several artists: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-multiple-artists
@@ -22,7 +21,7 @@ impl Spotify {
 
         let mut artists = Vec::new(); // create vector to store artists
         for artist in response["artists"].members() {
-            artists.push(format_artist(&artist)); // format artist and push to vector
+            artists.push(Artist::new(&artist)); // format artist and push to vector
         }
         return Ok(artists) // return vector of artists
     }
@@ -54,7 +53,7 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
-        return Ok(format_albums(&response)); // format and return result
+        return Ok(Albums::new(&response)); // format and return result
     }
 
     /// Get artist's top tracks: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-artists-top-tracks
@@ -66,7 +65,7 @@ impl Spotify {
 
         let mut artists = Vec::new(); // create vector to store artists
         for artist in response["tracks"].members() {
-            artists.push(format_artist(&artist)); // format artist and push to vector
+            artists.push(Artist::new(&artist)); // format artist and push to vector
         }
         return Ok(artists) // return vector of artists
     }
@@ -80,7 +79,7 @@ impl Spotify {
 
         let mut artists = Vec::new(); // create vector to store artists
         for artist in response["artists"].members() {
-            artists.push(format_artist(&artist)); // format artist and push to vector
+            artists.push(Artist::new(&artist)); // format artist and push to vector
         }
         return Ok(artists) // return vector of artists
     }

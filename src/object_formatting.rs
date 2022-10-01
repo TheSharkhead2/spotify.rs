@@ -3,51 +3,56 @@ use json::{JsonValue::{self, Array, Null}};
 
 use crate::spotify::{SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, Tracks, Albums, DatedAlbum, DatedAlbums, DatedTrack, DatedTracks, FeatureTrack, AnalysisTrack, Bar, Beat, Section, Segment, Tatum, SpotifyError};
 
-/// Take JsonValue object representing image from API request and turn into 
-/// SpotifyImage object (for ease of use).
-/// 
-/// # Arguments 
-/// * `image` - JsonValue object representing image from API request
-/// 
-/// # Panics 
-/// If height or width value can't be converted to i32 (shouldn't happen)
-/// 
-fn format_image(image: &JsonValue) -> SpotifyImage {
-    SpotifyImage {
-        url: image["url"].to_string(),
-        height: image["height"].as_i32().unwrap(),
-        width: image["width"].as_i32().unwrap(),
+impl SpotifyImage {
+    /// Take JsonValue object representing image from API request and turn into 
+    /// SpotifyImage object (for ease of use).
+    /// 
+    /// # Arguments 
+    /// * `image` - JsonValue object representing image from API request
+    /// 
+    /// # Panics 
+    /// If height or width value can't be converted to i32 (shouldn't happen)
+    /// 
+    fn new(image: &JsonValue) -> SpotifyImage {
+        SpotifyImage {
+            url: image["url"].to_string(),
+            height: image["height"].as_i32().unwrap(),
+            width: image["width"].as_i32().unwrap(),
+        }
     }
 }
 
-/// Takes JsonValue object representing possible external ids and formats them into ExternalTrackIds struct 
-/// 
-/// # Arguments
-/// * `external_ids` - JsonValue object representing possible external ids
-/// 
-fn format_external_ids(external_ids: &JsonValue) -> ExternalTrackIds {
-    ExternalTrackIds {
-        isrc: match external_ids["isrc"].as_str() {
-            Some(isrc) => Some(isrc.to_string()),
-            None => None,
-        },
-        ean: match external_ids["ean"].as_str() {
-            Some(ean) => Some(ean.to_string()),
-            None => None,
-        },
-        upc: match external_ids["upc"].as_str() {
-            Some(upc) => Some(upc.to_string()),
-            None => None,
-        },
+impl ExternalTrackIds {
+    /// Takes JsonValue object representing possible external ids and formats them into ExternalTrackIds struct 
+    /// 
+    /// # Arguments
+    /// * `external_ids` - JsonValue object representing possible external ids
+    /// 
+    fn new(external_ids: &JsonValue) -> ExternalTrackIds {
+        ExternalTrackIds {
+            isrc: match external_ids["isrc"].as_str() {
+                Some(isrc) => Some(isrc.to_string()),
+                None => None,
+            },
+            ean: match external_ids["ean"].as_str() {
+                Some(ean) => Some(ean.to_string()),
+                None => None,
+            },
+            upc: match external_ids["upc"].as_str() {
+                Some(upc) => Some(upc.to_string()),
+                None => None,
+            },
+        }
     }
 }
 
+impl Album {
 /// Takes JsonValue object representing album and formats it into struct for ease of use
 /// 
 /// # Arguments
 /// * `raw_object` - JsonValue object representing album
 /// 
-pub fn format_album(raw_object: &JsonValue) -> Album {
+pub fn new(raw_object: &JsonValue) -> Album {
     let album_type = match raw_object["album_type"].as_str() {
         Some("album") => AlbumType::Album,
         Some("single") => AlbumType::Single,
@@ -73,7 +78,7 @@ pub fn format_album(raw_object: &JsonValue) -> Album {
     let id = &raw_object["id"].to_string();
 
     let images = match &raw_object["images"] {
-        Array(images) => {images.iter().map(|image| format_image(image)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
+        Array(images) => {images.iter().map(|image| SpotifyImage::new(image)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
         _ => vec![], // default to empty vec 
     };
 
@@ -118,13 +123,13 @@ pub fn format_album(raw_object: &JsonValue) -> Album {
     let uri = &raw_object["uri"].to_string();
 
     let artists: Option<Vec<Artist>> = match &raw_object["artists"] {
-        Array(artists) => {Some(artists.iter().map(|artist| format_artist(artist)).collect())}, // turn JsonValue Array type to vec of Artist objects 
+        Array(artists) => {Some(artists.iter().map(|artist| Artist::new(artist)).collect())}, // turn JsonValue Array type to vec of Artist objects 
         _ => None, // if artist array can't be found, return None
     };
 
     let tracks = match &raw_object["tracks"] {
         Null => None, 
-        _ => Some(format_tracks(&raw_object["tracks"])),
+        _ => Some(Tracks::new(&raw_object["tracks"])),
     };
 
     Album {
@@ -145,36 +150,40 @@ pub fn format_album(raw_object: &JsonValue) -> Album {
     }
 
 }
+}
 
+impl DatedAlbum {
 /// Takes JsonValue object for DatedAlbum and formats it 
 /// 
 /// # Arguments
 /// * `raw_object` - JsonValue object representing DatedAlbum
 /// 
-pub fn format_dated_album(raw_object: &JsonValue) -> DatedAlbum {
+pub fn new(raw_object: &JsonValue) -> DatedAlbum {
     let added_at = match &raw_object["added_at"] {
         Null => None, // default to no date
         date_string => Some(NaiveDateTime::parse_from_str(&date_string.to_string(), "%Y-%m-%dT%H:%M:%S%.fZ").unwrap()),
     };
 
-    let album = format_album(&raw_object["album"]);
+    let album = Album::new(&raw_object["album"]);
 
     DatedAlbum {
         date_added: added_at,
         album,
     }
 }
+}
 
+impl DatedAlbums {
 /// Formats a set of albums from API request into struct for ease of use 
 /// 
 /// # Arguments
 /// * `raw_object` - JsonValue object representing set of albums
 /// 
-pub fn format_dated_albums(raw_object: &JsonValue) -> DatedAlbums {
+pub fn new(raw_object: &JsonValue) -> DatedAlbums {
     let href = &raw_object["href"].to_string();
 
     let albums: Vec<DatedAlbum> = match &raw_object["items"] {
-        Array(items) => {items.iter().map(|item| format_dated_album(item)).collect()}, // turn JsonValue Array type to vec of DatedAlbum objects 
+        Array(items) => {items.iter().map(|item| DatedAlbum::new(item)).collect()}, // turn JsonValue Array type to vec of DatedAlbum objects 
         _ => vec![], // default to empty vec 
     };
 
@@ -213,17 +222,19 @@ pub fn format_dated_albums(raw_object: &JsonValue) -> DatedAlbums {
         total,
     }
 }
+}
 
+impl Albums {
 /// Formats array of albums from API request into struct object for ease of use 
 /// 
 /// # Arguments
 /// * `raw_object` - JsonValue object representing array of albums
 ///
-pub fn format_albums(raw_object: &JsonValue) -> Albums {
+pub fn new(raw_object: &JsonValue) -> Albums {
     let href = &raw_object["href"].to_string();
 
     let albums: Vec<Album> = match &raw_object["items"] {
-        Array(items) => {items.iter().map(|item| format_album(item)).collect()}, // turn JsonValue Array type to vec of Album objects 
+        Array(items) => {items.iter().map(|item| Album::new(item)).collect()}, // turn JsonValue Array type to vec of Album objects 
         _ => vec![], // default to empty vec 
     };
 
@@ -262,14 +273,16 @@ pub fn format_albums(raw_object: &JsonValue) -> Albums {
         total,
     }
 }
+}
 
+impl Artist {
 /// Take JsonValue object representing artist from API request and turn into Artist struct for 
 /// ease of use. 
 /// 
 /// # Arguments 
 /// * `raw_object` - JsonValue object representing artist from API request 
 /// 
-pub fn format_artist(raw_object: &JsonValue) -> Artist {
+pub fn new(raw_object: &JsonValue) -> Artist {
     let spotify_url = &raw_object["external_urls"]["spotify"].to_string();
 
     let followers = match raw_object["followers"]["total"].as_i32() {
@@ -287,7 +300,7 @@ pub fn format_artist(raw_object: &JsonValue) -> Artist {
     let id = &raw_object["id"].to_string();
 
     let images = match &raw_object["images"] {
-        Array(images) => {images.iter().map(|image| format_image(image)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
+        Array(images) => {images.iter().map(|image| SpotifyImage::new(image)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
         _ => vec![], // default to empty vec 
     };
 
@@ -312,13 +325,15 @@ pub fn format_artist(raw_object: &JsonValue) -> Artist {
         uri: uri.to_string(),
     }
 }
+}
 
+impl Tracks {
 /// Formats array of tracks from API request into struct object for ease of use 
 /// 
 /// # Arguments 
 /// * `raw_object` - JsonValue object representing tracks from API request
 /// 
-pub fn format_tracks(raw_object: &JsonValue) -> Tracks {
+pub fn new(raw_object: &JsonValue) -> Tracks {
     let href = &raw_object["href"].to_string();
 
     let limit = match raw_object["limit"].as_i32() {
@@ -347,7 +362,7 @@ pub fn format_tracks(raw_object: &JsonValue) -> Tracks {
     };
 
     let tracks = match &raw_object["items"] {
-        Array(tracks) => {tracks.iter().map(|track| format_track(track)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
+        Array(tracks) => {tracks.iter().map(|track| Track::new(track)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
         _ => vec![], // default to empty vec 
     };
 
@@ -361,13 +376,15 @@ pub fn format_tracks(raw_object: &JsonValue) -> Tracks {
         tracks,
     }
 }
+}
 
+impl DatedTracks {
 /// Takes JsonValue object representing a set of DatedTracks and formats them 
 /// 
 /// # Arguments
 /// * `raw_object` - JsonValue object representing a set of DatedTracks
 /// 
-pub fn format_dated_tracks(raw_object: &JsonValue) -> DatedTracks {
+pub fn new(raw_object: &JsonValue) -> DatedTracks {
     let href = &raw_object["href"].to_string();
 
     let limit = match raw_object["limit"].as_i32() {
@@ -396,7 +413,7 @@ pub fn format_dated_tracks(raw_object: &JsonValue) -> DatedTracks {
     };
 
     let tracks = match &raw_object["items"] {
-        Array(tracks) => {tracks.iter().map(|track| format_dated_track(track)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
+        Array(tracks) => {tracks.iter().map(|track| DatedTrack::new(track)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
         _ => vec![], // default to empty vec 
     };
 
@@ -410,20 +427,22 @@ pub fn format_dated_tracks(raw_object: &JsonValue) -> DatedTracks {
         tracks,
     }
 }
+}
 
+impl Track {
 /// Format a single track in the form of a JsonValue from API request into struct for ease of use 
 /// 
 /// # Arguments
 /// * `raw_object` - JsonValue object representing track from API request
 /// 
-pub fn format_track(raw_object: &JsonValue) -> Track {
+pub fn new(raw_object: &JsonValue) -> Track {
     let album = match &raw_object["album"] {
         Null => None, // if album object doesn't exist, return None 
-        _ => Some(format_album(&raw_object["album"])), // if album object exists, format it
+        _ => Some(Album::new(&raw_object["album"])), // if album object exists, format it
     };
 
     let artists: Option<Vec<Artist>> = match &raw_object["artists"] {
-        Array(artists) => {Some(artists.iter().map(|artist| format_artist(artist)).collect())}, // turn JsonValue Array type to vec of Artist objects 
+        Array(artists) => {Some(artists.iter().map(|artist| Artist::new(artist)).collect())}, // turn JsonValue Array type to vec of Artist objects 
         _ => None, // default to None
     };
 
@@ -449,7 +468,7 @@ pub fn format_track(raw_object: &JsonValue) -> Track {
 
     let external_ids = match &raw_object["external_ids"] {
         Null => ExternalTrackIds { isrc: None, ean: None, upc: None }, // if external_ids object doesn't exist, just set all ids to None 
-        _ => format_external_ids(&raw_object["external_ids"]), // if external_ids object exists, format it
+        _ => ExternalTrackIds::new(&raw_object["external_ids"]), // if external_ids object exists, format it
     };
 
     let spotify_url = &raw_object["external_urls"]["spotify"].to_string();
@@ -509,32 +528,36 @@ pub fn format_track(raw_object: &JsonValue) -> Track {
         is_local,
     }
 }
+}
 
+impl DatedTrack {
 /// Takes JsonValue for DatedTrack and formats it
 /// 
 /// # Arguments
 /// * `raw_object` - JsonValue object representing DatedTrack from API request
 /// 
-pub fn format_dated_track(raw_object: &JsonValue) -> DatedTrack {
+pub fn new(raw_object: &JsonValue) -> DatedTrack {
     let added_at = match &raw_object["added_at"] {
         Null => None, // default to no date
         date_string => Some(NaiveDateTime::parse_from_str(&date_string.to_string(), "%Y-%m-%dT%H:%M:%S%.fZ").unwrap()),
     };
 
-    let track = format_track(&raw_object["track"]);
+    let track = Track::new(&raw_object["track"]);
 
     DatedTrack {
         date_added: added_at,
         track,
     }
 }
+}
 
+impl FeatureTrack {
 /// Takes JsonValue representing audio features for a track and formats it into FeatureTrack struct
 /// 
 /// # Arguments
 /// * `raw_object` - JsonValue object representing audio features for a track from API request
 /// 
-pub fn format_feature_track(raw_object: &JsonValue) -> FeatureTrack {
+pub fn new(raw_object: &JsonValue) -> FeatureTrack {
     let acousticness = match raw_object["acousticness"].as_f64() {
         Some(acousticness) => acousticness,
         None => 0.0, // default to 0.0
@@ -628,13 +651,15 @@ pub fn format_feature_track(raw_object: &JsonValue) -> FeatureTrack {
         valence,
     }
 }
+}
 
+impl AnalysisTrack {
 /// Takes JsonValue representing audion analysis and formats it into AnalysisTrack struct
 /// 
 /// # Arguments
 /// * `raw_object` - JsonValue object representing audio analysis for a track from API request
 ///
-pub fn format_analysis_track(raw_object: &JsonValue) -> Result<AnalysisTrack, SpotifyError> {
+pub fn new(raw_object: &JsonValue) -> Result<AnalysisTrack, SpotifyError> {
     // Check for errors before formatting. An error has occured on status code = 1
     if let Some(1) = raw_object["meta"]["status_code"].as_i32() {
         return Err(SpotifyError::FailedRequest(raw_object["meta"]["detailed_status"].to_string()))
@@ -994,5 +1019,5 @@ pub fn format_analysis_track(raw_object: &JsonValue) -> Result<AnalysisTrack, Sp
         segments,
         tatums,
     })
-
+}
 }

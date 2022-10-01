@@ -1,6 +1,5 @@
 use crate::srequest::RequestMethod;
 use crate::spotify::{Spotify, SpotifyError, Album, Tracks, DatedAlbums, Albums};
-use crate::object_formatting::{format_album, format_tracks, format_dated_albums, format_albums};
 use json::JsonValue::Boolean;
 
 impl Spotify {
@@ -16,7 +15,7 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
-        return Ok(format_album(&response)); // format and return result
+        return Ok(Album::new(&response)); // format and return result
     }
 
     /// Get several albums: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-multiple-albums
@@ -33,7 +32,7 @@ impl Spotify {
 
         let mut albums = Vec::new(); // create vector to store albums
         for album in response["albums"].members() {
-            albums.push(format_album(&album)); // format album and push to vector
+            albums.push(Album::new(&album)); // format album and push to vector
         }
         return Ok(albums) // return vector of albums 
 
@@ -66,7 +65,7 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
-        return Ok(format_tracks(&response)); // format and return result
+        return Ok(Tracks::new(&response)); // format and return result
     }
 
     /// Get albums saved in user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-users-saved-albums
@@ -98,7 +97,7 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
-        return Ok(format_dated_albums(&response)); // format and return result
+        return Ok(DatedAlbums::new(&response)); // format and return result
     }
 
     /// Save albums for current user: https://developer.spotify.com/documentation/web-api/reference/#/operations/save-albums-user
@@ -178,6 +177,6 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
-        return Ok(format_albums(&response["albums"])); // format and return result        
+        return Ok(Albums::new(&response["albums"])); // format and return result        
     }
 }

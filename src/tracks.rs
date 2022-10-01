@@ -1,6 +1,5 @@
 use crate::srequest::RequestMethod;
 use crate::spotify::{Spotify, SpotifyError, Track, DatedTracks, FeatureTrack, AnalysisTrack};
-use crate::object_formatting::{format_track, format_dated_tracks, format_feature_track, format_analysis_track};
 use json::JsonValue::Boolean;
 
 impl Spotify {
@@ -11,7 +10,7 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
-        return Ok(format_track(&response)); // format and return result
+        return Ok(Track::new(&response)); // format and return result
     }
 
     /// Get information on many tracks: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-several-tracks
@@ -27,7 +26,7 @@ impl Spotify {
 
         let mut tracks = Vec::new(); // create vector to store tracks
         for track in response["tracks"].members() {
-            tracks.push(format_track(&track)); // format track and push to vector
+            tracks.push(Track::new(&track)); // format track and push to vector
         }
 
         return Ok(tracks); // return vector of tracks
@@ -58,7 +57,7 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
-        return Ok(format_dated_tracks(&response)); // format and return result
+        return Ok(DatedTracks::new(&response)); // format and return result
     }
 
     /// Save tracks into current user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/save-tracks-user
@@ -116,7 +115,7 @@ impl Spotify {
         let mut feature_tracks = Vec::new(); // create vector to store tracks
 
         for track in response["audio_features"].members() {
-            feature_tracks.push(format_feature_track(&track)); // format track and push to vector
+            feature_tracks.push(FeatureTrack::new(&track)); // format track and push to vector
         }
 
         return Ok(feature_tracks); // return vector of tracks
@@ -129,7 +128,7 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
-        return Ok(format_feature_track(&response)); // format and return track
+        return Ok(FeatureTrack::new(&response)); // format and return track
     }
 
     /// Gets audio analysis for specified track: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-analysis
@@ -139,7 +138,7 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
-        return Ok(format_analysis_track(&response)?); // format and return track
+        return Ok(AnalysisTrack::new(&response)?); // format and return track
     }
 
     /// Gets track recommendations based on seed artists, tracks, or genres: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-recommendations
@@ -427,7 +426,7 @@ impl Spotify {
 
         let mut tracks = Vec::new(); // create vector to hold tracks
         for track in response["tracks"].members() {
-            tracks.push(format_track(track)); // format track and push to vector
+            tracks.push(Track::new(track)); // format track and push to vector
         }
 
         return Ok(tracks); // return vector
