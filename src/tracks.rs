@@ -220,4 +220,301 @@ impl Spotify {
             Err(e) => return Err(e), // On error with access token, return error
         }
     }
+
+    /// Gets track recommendations based on seed artists, tracks, or genres: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-recommendations
+    /// Required scope: none
+    /// 
+    /// # Arguments
+    /// * `seed_artists` - A list of seed artists. Up to 5 seed values can be supplied between ```seed_artists```, ```seed_tracks```, and ```seed_genres```. Must supply 1.
+    /// * `seed_tracks` - A list of seed tracks. Up to 5 seed values can be supplied between ```seed_artists```, ```seed_tracks```, and ```seed_genres```. Must supply 1.
+    /// * `seed_genres` - A list of seed genres. Up to 5 seed values can be supplied between ```seed_artists```, ```seed_tracks```, and ```seed_genres```. Must supply 1.
+    /// * `limit` - The target size of the list of recommended tracks. Default: 20. Minimum: 1. Maximum: 100.
+    /// * `market` - An ISO 3166-1 alpha-2 country code 
+    /// * `min_acousticness` - minimum acousticness value for tracks, between 0 and 1
+    /// * `max_acousticness` - maximum acousticness value for track, between 0 and 1
+    /// * `target_acousticness` - target acousticness value for track, between 0 and 1
+    /// * `min_danceability` - minimum danceability value for tracks, between 0 and 1
+    /// * `max_danceability` - maximum danceability value for track, between 0 and 1
+    /// * `target_danceability` - target danceability value for track, between 0 and 1
+    /// * `min_duration` - minimum duration of tracks in ms
+    /// * `max_duration` - maximum duration of track in ms 
+    /// * `target_duration` - target duration of track in ms
+    /// * `min_energy` - minimum energy value for tracks, between 0 and 1
+    /// * `max_energy` - maximum energy value for track, between 0 and 1
+    /// * `target_energy` - target energy value for track, between 0 and 1
+    /// * `min_instrumentalness` - minimum instrumentalness value for tracks, between 0 and 1
+    /// * `max_instrumentalness` - maximum instrumentalness value for track, between 0 and 1
+    /// * `target_instrumentalness` - target instrumentalness value for track, between 0 and 1
+    /// * `min_key` - minimum key value for tracks, between 0 and 11
+    /// * `max_key` - maximum key value for track, between 0 and 11
+    /// * `target_key` - target key value for track, between 0 and 11
+    /// * `min_liveness` - minimum liveness value for tracks, between 0 and 1
+    /// * `max_liveness` - maximum liveness value for track, between 0 and 1
+    /// * `target_liveness` - target liveness value for track, between 0 and 1
+    /// * `min_loudness` - minimum loudness value for tracks in dB
+    /// * `max_loudness` - maximum loudness value for track in dB
+    /// * `target_loudness` - target loudness value for track in dB 
+    /// * `min_mode` - minimum mode value for tracks, between 0 and 1
+    /// * `max_mode` - maximum mode value for track, between 0 and 1
+    /// * `target_mode` - target mode value for track, between 0 and 1
+    /// * `min_popularity` - minimum popularity value for tracks, between 0 and 100
+    /// * `max_popularity` - maximum popularity value for track, between 0 and 100
+    /// * `target_popularity` - target popularity value for track, between 0 and 100
+    /// * `min_speechiness` - minimum speechiness value for tracks, between 0 and 1
+    /// * `max_speechiness` - maximum speechiness value for track, between 0 and 1
+    /// * `target_speechiness` - target speechiness value for track, between 0 and 1
+    /// * `min_tempo` - minimum tempo value for tracks in BPM
+    /// * `max_tempo` - maximum tempo value for track in BPM
+    /// * `target_tempo` - target tempo value for track in BPM
+    /// * `min_time_signature` - minimum time signature value for tracks
+    /// * `max_time_signature` - maximum time signature value for track
+    /// * `target_time_signature` - target time signature value for track
+    /// * `min_valence` - minimum valence value for tracks, between 0 and 1
+    /// * `max_valence` - maximum valence value for track, between 0 and 1
+    /// * `target_valence` - target valence value for track, between 0 and 1
+    /// 
+    /// # Panics 
+    /// * If ```seed_artists```, ```seed_tracks```, and ```seed_genres``` are all empty. Need to supply a seed value.
+    /// * If more than 5 seed values are supplied across `seed_artists`, `seed_tracks`, and `seed_genres`.
+    /// 
+    pub fn get_recommendations(&self, seed_artists: Option<Vec<&str>>, seed_genres: Option<Vec<&str>>, seed_tracks: Option<Vec<&str>>, limit: Option<i32>, market: Option<&str>,
+        max_acousticness: Option<f64>, min_acousticness: Option<f64>, target_acousticness: Option<f64>, max_danceability: Option<f64>, min_danceability: Option<f64>, target_danceability: Option<f64>,
+        max_duration: Option<i32>, min_duration: Option<i32>, target_duration: Option<i32>, max_energy: Option<f64>, min_energy: Option<f64>, target_energy: Option<f64>,
+        max_instrumentalness: Option<f64>, min_instrumentalness: Option<f64>, target_instrumentalness: Option<f64>, max_key: Option<i32>, min_key: Option<i32>, target_key: Option<i32>,
+        max_liveness: Option<f64>, min_liveness: Option<f64>, target_liveness: Option<f64>, max_loudness: Option<f64>, min_loudness: Option<f64>, target_loudness: Option<f64>,
+        max_mode: Option<i32>, min_mode: Option<i32>, target_mode: Option<i32>, max_popularity: Option<i32>, min_popularity: Option<i32>, target_popularity: Option<i32>,
+        max_speechiness: Option<f64>, min_speechiness: Option<f64>, target_speechiness: Option<f64>, max_tempo: Option<f64>, min_tempo: Option<f64>, target_tempo: Option<f64>,
+        max_time_signature: Option<i32>, min_time_signature: Option<i32>, target_time_signature: Option<i32>, max_valence: Option<i32>, min_valence: Option<i32>, target_valence: Option<i32>) -> Result<Vec<Track>, SpotifyError> {
+        // panic if not supplied with sufficient seed values
+        if seed_artists == None && seed_genres == None && seed_tracks == None {
+            panic!("Must supply at least one seed value");
+        }
+
+        // panic if more than 5 seed values are supplied
+        if match &seed_artists {Some(seed_artists) => seed_artists.len(), None => 0} + match &seed_genres {Some(seed_genres) => seed_genres.len(), None => 0} + match &seed_tracks {Some(seed_tracks) => seed_tracks.len(), None => 0} > 5 {
+            panic!("Cannot supply more than 5 seed values");
+        }
+
+        let mut url_extension = String::from("recommendations?");
+        
+        // add seed values to url
+        if let Some(seed_artists) = seed_artists {
+            url_extension.push_str(&format!("&seed_artists={}", seed_artists.join(",")));
+        }
+
+        if let Some(seed_genres) = seed_genres {
+            url_extension.push_str(&format!("&seed_genres={}", seed_genres.join(",")));
+        }
+
+        if let Some(seed_tracks) = seed_tracks {
+            url_extension.push_str(&format!("&seed_tracks={}", seed_tracks.join(",")));
+        }
+
+        // limit parameter
+        if let Some(limit) = limit {
+            url_extension.push_str(&format!("&limit={}", limit));
+        }
+
+        // market parameter
+        if let Some(market) = market {
+            url_extension.push_str(&format!("&market={}", market));
+        }
+
+        // acousticness parameters
+        if let Some(max_acousticness) = max_acousticness {
+            url_extension.push_str(&format!("&max_acousticness={}", max_acousticness));
+        }
+
+        if let Some(min_acousticness) = min_acousticness {
+            url_extension.push_str(&format!("&min_acousticness={}", min_acousticness));
+        }
+
+        if let Some(target_acousticness) = target_acousticness {
+            url_extension.push_str(&format!("&target_acousticness={}", target_acousticness));
+        }
+
+        // danceability parameters
+        if let Some(max_danceability) = max_danceability {
+            url_extension.push_str(&format!("&max_danceability={}", max_danceability));
+        }
+
+        if let Some(min_danceability) = min_danceability {
+            url_extension.push_str(&format!("&min_danceability={}", min_danceability));
+        }
+
+        if let Some(target_danceability) = target_danceability {
+            url_extension.push_str(&format!("&target_danceability={}", target_danceability));
+        }
+
+        // duration parameters
+        if let Some(max_duration) = max_duration {
+            url_extension.push_str(&format!("&max_duration_ms={}", max_duration));
+        }
+
+        if let Some(min_duration) = min_duration {
+            url_extension.push_str(&format!("&min_duration_ms={}", min_duration));
+        }
+
+        if let Some(target_duration) = target_duration {
+            url_extension.push_str(&format!("&target_duration_ms={}", target_duration));
+        }
+
+        // energy parameters
+        if let Some(max_energy) = max_energy {
+            url_extension.push_str(&format!("&max_energy={}", max_energy));
+        }
+
+        if let Some(min_energy) = min_energy {
+            url_extension.push_str(&format!("&min_energy={}", min_energy));
+        }
+
+        if let Some(target_energy) = target_energy {
+            url_extension.push_str(&format!("&target_energy={}", target_energy));
+        }
+
+        // instrumentalness parameters
+        if let Some(max_instrumentalness) = max_instrumentalness {
+            url_extension.push_str(&format!("&max_instrumentalness={}", max_instrumentalness));
+        }
+
+        if let Some(min_instrumentalness) = min_instrumentalness {
+            url_extension.push_str(&format!("&min_instrumentalness={}", min_instrumentalness));
+        }
+
+        if let Some(target_instrumentalness) = target_instrumentalness {
+            url_extension.push_str(&format!("&target_instrumentalness={}", target_instrumentalness));
+        }
+
+        // key parameters
+        if let Some(max_key) = max_key {
+            url_extension.push_str(&format!("&max_key={}", max_key));
+        }
+
+        if let Some(min_key) = min_key {
+            url_extension.push_str(&format!("&min_key={}", min_key));
+        }
+
+        if let Some(target_key) = target_key {
+            url_extension.push_str(&format!("&target_key={}", target_key));
+        }
+
+        // liveness parameters
+        if let Some(max_liveness) = max_liveness {
+            url_extension.push_str(&format!("&max_liveness={}", max_liveness));
+        }
+
+        if let Some(min_liveness) = min_liveness {
+            url_extension.push_str(&format!("&min_liveness={}", min_liveness));
+        }
+
+        if let Some(target_liveness) = target_liveness {
+            url_extension.push_str(&format!("&target_liveness={}", target_liveness));
+        }
+
+        // loudness parameters
+        if let Some(max_loudness) = max_loudness {
+            url_extension.push_str(&format!("&max_loudness={}", max_loudness));
+        }
+
+        if let Some(min_loudness) = min_loudness {
+            url_extension.push_str(&format!("&min_loudness={}", min_loudness));
+        }
+
+        if let Some(target_loudness) = target_loudness {
+            url_extension.push_str(&format!("&target_loudness={}", target_loudness));
+        }
+
+        // mode parameters
+        if let Some(max_mode) = max_mode {
+            url_extension.push_str(&format!("&max_mode={}", max_mode));
+        }
+
+        if let Some(min_mode) = min_mode {
+            url_extension.push_str(&format!("&min_mode={}", min_mode));
+        }
+
+        if let Some(target_mode) = target_mode {
+            url_extension.push_str(&format!("&target_mode={}", target_mode));
+        }
+
+        // popularity parameters
+        if let Some(max_popularity) = max_popularity {
+            url_extension.push_str(&format!("&max_popularity={}", max_popularity));
+        }
+
+        if let Some(min_popularity) = min_popularity {
+            url_extension.push_str(&format!("&min_popularity={}", min_popularity));
+        }
+
+        if let Some(target_popularity) = target_popularity {
+            url_extension.push_str(&format!("&target_popularity={}", target_popularity));
+        }
+
+        // speechiness parameters
+        if let Some(max_speechiness) = max_speechiness {
+            url_extension.push_str(&format!("&max_speechiness={}", max_speechiness));
+        }
+
+        if let Some(min_speechiness) = min_speechiness {
+            url_extension.push_str(&format!("&min_speechiness={}", min_speechiness));
+        }
+
+        if let Some(target_speechiness) = target_speechiness {
+            url_extension.push_str(&format!("&target_speechiness={}", target_speechiness));
+        }
+
+        // tempo parameters
+        if let Some(max_tempo) = max_tempo {
+            url_extension.push_str(&format!("&max_tempo={}", max_tempo));
+        }
+
+        if let Some(min_tempo) = min_tempo {
+            url_extension.push_str(&format!("&min_tempo={}", min_tempo));
+        }
+
+        if let Some(target_tempo) = target_tempo {
+            url_extension.push_str(&format!("&target_tempo={}", target_tempo));
+        }
+
+        // time signature parameters
+        if let Some(max_time_signature) = max_time_signature {
+            url_extension.push_str(&format!("&max_time_signature={}", max_time_signature));
+        }
+
+        if let Some(min_time_signature) = min_time_signature {
+            url_extension.push_str(&format!("&min_time_signature={}", min_time_signature));
+        }
+
+        if let Some(target_time_signature) = target_time_signature {
+            url_extension.push_str(&format!("&target_time_signature={}", target_time_signature));
+        }
+
+        // valence parameters
+        if let Some(max_valence) = max_valence {
+            url_extension.push_str(&format!("&max_valence={}", max_valence));
+        }
+
+        if let Some(min_valence) = min_valence {
+            url_extension.push_str(&format!("&min_valence={}", min_valence));
+        }
+
+        if let Some(target_valence) = target_valence {
+            url_extension.push_str(&format!("&target_valence={}", target_valence));
+        }
+
+        let access_token = self.access_token()?; // get access token
+
+        match spotify_request(&access_token, &url_extension, RequestMethod::Get) {
+            Ok(response) => {
+                let mut tracks: Vec<Track> = Vec::new(); // blank return vector
+                
+                for track in response["tracks"].members() {
+                    tracks.push(format_track(track)); // format track and push to vector
+                }
+
+                return Ok(tracks)
+            },
+            Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+        }
+    }
 }
