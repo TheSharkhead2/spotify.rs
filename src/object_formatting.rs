@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use json::{JsonValue::{self, Array, Null}};
 
-use crate::spotify::{SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, Tracks, Albums, DatedAlbum, DatedAlbums, DatedTrack, DatedTracks, FeatureTrack};
+use crate::spotify::{SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, Tracks, Albums, DatedAlbum, DatedAlbums, DatedTrack, DatedTracks, FeatureTrack, AnalysisTrack, Bar, Beat, Section, Segment, Tatum, SpotifyError};
 
 /// Take JsonValue object representing image from API request and turn into 
 /// SpotifyImage object (for ease of use).
@@ -627,4 +627,372 @@ pub fn format_feature_track(raw_object: &JsonValue) -> FeatureTrack {
         uri: uri.to_string(),
         valence,
     }
+}
+
+/// Takes JsonValue representing audion analysis and formats it into AnalysisTrack struct
+/// 
+/// # Arguments
+/// * `raw_object` - JsonValue object representing audio analysis for a track from API request
+///
+pub fn format_analysis_track(raw_object: &JsonValue) -> Result<AnalysisTrack, SpotifyError> {
+    // Check for errors before formatting. An error has occured on status code = 1
+    if let Some(1) = raw_object["meta"]["status_code"].as_i32() {
+        return Err(SpotifyError::FailedRequest(raw_object["meta"]["detailed_status"].to_string()))
+    }
+
+    let analyzer_version = raw_object["meta"]["analyzer_version"].to_string();
+
+    let platform = raw_object["meta"]["platform"].to_string();
+
+    let detailed_status = raw_object["meta"]["detailed_status"].to_string();
+
+    let timestamp = match raw_object["meta"]["timestamp"].as_i64() {
+        Some(timestamp) => timestamp,
+        None => 0, // default to 0
+    };
+
+    let analysis_time = match raw_object["meta"]["analysis_time"].as_f64() {
+        Some(analysis_time) => analysis_time,
+        None => 0.0, // default to 0.0
+    };
+
+    let input_process = raw_object["meta"]["input_process"].to_string();
+
+    let num_samples = match raw_object["track"]["num_samples"].as_i32() {
+        Some(num_samples) => num_samples,
+        None => 0, // default to 0
+    };
+
+    let duration = match raw_object["track"]["duration"].as_f64() {
+        Some(duration) => duration,
+        None => 0.0, // default to 0.0
+    };
+
+    let analysis_sample_rate = match raw_object["track"]["analysis_sample_rate"].as_i32() {
+        Some(analysis_sample_rate) => analysis_sample_rate,
+        None => 0, // default to 0
+    };
+    
+    let analysis_channels = match raw_object["track"]["analysis_channels"].as_i32() {
+        Some(analysis_channels) => analysis_channels,
+        None => 0, // default to 0
+    };
+
+    let end_fade_in = match raw_object["track"]["end_of_fade_in"].as_f64() {
+        Some(end_of_fade_in) => end_of_fade_in,
+        None => 0.0, // default to 0.0
+    };
+
+    let start_fade_out = match raw_object["track"]["start_of_fade_out"].as_f64() {
+        Some(start_of_fade_out) => start_of_fade_out,
+        None => 0.0, // default to 0.0
+    };
+
+    let loudness = match raw_object["track"]["loudness"].as_f64() {
+        Some(loudness) => loudness,
+        None => 0.0, // default to 0.0
+    };
+
+    let tempo = match raw_object["track"]["tempo"].as_f64() {
+        Some(tempo) => tempo,
+        None => 0.0, // default to 0.0
+    };
+
+    let tempo_confidence = match raw_object["track"]["tempo_confidence"].as_f64() {
+        Some(tempo_confidence) => tempo_confidence,
+        None => 0.0, // default to 0.0
+    };
+
+    let time_signature = match raw_object["track"]["time_signature"].as_i32() {
+        Some(time_signature) => time_signature,
+        None => 0, // default to 0
+    };
+
+    let time_signature_confidence = match raw_object["track"]["time_signature_confidence"].as_f64() {
+        Some(time_signature_confidence) => time_signature_confidence,
+        None => 0.0, // default to 0.0
+    };
+
+    let key = match raw_object["track"]["key"].as_i32() {
+        Some(key) => key,
+        None => 0, // default to 0
+    };
+
+    let key_confidence = match raw_object["track"]["key_confidence"].as_f64() {
+        Some(key_confidence) => key_confidence,
+        None => 0.0, // default to 0.0
+    };
+
+    let mode = match raw_object["track"]["mode"].as_i32() {
+        Some(mode) => mode,
+        None => 0, // default to 0
+    };
+
+    let mode_confidence = match raw_object["track"]["mode_confidence"].as_f64() {
+        Some(mode_confidence) => mode_confidence,
+        None => 0.0, // default to 0.0
+    };
+
+    let code_string = raw_object["track"]["codestring"].to_string();
+
+    let code_version = raw_object["track"]["code_version"].to_string();
+
+    let echoprint_string = raw_object["track"]["echoprintstring"].to_string();
+
+    let echoprint_version = raw_object["track"]["echoprint_version"].to_string();
+
+    let synch_string = raw_object["track"]["synchstring"].to_string();
+
+    let synch_version = raw_object["track"]["synch_version"].to_string();
+
+    let rhythm_string = raw_object["track"]["rhythmstring"].to_string();
+
+    let rhythm_version = raw_object["track"]["rhythm_version"].to_string();
+
+    let mut bars: Vec<Bar> = Vec::new(); // empty vector for Bar objects
+
+    for bar in raw_object["bars"].members() { // loop through array and format Bar objects
+        let start = match bar["start"].as_f64() {
+            Some(start) => start,
+            None => 0.0, // default to 0.0
+        };
+
+        let duration = match bar["duration"].as_f64() {
+            Some(duration) => duration,
+            None => 0.0, // default to 0.0
+        };
+
+        let confidence = match bar["confidence"].as_f64() {
+            Some(confidence) => confidence,
+            None => 0.0, // default to 0.0
+        };
+
+        bars.push(Bar {
+            start,
+            duration,
+            confidence,
+        });
+    }
+
+    let mut beats: Vec<Beat> = Vec::new(); // empty vector for Beat objects
+
+    for beat in raw_object["beats"].members() { // loop through array and format Beat objects
+        let start = match beat["start"].as_f64() {
+            Some(start) => start,
+            None => 0.0, // default to 0.0
+        };
+
+        let duration = match beat["duration"].as_f64() {
+            Some(duration) => duration,
+            None => 0.0, // default to 0.0
+        };
+
+        let confidence = match beat["confidence"].as_f64() {
+            Some(confidence) => confidence,
+            None => 0.0, // default to 0.0
+        };
+
+        beats.push(Beat {
+            start,
+            duration,
+            confidence,
+        });
+    }
+
+    let mut sections: Vec<Section> = Vec::new(); // empty vector for Section objects
+
+    for section in raw_object["sections"].members() { // loop through array and format Section objects
+        let start = match section["start"].as_f64() {
+            Some(start) => start,
+            None => 0.0, // default to 0.0
+        };
+
+        let duration = match section["duration"].as_f64() {
+            Some(duration) => duration,
+            None => 0.0, // default to 0.0
+        };
+
+        let confidence = match section["confidence"].as_f64() {
+            Some(confidence) => confidence,
+            None => 0.0, // default to 0.0
+        };
+
+        let loudness = match section["loudness"].as_f64() {
+            Some(loudness) => loudness,
+            None => 0.0, // default to 0.0
+        };
+
+        let tempo = match section["tempo"].as_f64() {
+            Some(tempo) => tempo,
+            None => 0.0, // default to 0.0
+        };
+
+        let tempo_confidence = match section["tempo_confidence"].as_f64() {
+            Some(tempo_confidence) => tempo_confidence,
+            None => 0.0, // default to 0.0
+        };
+
+        let key = match section["key"].as_i32() {
+            Some(key) => key,
+            None => 0, // default to 0
+        };
+
+        let key_confidence = match section["key_confidence"].as_f64() {
+            Some(key_confidence) => key_confidence,
+            None => 0.0, // default to 0.0
+        };
+
+        let mode = match section["mode"].as_i32() {
+            Some(mode) => mode,
+            None => 0, // default to 0
+        };
+
+        let mode_confidence = match section["mode_confidence"].as_f64() {
+            Some(mode_confidence) => mode_confidence,
+            None => 0.0, // default to 0.0
+        };
+
+        let time_signature = match section["time_signature"].as_i32() {
+            Some(time_signature) => time_signature,
+            None => 0, // default to 0
+        };
+
+        let time_signature_confidence = match section["time_signature_confidence"].as_f64() {
+            Some(time_signature_confidence) => time_signature_confidence,
+            None => 0.0, // default to 0.0
+        };
+
+        sections.push(Section {
+            start,
+            duration,
+            confidence,
+            loudness,
+            tempo,
+            tempo_confidence,
+            key,
+            key_confidence,
+            mode,
+            mode_confidence,
+            time_signature,
+            time_signature_confidence,
+        });
+    }
+
+    let mut segments: Vec<Segment> = Vec::new(); // empty vector for Segment objects
+
+    for segment in raw_object["segments"].members() { // loop through array and format Segment objects
+        let start = match segment["start"].as_f64() {
+            Some(start) => start,
+            None => 0.0, // default to 0.0
+        };
+
+        let duration = match segment["duration"].as_f64() {
+            Some(duration) => duration,
+            None => 0.0, // default to 0.0
+        };
+
+        let confidence = match segment["confidence"].as_f64() {
+            Some(confidence) => confidence,
+            None => 0.0, // default to 0.0
+        };
+
+        let loudness_start = match segment["loudness_start"].as_f64() {
+            Some(loudness_start) => loudness_start,
+            None => 0.0, // default to 0.0
+        };
+
+        let loudness_max_time = match segment["loudness_max_time"].as_f64() {
+            Some(loudness_max_time) => loudness_max_time,
+            None => 0.0, // default to 0.0
+        };
+
+        let loudness_max = match segment["loudness_max"].as_f64() {
+            Some(loudness_max) => loudness_max,
+            None => 0.0, // default to 0.0
+        };
+
+        let loudness_end = match segment["loudness_end"].as_f64() {
+            Some(loudness_end) => loudness_end,
+            None => 0.0, // default to 0.0
+        };
+
+        let pitches: Vec<f64> = segment["pitches"].members().map(|p| p.as_f64().unwrap()).collect();
+
+        let timbre: Vec<f64> = segment["timbre"].members().map(|t| t.as_f64().unwrap()).collect();
+
+        segments.push(Segment {
+            start,
+            duration,
+            confidence,
+            loudness_start,
+            loudness_max_time,
+            loudness_max,
+            loudness_end,
+            pitches,
+            timbre,
+        });
+    }
+
+    let mut tatums: Vec<Tatum> = Vec::new(); // empty vector for Tatum objects
+
+    for tatum in raw_object["tatums"].members() { // loop through array and format Tatum objects
+        let start = match tatum["start"].as_f64() {
+            Some(start) => start,
+            None => 0.0, // default to 0.0
+        };
+
+        let duration = match tatum["duration"].as_f64() {
+            Some(duration) => duration,
+            None => 0.0, // default to 0.0
+        };
+
+        let confidence = match tatum["confidence"].as_f64() {
+            Some(confidence) => confidence,
+            None => 0.0, // default to 0.0
+        };
+
+        tatums.push(Tatum {
+            start,
+            duration,
+            confidence,
+        });
+    }
+
+    Ok(AnalysisTrack {
+        analyzer_version,
+        platform,
+        detailed_status,
+        timestamp,
+        analysis_time,
+        input_process,
+        num_samples,
+        duration,
+        analysis_sample_rate,
+        analysis_channels,
+        end_fade_in,
+        start_fade_out,
+        loudness,
+        tempo,
+        tempo_confidence,
+        time_signature,
+        time_signature_confidence,
+        key,
+        key_confidence,
+        mode,
+        mode_confidence,
+        code_string,
+        code_version,
+        echoprint_string,
+        echoprint_version,
+        synch_string,
+        synch_version,
+        rhythm_string,
+        rhythm_version,
+        bars,
+        beats,
+        sections,
+        segments,
+        tatums,
+    })
+
 }

@@ -294,11 +294,189 @@ impl fmt::Debug for FeatureTrack {
     }
 }
 
+/// Struct representing bars in a track for audio analysis
+/// [Bar](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-analysis): A bar (or measure) is a segment of time defined as a given number of beats.
+pub struct Bar {
+    pub start: f64, // The starting point (in seconds) of the bar
+    pub duration: f64, // The duration (in seconds) of the bar
+    pub confidence: f64, // The confidence, from 0.0 to 1.0, of the reliability of the bar
+}
+
+/// Implements Debug trait for Bar struct
+impl fmt::Debug for Bar {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Bar")
+            .field("start", &self.start)
+            .field("duration", &self.duration)
+            .finish()
+    }
+}
+
+/// Struct representing beats in a track for audio analysis
+/// [Beat](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-analysis): A beat is the basic time unit of a piece of music; for example, each tick of a metronome. Beats are typically multiples of tatums. 
+pub struct Beat {
+    pub start: f64, // The starting point (in seconds) of the beat
+    pub duration: f64, // The duration (in seconds) of the beat
+    pub confidence: f64, // The confidence, from 0.0 to 1.0, of the reliability of the beat
+}
+
+/// Implements Debug trait for Beat struct
+impl fmt::Debug for Beat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Beat")
+            .field("start", &self.start)
+            .field("duration", &self.duration)
+            .finish()
+    }
+}
+
+/// Struct representing sections in a track for audio analysis
+/// [Section](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-analysis): Sections are defined by large variations in rhythm or timbre, e.g. chorus, verse, bridge, guitar solo, etc. Each section contains its own descriptions of tempo, key, mode, time_signature, and loudness.
+pub struct Section {
+    pub start: f64, // The starting point (in seconds) of the section
+    pub duration: f64, // The duration (in seconds) of the section
+    pub confidence: f64, // The confidence, from 0.0 to 1.0, of the reliability of the section
+    pub loudness: f64, // The overall loudness of the section in decibels (dB). Loudness values are useful for comparing relative loudness of sections within tracks.
+    pub tempo: f64, // The overall estimated tempo of the section in beats per minute (BPM). 
+    pub tempo_confidence: f64, // The confidence, from 0.0 to 1.0, of the reliability of the tempo
+    pub key: i32, // The estimated overall key of the section. The values in this field ranging from 0 to 11 mapping to pitches using standard Pitch Class notation (E.g. 0 = C, 1 = C♯/D♭, 2 = D, and so on).
+    pub key_confidence: f64, // The confidence, from 0.0 to 1.0, of the reliability of the key
+    pub mode: i32, // The estimated overall modality (major or minor) of the section. The major key (e.g. C major) is represented by 1 and the minor key (e.g. A minor) is 0.
+    pub mode_confidence: f64, // The confidence, from 0.0 to 1.0, of the reliability of the mode
+    pub time_signature: i32, // An estimated overall time signature of the section. The time signature (meter) is a notational convention to specify how many beats are in each bar (or measure).
+    pub time_signature_confidence: f64, // The confidence, from 0.0 to 1.0, of the reliability of the time_signature
+}
+
+/// Implements Debug trait for Section struct
+impl fmt::Debug for Section {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Section")
+            .field("start", &self.start)
+            .field("duration", &self.duration)
+            .field("loudness", &self.loudness)
+            .field("tempo", &self.tempo)
+            .field("key", &self.key)
+            .field("mode", &self.mode)
+            .field("time_signature", &self.time_signature)
+            .finish()
+    }
+}
+
+/// Struct representing segments in a track for audio analysis
+/// [Segment](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-analysis): Each segment contains a roughly consistent sound throughout its duration.
+pub struct Segment {
+    pub start: f64, // The starting point (in seconds) of the segment
+    pub duration: f64, // The duration (in seconds) of the segment
+    pub confidence: f64, // The confidence, from 0.0 to 1.0, of the reliability of the segment
+    pub loudness_start: f64, // The onset loudness of the segment in decibels (dB). Can be used with ```loudness_max``` and ```loudness_max_time``` to describe the "attack" of the track 
+    pub loudness_max: f64, // The peak loudness of the segment in decibels (dB). Can be used with ```loudness_start``` and ```loudness_max_time``` to describe the "attack" of the track 
+    pub loudness_max_time: f64, // The segment-relative offset of the segment peak loudness in seconds. Can be used with ```loudness_start``` and ```loudness_max``` to describe the "attack" of the track 
+    pub loudness_end: f64, /// The offset loudness of the segment in decibels (dB). This value should be equal to ```loudness_start``` of the next segment 
+    pub pitches: Vec<f64>, // A normalized vector of 12 pitch values (values ranging from 0 to 1). These describe the relative dominance of every pitch on the chromatic scale. Noisy sounds are most demonstrated by many values near 1, whereas pure tones will have one value at 1 and the others near 0.
+    pub timbre: Vec<f64>, // A 12-vector of unbounded values where each value represents coefficient values for 12 basis functions that can describe the timbre of a segment. Each basis function describes a certain quality of the sound, together they represent "sound color" and can distinguish between instruments.
+}
+
+/// Implements Debug trait for Segment struct
+impl fmt::Debug for Segment {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Segment")
+            .field("start", &self.start)
+            .field("duration", &self.duration)
+            .field("loudness_start", &self.loudness_start)
+            .field("loudness_max", &self.loudness_max)
+            .field("loudness_max_time", &self.loudness_max_time)
+            .field("loudness_end", &self.loudness_end)
+            .field("pitches", &self.pitches)
+            .field("timbre", &self.timbre)
+            .finish()
+    }
+}
+
+/// Struct representing tatums in a track for audio analysis
+/// [Tatum](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-analysis): A tatum represents the lowest regular pulse train that a listener intuitively infers from the timing of percieved musical events (segments). 
+pub struct Tatum {
+    pub start: f64, // The starting point (in seconds) of the tatum
+    pub duration: f64, // The duration (in seconds) of the tatum
+    pub confidence: f64, // The confidence, from 0.0 to 1.0, of the reliability of the tatum
+}
+
+/// Implements Debug trait for Tatum struct
+impl fmt::Debug for Tatum {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Tatum")
+            .field("start", &self.start)
+            .field("duration", &self.duration)
+            .finish()
+    }
+}
+
+/// Struct to represent a Track's audio analysis 
+pub struct AnalysisTrack {
+    pub analyzer_version: String, // The version of the audio analysis engine
+    pub platform: String, // The platform used to read the track's audio data 
+    pub detailed_status: String, // A detailed status code for the track, may contain information as to why fields are missing 
+    pub timestamp: i64, // The Unix timestamp as to when this track was analyzed 
+    pub analysis_time: f64, // The length of time in seconds it took to analyze the track
+    pub input_process: String, // The process used to read the track's audio data
+
+    pub num_samples: i32, // The number of samples in the track
+    pub duration: f64, // The length of the track in seconds
+    pub analysis_sample_rate: i32, // The sample rate of the track
+    pub analysis_channels: i32, // The number of channels in the track used for analysis 
+    pub end_fade_in: f64, // The time, in seconds, the fade-in period of the song begins. If the track has no fade-in, this value is 0.
+    pub start_fade_out: f64, // The time, in seconds, the fade-out period of the song begins. If the track has no fade-out, this value is the max song length.
+    pub loudness: f64, // The overall loudness of the track in decibels (dB). Averaged values across the entire track, useful for comparing relative loudness of different tracks 
+    pub tempo: f64, // average tempo of the track in beats per minute 
+    pub tempo_confidence: f64, // value from 0 to 1 representing how reliable the tempo value is.
+    pub time_signature: i32, // The estimated time signature of the track where values take on 3 to 7 and represent 3/4 and 7/4 time signatures respectively.
+    pub time_signature_confidence: f64, // value from 0 to 1 representing how reliable the time signature value is.
+    pub key: i32, // The estimated overall key of the track. Integers map to pitches using standard Pitch Class notation. E.g. 0 = C, 1 = C♯/D♭, 2 = D, and so on. Between 1 and 11 and set to -1 if no key is detected
+    pub key_confidence: f64, // value from 0 to 1 representing how reliable the key value is.
+    pub mode: i32, // The estimated overall modality of the track. 0 = minor, 1 = major.
+    pub mode_confidence: f64, // value from 0 to 1 representing how reliable the mode value is.
+    pub code_string: String, // An Echo Nest Musical Fingerprint codestring for the track
+    pub code_version: String, // The version of the Echo Nest Musical Fingerprint codestring
+    pub echoprint_string: String, // An echoprintstring for the track
+    pub echoprint_version: String, // The version of echoprintstring
+    pub synch_string: String, //  synchstring for the track
+    pub synch_version: String, // The version of the =ynchstring
+    pub rhythm_string: String, // Rhythmstring for the track
+    pub rhythm_version: String, // The version of the rhythmstring
+
+    pub bars: Vec<Bar>, // A list of bars in the track
+    pub beats: Vec<Beat>, // A list of beats in the track
+    pub sections: Vec<Section>, // A list of sections in the track
+    pub segments: Vec<Segment>, // A list of segments in the track
+    pub tatums: Vec<Tatum>, // A list of tatums in the track
+}
+
+/// Implements the Debug trait for AnalysisTrack struct
+impl fmt::Debug for AnalysisTrack {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AnalysisTrack")
+            .field("duration", &self.duration)
+            .field("end_of_fade_in", &self.end_fade_in)
+            .field("start_fade_out", &self.start_fade_out)
+            .field("loudness", &self.loudness)
+            .field("tempo", &self.tempo)
+            .field("time_signature", &self.time_signature)
+            .field("key", &self.key)
+            .field("mode", &self.mode)
+            .field("bars", &self.bars)
+            .field("beats", &self.beats)
+            .field("sections", &self.sections)
+            .field("segments", &self.segments)
+            .field("tatums", &self.tatums)
+            .finish()
+    }
+}
+
 /// Error object for Spotify struct
 pub enum SpotifyError {
     AccessTokenExpired,
     RequestError(String),
     InsufficientScope(String),
+    FailedRequest(String),
     // Unknown,
 }
 
@@ -309,6 +487,7 @@ impl fmt::Display for SpotifyError {
             SpotifyError::AccessTokenExpired => write!(f, "Access token expired, please refresh"),
             SpotifyError::RequestError(e) => write!(f, "Request error: {}", e),
             SpotifyError::InsufficientScope(scopes) => write!(f, "Insufficient scope. Need: {:?}", scopes),
+            SpotifyError::FailedRequest(e) => write!(f, "Failed request: {}", e),
             // SpotifyError::Unknown => write!(f, "Unknown error"),
         }
     }
@@ -319,6 +498,7 @@ impl fmt::Debug for SpotifyError {
             SpotifyError::AccessTokenExpired => write!(f, "Access token expired, please refresh"),
             SpotifyError::RequestError(e) => write!(f, "Request error: {}", e),
             SpotifyError::InsufficientScope(scopes) => write!(f, "Insufficient scope. Need: {:?}", scopes),
+            SpotifyError::FailedRequest(e) => write!(f, "Failed request: {}", e),
             // SpotifyError::Unknown => write!(f, "Unknown error"),
         }
     }

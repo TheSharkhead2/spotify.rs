@@ -1,6 +1,6 @@
 use crate::srequest::{spotify_request, RequestMethod};
-use crate::spotify::{Spotify, SpotifyError, Track, DatedTracks, FeatureTrack};
-use crate::object_formatting::{format_track, format_dated_tracks, format_feature_track};
+use crate::spotify::{Spotify, SpotifyError, Track, DatedTracks, FeatureTrack, AnalysisTrack};
+use crate::object_formatting::{format_track, format_dated_tracks, format_feature_track, format_analysis_track};
 use json::JsonValue::{Array, Boolean};
 
 impl Spotify {
@@ -178,6 +178,27 @@ impl Spotify {
                     Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
                 }
             }, 
+            Err(e) => return Err(e), // On error with access token, return error
+        }
+    }
+
+    /// Gets audio analysis for specified track: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-analysis
+    /// Required scope: none
+    pub fn get_track_audio_analysis(&self, track_id: &str) -> Result<AnalysisTrack, SpotifyError> {
+        let url_extension = format!("audio-analysis/{}", track_id); // base url
+
+        match self.access_token() { // get access token
+            Ok(access_token) => {
+                match spotify_request(&access_token, &url_extension, RequestMethod::Get) { // make request
+                    Ok(response) => {
+                        return match format_analysis_track(&response) { // format and return result
+                            Ok(track) => Ok(track),
+                            Err(e) => Err(e),
+                        }
+                    },
+                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+                }
+            },
             Err(e) => return Err(e), // On error with access token, return error
         }
     }
