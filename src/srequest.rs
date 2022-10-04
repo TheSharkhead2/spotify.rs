@@ -29,7 +29,7 @@ impl Spotify {
         headers.insert("Authorization", format!("Bearer {}", access_token).parse().unwrap()); // insert authorization header
 
         let request_url = format!("https://api.spotify.com/v1/{}", url_extension); // create request url
-        
+
         // Send appropriate request for request method
         let response = match request_method {
             RequestMethod::Get => {match client.get(&request_url).headers(headers).send() {
