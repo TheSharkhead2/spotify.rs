@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use json::{JsonValue::{self, Array, Null}};
 
-use crate::spotify::{SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, Tracks, Albums, DatedAlbum, DatedAlbums, DatedTrack, DatedTracks, FeatureTrack, AnalysisTrack, Bar, Beat, Section, Segment, Tatum, SpotifyError};
+use crate::spotify::{SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, Tracks, Albums, DatedAlbum, DatedAlbums, DatedTrack, DatedTracks, FeatureTrack, AnalysisTrack, Bar, Beat, Section, Segment, Tatum, SpotifyError, User};
 
 impl SpotifyImage {
     /// Take JsonValue object representing image from API request and turn into 
@@ -16,8 +16,14 @@ impl SpotifyImage {
     fn new(image: &JsonValue) -> SpotifyImage {
         SpotifyImage {
             url: image["url"].to_string(),
-            height: image["height"].as_i32().unwrap(),
-            width: image["width"].as_i32().unwrap(),
+            height: match image["height"].as_i32() {
+                Some(height) => height,
+                None => 0, // default to 0
+            },
+            width: match image["width"].as_i32() {
+                Some(width) => width,
+                None => 0, // default to 0
+            },
         }
     }
 }
@@ -1020,4 +1026,71 @@ pub fn new(raw_object: &JsonValue) -> Result<AnalysisTrack, SpotifyError> {
         tatums,
     })
 }
+}
+
+impl User {
+    /// Takes JsonValue representing a User and returns the User Struct 
+    /// 
+    /// # Arguments
+    /// * `raw_object` - JsonValue representing a User
+    /// 
+    pub fn new(raw_object: &JsonValue) -> User {
+        let country = match raw_object["country"].as_str() {
+            Some(country) => country,
+            None => "", // default to empty string
+        };
+
+        let display_name = match raw_object["display_name"].as_str() {
+            Some("null") => None, // default to None 
+            Some(display_name) => Some(display_name.to_string()),
+            None => None, // default to None
+        };
+
+        let spotify_url = match raw_object["external_urls"]["spotify"].as_str() {
+            Some(spotify_url) => spotify_url,
+            None => "", // default to empty string
+        };
+
+        let total_followers = match raw_object["followers"]["total"].as_i32() {
+            Some(followers) => followers,
+            None => 0, // default to 0
+        };
+
+        let href = match raw_object["href"].as_str() {
+            Some(href) => href,
+            None => "", // default to empty string
+        };
+
+        let id = match raw_object["id"].as_str() {
+            Some(id) => id,
+            None => "", // default to empty string
+        };
+
+        let images = match &raw_object["images"] {
+            Array(images) => {images.iter().map(|image| SpotifyImage::new(image)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
+            _ => vec![], // default to empty vec 
+        };
+
+        let product = match raw_object["product"].as_str() {
+            Some(product) => product,
+            None => "", // default to empty string
+        };
+
+        let uri = match raw_object["uri"].as_str() {
+            Some(uri) => uri,
+            None => "", // default to empty string
+        };
+
+        User {
+            country: country.to_string(),
+            display_name,
+            spotify_url: spotify_url.to_string(),
+            total_followers,
+            href: href.to_string(),
+            id: id.to_string(),
+            images,
+            product: product.to_string(),
+            uri: uri.to_string(),
+        }
+    }
 }

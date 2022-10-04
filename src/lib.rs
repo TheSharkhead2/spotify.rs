@@ -5,6 +5,7 @@ mod object_formatting;
 mod albums;
 mod artists;
 mod tracks;
+mod users;
 
 pub use spotify::Spotify; // re-export Spotify struct
 
