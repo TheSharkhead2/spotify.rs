@@ -4,7 +4,7 @@ use spotifyrs::{Spotify, TimeRange};
 fn general_testing() {
     let mut spotify = Spotify::authenticate(
         String::from("8888"),
-        String::from("user-follow-read"),
+        String::from("user-follow-read user-follow-modify"),
     );
     
     // println!("{:?}", spotify.get_album("1xJ7jIK1tT0aVoJw1fPE6r", None));
@@ -36,6 +36,8 @@ fn general_testing() {
     // println!("{:?}", spotify.get_users_profile("kcm4s9xdvua5ft5glrsxii3ki"));
     // println!("{:?}", spotify.follow_playlist("4yNivColKnMGbTe9P3lRjR", Some(true)));
     // println!("{:?}", spotify.unfollow_playlist("4yNivColKnMGbTe9P3lRjR"));
-    println!("{:?}", spotify.get_followed_artists(None));
+    // println!("{:?}", spotify.get_followed_artists(None));
+    println!("{:?}", spotify.follow_artists(vec!["6eUKZXaKkcviH0Ku9w2n3V", "59sBwR0jPSTrbMtuTkRPN5"]));
+    println!("{:?}", spotify.follow_users(vec!["xk6cplfegqhw6rwezfuvr1198"]));
 }
 

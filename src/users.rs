@@ -180,4 +180,46 @@ impl Spotify {
 
         return Ok(Artists::new(&response["artists"]))
     }
+
+    /// Follows specified artists. A derivative of: <https://developer.spotify.com/documentation/web-api/reference/#/operations/follow-artists-users>
+    /// 
+    /// Requires scope: user-follow-modify
+    /// 
+    /// # Arguments
+    /// * `artist_ids` - A vector of the artist Spotify IDs to follow.
+    /// 
+    pub fn follow_artists(&mut self, artist_ids: Vec<&str>) -> Result<(), SpotifyError> {
+        let url_extension = format!("me/following?type=artist&ids={}", artist_ids.join(","));
+
+        self.check_scope("user-follow-modify")?;
+
+        // create HashMap for body
+        let mut body: HashMap<String, Vec<&str>> = HashMap::new();
+        body.insert("ids".to_string(), artist_ids);
+
+        self.spotify_request(&url_extension, RequestMethod::Put(body))?;
+
+        return Ok(())
+    } 
+
+    /// Follows specified users. A derivative of: <https://developer.spotify.com/documentation/web-api/reference/#/operations/follow-artists-users>
+    /// 
+    /// Requires scope: user-follow-modify
+    /// 
+    /// # Arguments
+    /// * `user_ids` - A vector of the user Spotify IDs to follow.
+    /// 
+    pub fn follow_users(&mut self, user_ids: Vec<&str>) -> Result<(), SpotifyError> {
+        let url_extension = format!("me/following?type=user&ids={}", user_ids.join(","));
+
+        self.check_scope("user-follow-modify")?;
+
+        // create HashMap for body
+        let mut body: HashMap<String, Vec<&str>> = HashMap::new();
+        body.insert("ids".to_string(), user_ids);
+
+        self.spotify_request(&url_extension, RequestMethod::Put(body))?;
+
+        return Ok(())
+    }
 }
