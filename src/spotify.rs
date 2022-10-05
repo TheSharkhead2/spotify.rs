@@ -541,6 +541,9 @@ pub enum SpotifyError {
     RequestError(String),
     InsufficientScope(String),
     FailedRequest(String),
+    BadOrExpiredToken(String), 
+    RateLimitExceeded(String),
+    BadRequest(String),
     // Unknown,
 }
 
@@ -551,6 +554,9 @@ impl fmt::Debug for SpotifyError {
             SpotifyError::RequestError(e) => write!(f, "Request error: {}", e),
             SpotifyError::InsufficientScope(scopes) => write!(f, "Insufficient scope. Need: {:?}", scopes),
             SpotifyError::FailedRequest(e) => write!(f, "Failed request: {}", e),
+            SpotifyError::BadOrExpiredToken(e) => write!(f, "Bad or expired token: {}", e),
+            SpotifyError::RateLimitExceeded(e) => write!(f, "Rate limited: {}", e),
+            SpotifyError::BadRequest(e) => write!(f, "Bad request: {}", e),
             // SpotifyError::Unknown => write!(f, "Unknown error"),
         }
     }

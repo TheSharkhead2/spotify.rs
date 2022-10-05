@@ -51,17 +51,23 @@ impl Spotify {
                 Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
             }},
         };
-        // if response is successful, read response 
-        if response.status().is_success() {
-            let response_body = json::parse(&response.text().unwrap());
-        
-            match response_body {
-                Ok(response_body) => return Ok(response_body),
-                Err(_) => Ok(Null), // on error just return nothing (temp fix probably)
-            }
 
-        } else {
-            return Err(SpotifyError::RequestError(format!("{}",&response.status()))) // should probably do some proper error handling based on response code, for now just return general request error
+        let response_body = json::parse(&response.text().unwrap()); // parse response body
+        match response_body {
+            Ok(response_body) => {
+                if response_body["error"].is_null() {
+                    Ok(response_body)
+                } else {
+                    match response_body["error"]["status"].as_i32() {
+                        Some(401) => Err(SpotifyError::BadOrExpiredToken(response_body["error"]["message"].to_string())),
+                        Some(403) => Err(SpotifyError::BadRequest(response_body["error"]["message"].to_string())),
+                        Some(429) => Err(SpotifyError::RateLimitExceeded(response_body["error"]["message"].to_string())),
+                        _ => Err(SpotifyError::RequestError(format!("Error code: {}, message: {}", response_body["error"]["status"], response_body["error"]["message"]))),
+                    }
+                    
+                }
+            },
+            Err(_) => Ok(Null), // on json parsing error just return nothing (temp fix for a potential non-problem)
         }
     }
 }
