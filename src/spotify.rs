@@ -496,14 +496,14 @@ impl fmt::Debug for AnalysisTrack {
 
 /// Struct to represent User 
 pub struct User {
-    pub country: String, // The country of the user, ISO 3166-1 alpha-2 country code.
+    pub country: Option<String>, // The country of the user, ISO 3166-1 alpha-2 country code.
     pub display_name: Option<String>, // The name displayed on the user's profile. 
     pub spotify_url: String, // Spotify url for the user
     pub total_followers: i32, // Total number of followers
     pub href: String, // A link to the Web API endpoint for this user
     pub id: String, // The Spotify user ID for the user
     pub images: Vec<SpotifyImage>, // The user's profile image
-    pub product: String, // The user's Spotify subscription level: "premium", "free", etc. (The subscription level "open" can be considered the same as "free".)
+    pub product: Option<String>, // The user's Spotify subscription level: "premium", "free", etc. (The subscription level "open" can be considered the same as "free".)
     pub uri: String, // The Spotify URI for the user
 }
 

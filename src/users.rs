@@ -84,4 +84,14 @@ impl Spotify {
 
         return Ok(Tracks::new(&response))
     }
+
+    /// Gets the public profile for a user: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-users-profile>
+    /// Requires scope: none 
+    pub fn get_users_profile(&mut self, user_id: &str) -> Result<User, SpotifyError> {
+        let url_extension = format!("users/{}", user_id);
+
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?;
+
+        return Ok(User::new(&response))
+    }
 }

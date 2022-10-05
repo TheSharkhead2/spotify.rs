@@ -30,8 +30,9 @@ fn general_testing() {
     // println!("{:?}", spotify.get_track_audio_features("1Hg3GtuEEpPT8NU49xC71Z"));
     // println!("{:?}", spotify.get_track_audio_analysis("1Hg3GtuEEpPT8NU49xC71Z"));
     // println!("{:?}", spotify.get_recommendations(None, None, Some(vec!["1Hg3GtuEEpPT8NU49xC71Z"]), Some(vec![("target_danceability", "0.8")])));
-    // println!("{:?}", spotify.get_current_users_profile());
+    println!("{:?}", spotify.get_current_users_profile());
     // println!("{:?}", spotify.get_users_top_artists(Some(TimeRange::LongTerm), None, None));
-    println!("{:?}", spotify.get_users_top_tracks(Some(TimeRange::ShortTerm), None, None))
+    // println!("{:?}", spotify.get_users_top_tracks(Some(TimeRange::ShortTerm), None, None))
+    println!("{:?}", spotify.get_users_profile("kcm4s9xdvua5ft5glrsxii3ki"));
 }
 

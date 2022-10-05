@@ -1087,8 +1087,8 @@ impl User {
     /// 
     pub fn new(raw_object: &JsonValue) -> User {
         let country = match raw_object["country"].as_str() {
-            Some(country) => country,
-            None => "", // default to empty string
+            Some(country) => Some(country.to_string()),
+            None => None, // default to empty string
         };
 
         let display_name = match raw_object["display_name"].as_str() {
@@ -1123,8 +1123,8 @@ impl User {
         };
 
         let product = match raw_object["product"].as_str() {
-            Some(product) => product,
-            None => "", // default to empty string
+            Some(product) => Some(product.to_string()),
+            None => None, // default to empty string
         };
 
         let uri = match raw_object["uri"].as_str() {
@@ -1133,14 +1133,14 @@ impl User {
         };
 
         User {
-            country: country.to_string(),
+            country,
             display_name,
             spotify_url: spotify_url.to_string(),
             total_followers,
             href: href.to_string(),
             id: id.to_string(),
             images,
-            product: product.to_string(),
+            product,
             uri: uri.to_string(),
         }
     }
