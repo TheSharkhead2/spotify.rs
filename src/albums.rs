@@ -4,8 +4,14 @@ use json::JsonValue::Boolean;
 use std::collections::HashMap;
 
 impl Spotify {
-    /// Get an album: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-album
+    /// Get an album: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-album>
+    /// 
     /// Required scope: none
+    /// 
+    /// # Arguments
+    /// * `album_id` - The Spotify ID of the album.
+    /// * `market` - An ISO 3166-1 alpha-2 country code. 
+    /// 
     pub fn get_album(&mut self, album_id: &str, market: Option<&str>) -> Result<Album, SpotifyError> {
         let mut url_extension = format!("albums/{}", album_id); // base url 
 
@@ -19,8 +25,14 @@ impl Spotify {
         return Ok(Album::new(&response)); // format and return result
     }
 
-    /// Get several albums: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-multiple-albums
+    /// Get several albums: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-multiple-albums>
+    /// 
     /// Required scope: none
+    /// 
+    /// # Arguments
+    /// * `album_ids` - A vector of Spotify IDs for the albums.
+    /// * `market` - An ISO 3166-1 alpha-2 country code.
+    /// 
     pub fn get_albums(&mut self, album_ids: Vec<&str>, market: Option<&str>) -> Result<Vec<Album>, SpotifyError> {
         let mut url_extension = format!("albums/?ids={}", album_ids.join(",")); // base url 
 
@@ -39,8 +51,16 @@ impl Spotify {
 
     }
 
-    /// Get an album's tracks: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-albums-tracks
+    /// Get an album's tracks: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-albums-tracks>
+    /// 
     /// Required scope: none
+    /// 
+    /// # Arguments
+    /// * `album_id` - The Spotify ID of the album.
+    /// * `market` - An ISO 3166-1 alpha-2 country code.
+    /// * `limit` - The maximum number of tracks to return. Default: 20. Minimum: 1. Maximum: 50.
+    /// * `offset` - The index of the first track to return. Default: 0 (the first object). Use with limit to get the next set of tracks.
+    /// 
     pub fn get_album_tracks(&mut self, album_id: &str, market: Option<&str>, limit: Option<u32>, offset: Option<u32>) -> Result<Tracks, SpotifyError> {
         let mut url_extension = format!("albums/{}/tracks", album_id); // base url 
 
@@ -69,8 +89,14 @@ impl Spotify {
         return Ok(Tracks::new(&response)); // format and return result
     }
 
-    /// Get albums saved in user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-users-saved-albums
+    /// Get albums saved in user's library: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-users-saved-albums>
+    /// 
     /// Required scope: user-library-read
+    /// 
+    /// # Arguments
+    /// * `limit` - The maximum number of albums to return. Default: 20. Minimum: 1. Maximum: 50.
+    /// * `offset` - The index of the first album to return. Default: 0 (the first object). Use with limit to get the next set of albums.
+    /// 
     pub fn get_saved_albums(&mut self, limit: Option<u32>, market: Option<&str>, offset: Option<u32>) -> Result<DatedAlbums, SpotifyError> {
         let mut url_extension = String::from("me/albums"); // base url
 
@@ -101,8 +127,13 @@ impl Spotify {
         return Ok(DatedAlbums::new(&response)); // format and return result
     }
 
-    /// Save albums for current user: https://developer.spotify.com/documentation/web-api/reference/#/operations/save-albums-user
+    /// Save albums for current user: <https://developer.spotify.com/documentation/web-api/reference/#/operations/save-albums-user>
+    /// 
     /// Required scope: user-library-modify
+    /// 
+    /// # Arguments
+    /// * `album_ids` - A vector of Spotify IDs for the albums.
+    /// 
     pub fn save_albums(&mut self, album_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let album_ids_string = album_ids.join(","); // join album ids into string seperated by commas 
 
@@ -119,8 +150,13 @@ impl Spotify {
         return Ok(()); // return nothing
     }
 
-    /// Remove saved albums from current user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/remove-albums-user 
+    /// Remove saved albums from current user's library: <https://developer.spotify.com/documentation/web-api/reference/#/operations/remove-albums-user>
+    /// 
     /// Required scope: user-library-modify
+    /// 
+    /// # Arguments
+    /// * `album_ids` - A vector of Spotify IDs for the albums.
+    /// 
     pub fn remove_albums(&mut self, album_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let album_ids_string = album_ids.join(","); // join album ids into string seperated by commas
 
@@ -133,8 +169,13 @@ impl Spotify {
         return Ok(()); // return nothing
     }
 
-    /// Checks to see if albums are already saved to user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/check-users-saved-albums
+    /// Checks to see if albums are already saved to user's library: <https://developer.spotify.com/documentation/web-api/reference/#/operations/check-users-saved-albums>
+    /// 
     /// Required scope: user-library-read
+    /// 
+    /// # Arguments
+    /// * `album_ids` - A vector of Spotify IDs for the albums.
+    /// 
     pub fn check_saved_albums(&mut self, album_ids: Vec<&str>) -> Result<Vec<bool>, SpotifyError> {
         let album_ids_string = album_ids.join(","); // join album ids into string seperated by commas
 
@@ -155,8 +196,15 @@ impl Spotify {
         return Ok(saved_albums) // return vector of saved albums
     }
 
-    /// Get a list of new album releases featured in Spotify: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-new-releases 
+    /// Get a list of new album releases featured in Spotify: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-new-releases>
+    /// 
     /// Required scope: none
+    /// 
+    /// # Arguments
+    /// * `country` - An ISO 3166-1 alpha-2 country code.
+    /// * `limit` - The maximum number of albums to return. Default: 20. Minimum: 1. Maximum: 50.
+    /// * `offset` - The index of the first album to return. Default: 0 (the first object). Use with limit to get the next set of albums.
+    /// 
     pub fn get_new_releases(&mut self, country: Option<&str>, limit: Option<u32>, offset: Option<u32>) -> Result<Albums, SpotifyError> {
         let mut url_extension = String::from("browse/new-releases"); // base url
 

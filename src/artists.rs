@@ -2,8 +2,13 @@ use crate::srequest::RequestMethod;
 use crate::spotify::{Spotify, SpotifyError, Artist, Albums};
 
 impl Spotify {
-    /// Get information on a single aritst: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-artist 
-    /// Required scope: none 
+    /// Get information on a single aritst: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-artist>
+    ///  
+    /// Required scope: none
+    /// 
+    /// # Arguments
+    /// * `artist_id` - The Spotify ID of the artist.
+    ///  
     pub fn get_artist(&mut self, artist_id: &str) -> Result<Artist, SpotifyError> {
         let url_extension = format!("artists/{}", artist_id);
 
@@ -12,8 +17,13 @@ impl Spotify {
         return Ok(Artist::new(&response)); // format and return result
     }
 
-    /// Gets information on several artists: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-multiple-artists
+    /// Gets information on several artists: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-multiple-artists>
+    /// 
     /// Required scope: none
+    /// 
+    /// # Arguments
+    /// * `artist_ids` - A vector of the Spotify IDs for the artists. Maximum: 50 IDs.
+    /// 
     pub fn get_several_artists(&mut self, artist_ids: Vec<&str>) -> Result<Vec<Artist>, SpotifyError> {
         let url_extension = format!("artists/?ids={}", artist_ids.join(",")); // base url with artist ids added
 
@@ -26,8 +36,17 @@ impl Spotify {
         return Ok(artists) // return vector of artists
     }
 
-    /// Get artist's albums: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-artists-albums
+    /// Get artist's albums: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-artists-albums>
+    /// 
     /// Required scope: none
+    /// 
+    /// # Arguments
+    /// * `artist_id` - The Spotify ID of the artist.
+    /// * `include_groups` - A list of keywords that will be used to filter the response. If not supplied, all album types will be returned. Valid values: album, single, appears_on, compilation.
+    /// * `market` - An ISO 3166-1 alpha-2 country code.
+    /// * `limit` - The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
+    /// * `offset` - The index of the first item to return. Default: 0 (the first object). Use with limit to get the next set of items.
+    /// 
     pub fn get_artist_albums(&mut self, artist_id: &str, include_groups: Option<Vec<&str>>, limit: Option<u32>, market: Option<&str>, offset: Option<u32>) -> Result<Albums, SpotifyError>{
         let mut url_extension = format!("artists/{}/albums", artist_id); // base url 
 
@@ -56,8 +75,14 @@ impl Spotify {
         return Ok(Albums::new(&response)); // format and return result
     }
 
-    /// Get artist's top tracks: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-artists-top-tracks
+    /// Get artist's top tracks: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-artists-top-tracks>
+    /// 
     /// Required scope: none 
+    /// 
+    /// # Arguments
+    /// * `artist_id` - The Spotify ID of the artist.
+    /// * `market` - An ISO 3166-1 alpha-2 country code.
+    /// 
     pub fn get_artist_top_tracks(&mut self, artist_id: &str, market: &str) -> Result<Vec<Artist>, SpotifyError> {
         let url_extension = format!("artists/{}/top-tracks?market={}", artist_id, market); // base url 
 
@@ -70,8 +95,13 @@ impl Spotify {
         return Ok(artists) // return vector of artists
     }
 
-    /// Get artist's related to specified artist: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-artists-related-artists
+    /// Get artist's related to specified artist: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-artists-related-artists>
+    /// 
     /// Required scope: none
+    /// 
+    /// # Arguments
+    /// * `artist_id` - The Spotify ID of the artist.
+    /// 
     pub fn get_artist_related_artists(&mut self, artist_id: &str) -> Result<Vec<Artist>, SpotifyError> {
         let url_extension = format!("artists/{}/related-artists", artist_id); // base url 
 

@@ -7,8 +7,7 @@ mod artists;
 mod tracks;
 mod users;
 
-pub use spotify::Spotify; // re-export Spotify struct
-pub use spotify::TimeRange; // re-export TimeRange enum
+pub use spotify::{Spotify, SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, DatedAlbum, Albums, DatedAlbums, Artist, Artists, Track, DatedTrack, Tracks, DatedTracks, FeatureTrack, Bar, Beat, Section, Segment, Tatum, AnalysisTrack, User, TimeRange}; // re-export relevant structs and enums
 
 #[cfg(test)]
 mod tests {

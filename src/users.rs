@@ -6,7 +6,9 @@ use crate::spotify::{Spotify, SpotifyError, User, TimeRange, Artists, Tracks};
 
 impl Spotify {
     /// Get information on current user: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-current-users-profile>
+    /// 
     /// Requires scope: user-read-private user-read-email
+    /// 
     pub fn get_current_users_profile(&mut self) -> Result<User, SpotifyError> {
         let url_extension = "me";
 
@@ -18,7 +20,14 @@ impl Spotify {
     }
 
     /// Gets the user's top artists. A derivative of: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-users-top-artists-and-tracks>
+    /// 
     /// Requires scope: user-top-read
+    /// 
+    /// # Arguments
+    /// * `time_range` - The time range over which to retrieve top artists: short, medium, long. Default: medium.
+    /// * `limit` - The number of artists to return. Default: 20. Minimum: 1. Maximum: 50.
+    /// * `offset` - The index of the first artist to return. Default: 0 (i.e., the first artist). Use with limit to get the next set of artists.
+    /// 
     pub fn get_users_top_artists(&mut self, time_range: Option<TimeRange>, limit: Option<i32>, offset: Option<i32>) -> Result<Artists, SpotifyError> {
         let mut url_extension = String::from("me/top/artists");
 
@@ -53,7 +62,14 @@ impl Spotify {
     }
 
     /// Gets the user's top tracks. A derivative of: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-users-top-artists-and-tracks>
+    /// 
     /// Requires scope: user-top-read
+    /// 
+    /// # Arguments
+    /// * `time_range` - The time range over which to retrieve top tracks: short, medium, long. Default: medium.
+    /// * `limit` - The number of tracks to return. Default: 20. Minimum: 1. Maximum: 50.
+    /// * `offset` - The index of the first track to return. Default: 0 (i.e., the first track). Use with limit to get the next set of tracks.
+    /// 
     pub fn get_users_top_tracks(&mut self, time_range: Option<TimeRange>, limit: Option<i32>, offset: Option<i32>) -> Result<Tracks, SpotifyError> {
         let mut url_extension = String::from("me/top/tracks");
 
@@ -88,7 +104,12 @@ impl Spotify {
     }
 
     /// Gets the public profile for a user: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-users-profile>
+    /// 
     /// Requires scope: none 
+    /// 
+    /// # Arguments
+    /// * `user_id` - The user's Spotify user ID.
+    /// 
     pub fn get_users_profile(&mut self, user_id: &str) -> Result<User, SpotifyError> {
         let url_extension = format!("users/{}", user_id);
 
@@ -98,7 +119,13 @@ impl Spotify {
     }
 
     /// Add current user as a follower to a playlist: <https://developer.spotify.com/documentation/web-api/reference/#/operations/follow-playlist>
+    /// 
     /// Requires scope: playlist-modify-public playlist-modify-private
+    /// 
+    /// # Arguments
+    /// * `playlist_id` - The Spotify ID of the playlist.
+    /// * `public` - If true the playlist will be included in user's public playlists, if false it will remain private. Default: true.
+    /// 
     pub fn follow_playlist(&mut self, playlist_id: &str, public: Option<bool>) -> Result<(), SpotifyError> {
         let url_extension = format!("playlists/{}/followers", playlist_id);
 
@@ -116,7 +143,12 @@ impl Spotify {
     }
 
     /// Remove current user as a follower to a playlist: <https://developer.spotify.com/documentation/web-api/reference/#/operations/unfollow-playlist>
+    /// 
     /// Requires scope: playlist-modify-private playlist-modify-public
+    /// 
+    /// # Arguments
+    /// * `playlist_id` - The Spotify ID of the playlist.
+    /// 
     pub fn unfollow_playlist(&mut self, playlist_id: &str) -> Result<(), SpotifyError> {
         let url_extension = format!("playlists/{}/followers", playlist_id);
 
@@ -130,6 +162,10 @@ impl Spotify {
     /// Gets the current user's followed artists: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-followed>
     /// 
     /// Requires scope: user-follow-read
+    /// 
+    /// # Arguments
+    /// * `limit` - The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
+    /// 
     pub fn get_followed_artists(&mut self, limit: Option<i32>) -> Result<Artists, SpotifyError>{
         let mut url_extension = String::from("me/following?type=artist");
 

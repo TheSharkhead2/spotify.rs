@@ -556,7 +556,7 @@ impl fmt::Debug for SpotifyError {
     }
 }
 
-/// Wrapper object for Spotify API
+/// An authenticated instance of the Spotify API client. Can be used to make requests in the given scope. 
 pub struct Spotify {
     client_id: String,
     scope: String,
@@ -566,6 +566,13 @@ pub struct Spotify {
 }
 
 impl Spotify {
+    /// Creates a new Spotify object by authenticating with the Spotify API using the PKCE codeflow. 
+    /// Grabs `client_id` from `.env` file. 
+    /// 
+    /// # Arguments
+    /// * `localhost_port` - The localhost port fort the redirect uri. Note: currently there is only support for localhost redirect uris. 
+    /// * `scope` - The scope of the Spotify API. See <https://developer.spotify.com/documentation/general/guides/authorization/scopes/> for more information.
+    /// 
     pub fn authenticate(localhost_port: String, scope: String) -> Spotify {
         let client_id = dotenv::var("CLIENT_ID").unwrap(); // grab client_id from .env
 
@@ -611,6 +618,7 @@ impl Spotify {
         Ok(())
     }
 
+    /// Returns the access token. If the token is expired, it will be refreshed.
     pub fn access_token(&mut self) -> String {
         // if access token is expired, refresh it
         if Utc::now() > self.expires_at { 
@@ -621,6 +629,7 @@ impl Spotify {
         return self.access_token.clone() // return access token
     }
 
+    /// Refreshes the access token and returns the new access token and the time it expires
     fn refresh(&self) -> (String, DateTime<Utc>) {
         let (access_token, expires_in) = match refresh_access_token(&self.refresh_token, &self.client_id) {
             Ok((access_token, expires_in)) => (access_token, expires_in), 

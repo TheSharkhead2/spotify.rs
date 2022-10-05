@@ -5,8 +5,13 @@ use querystring::stringify;
 use std::collections::HashMap;
 
 impl Spotify {
-    /// Get information on a single track: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-track
+    /// Get information on a single track: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-track>
+    /// 
     /// Required scope: none
+    /// 
+    /// # Arguments
+    /// * `track_id` - The Spotify ID of the track.
+    /// 
     pub fn get_track(&mut self, track_id: &str) -> Result<Track, SpotifyError> {
         let url_extension = format!("tracks/{}", track_id);
 
@@ -15,8 +20,14 @@ impl Spotify {
         return Ok(Track::new(&response)); // format and return result
     }
 
-    /// Get information on many tracks: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-several-tracks
+    /// Get information on many tracks: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-several-tracks>
+    /// 
     /// Required scope: none
+    /// 
+    /// # Arguments
+    /// * `track_ids` - A vector of Spotify track ids. 
+    /// * `market` - An ISO 3166-1 alpha-2 country code. 
+    /// 
     pub fn get_several_tracks(&mut self, track_ids: Vec<&str>, market: Option<&str>) -> Result<Vec<Track>, SpotifyError> {
         let mut url_extension = format!("tracks/?ids={}", track_ids.join(",")); // base url with track ids added
 
@@ -34,8 +45,15 @@ impl Spotify {
         return Ok(tracks); // return vector of tracks
     }
 
-    /// Get user's saved tracks: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-users-saved-tracks
+    /// Get user's saved tracks: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-users-saved-tracks>
+    /// 
     /// Required scope: user-library-read
+    /// 
+    /// # Arguments
+    /// * `limit` - The number of tracks to return. Default: 20. Minimum: 1. Maximum: 50.
+    /// * `market` - An ISO 3166-1 alpha-2 country code. 
+    /// * `offset` - The index of the first track to return. Default: 0 (i.e., the first track). Use with limit to get the next set of tracks.
+    /// 
     pub fn get_user_saved_tracks(&mut self, limit: Option<u32>, market: Option<&str>, offset: Option<u32>) -> Result<DatedTracks, SpotifyError> {
         let mut url_extension = String::from("me/tracks"); // base url
 
@@ -62,8 +80,13 @@ impl Spotify {
         return Ok(DatedTracks::new(&response)); // format and return result
     }
 
-    /// Save tracks into current user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/save-tracks-user
+    /// Save tracks into current user's library: <https://developer.spotify.com/documentation/web-api/reference/#/operations/save-tracks-user>
+    /// 
     /// Required scope: user-library-modify
+    /// 
+    /// # Arguments
+    /// * `track_ids` - A vector of Spotify track ids
+    /// 
     pub fn save_tracks(&mut self, track_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let url_extension = format!("me/tracks?ids={}", track_ids.join(",")); // base url
 
@@ -78,8 +101,13 @@ impl Spotify {
         return Ok(()); // return nothing
     }
 
-    /// Remove tracks from current user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/remove-tracks-user
+    /// Remove tracks from current user's library: <https://developer.spotify.com/documentation/web-api/reference/#/operations/remove-tracks-user>
+    /// 
     /// Required scope: user-library-modify
+    /// 
+    /// # Arguments
+    /// * `track_ids` - A vector of Spotify track IDs
+    /// 
     pub fn remove_tracks(&mut self, track_ids: Vec<&str>) -> Result<(), SpotifyError> { 
         let url_extension = format!("me/tracks?ids={}", track_ids.join(",")); // base url
 
@@ -90,8 +118,13 @@ impl Spotify {
         return Ok(()); // return nothing
     }
 
-    /// Checks to see if specified tracks are saved in user's library: https://developer.spotify.com/documentation/web-api/reference/#/operations/check-users-saved-tracks
+    /// Checks to see if specified tracks are saved in user's library: <https://developer.spotify.com/documentation/web-api/reference/#/operations/check-users-saved-tracks>
+    /// 
     /// Required scope: user-library-read
+    /// 
+    /// # Arguments
+    /// * `track_ids` - A vector of track ids to check
+    /// 
     pub fn check_saved_tracks(&mut self, track_ids: Vec<&str>) -> Result<Vec<bool>, SpotifyError> {
         let url_extension = format!("me/tracks/contains?ids={}", track_ids.join(",")); // base url
 
@@ -111,8 +144,13 @@ impl Spotify {
         return Ok(saved_tracks); // return vector of saved tracks
     }
 
-    /// Gets audio features for specified track(s): https://developer.spotify.com/documentation/web-api/reference/#/operations/get-several-audio-features
+    /// Gets audio features for specified track(s): <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-several-audio-features>
+    /// 
     /// Required scope: none 
+    /// 
+    /// # Arguments
+    /// * `track_ids` - A vector of track ids
+    /// 
     pub fn get_tracks_audio_features(&mut self, track_ids: Vec<&str>) -> Result<Vec<FeatureTrack>, SpotifyError> {
         let url_extension = format!("audio-features/?ids={}", track_ids.join(",")); // base url
 
@@ -127,8 +165,13 @@ impl Spotify {
         return Ok(feature_tracks); // return vector of tracks
     }
 
-    /// Gets audio features for specified track: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-features
+    /// Gets audio features for specified track: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-features>
+    /// 
     /// Required scope: none
+    /// 
+    /// # Arguments
+    /// * `track_id` - Spotify ID of track
+    /// 
     pub fn get_track_audio_features(&mut self, track_id: &str) -> Result<FeatureTrack, SpotifyError> {
         let url_extension = format!("audio-features/{}", track_id); // base url
 
@@ -137,8 +180,13 @@ impl Spotify {
         return Ok(FeatureTrack::new(&response)); // format and return track
     }
 
-    /// Gets audio analysis for specified track: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-analysis
+    /// Gets audio analysis for specified track: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-analysis>
+    /// 
     /// Required scope: none
+    /// 
+    /// # Arguments 
+    /// * `track_id` - Spotify ID of track
+    /// 
     pub fn get_track_audio_analysis(&mut self, track_id: &str) -> Result<AnalysisTrack, SpotifyError> {
         let url_extension = format!("audio-analysis/{}", track_id); // base url
 
@@ -147,7 +195,8 @@ impl Spotify {
         return Ok(AnalysisTrack::new(&response)?); // format and return track
     }
 
-    /// Gets track recommendations based on seed artists, tracks, or genres: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-recommendations
+    /// Gets track recommendations based on seed artists, tracks, or genres: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-recommendations>
+    /// 
     /// Required scope: none
     /// 
     /// # Arguments
