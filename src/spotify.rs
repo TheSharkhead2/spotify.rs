@@ -157,6 +157,29 @@ impl fmt::Debug for Artist {
     }
 }
 
+/// Struct to represent a set of Artists
+pub struct Artists {
+    pub href: String, // A link to the Web API endpoint returning the full result of the request
+    pub artists: Vec<Artist>, // The requested data
+    pub limit: i32, // The maximum number of items in the response (as set in the query or by default)
+    pub next: Option<String>, // URL to the next page of items. (null if none)
+    pub offset: i32, // The offset of the items returned (as set in the query or by default)
+    pub previous: Option<String>, // URL to the previous page of items. (null if none)
+    pub total: i32, // The total number of items available to return
+}
+
+/// Implement Debug trait for Artists struct
+impl fmt::Debug for Artists {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Artists")
+            .field("artists", &self.artists)
+            .field("limit", &self.limit)
+            .field("offset", &self.offset)
+            .field("total", &self.total)
+            .finish()
+    }
+}
+
 /// Struct to represent Track
 pub struct Track {
     pub album: Option<Album>, // The album on which the track appears. 
@@ -492,6 +515,24 @@ impl fmt::Debug for User {
             .field("id", &self.id)
             .field("total_followers", &self.total_followers)
             .finish()
+    }
+}
+
+/// Enum to represent possibilities for time range of user top tracks and artists
+pub enum TimeRange {
+    ShortTerm,
+    MediumTerm,
+    LongTerm,
+}
+
+/// Implements Debug trait for TimeRange enum
+impl fmt::Debug for TimeRange {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TimeRange::ShortTerm => write!(f, "ShortTerm"),
+            TimeRange::MediumTerm => write!(f, "MediumTerm"),
+            TimeRange::LongTerm => write!(f, "LongTerm"),
+        }
     }
 }
 

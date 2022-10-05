@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use json::{JsonValue::{self, Array, Null}};
 
-use crate::spotify::{SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, Tracks, Albums, DatedAlbum, DatedAlbums, DatedTrack, DatedTracks, FeatureTrack, AnalysisTrack, Bar, Beat, Section, Segment, Tatum, SpotifyError, User};
+use crate::spotify::{SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, Tracks, Albums, DatedAlbum, DatedAlbums, DatedTrack, DatedTracks, FeatureTrack, AnalysisTrack, Bar, Beat, Section, Segment, Tatum, SpotifyError, User, Artists};
 
 impl SpotifyImage {
     /// Take JsonValue object representing image from API request and turn into 
@@ -329,6 +329,57 @@ pub fn new(raw_object: &JsonValue) -> Artist {
         name: name.to_string(),
         popularity,
         uri: uri.to_string(),
+    }
+}
+}
+
+impl Artists {
+/// Formats array of artists from API request into struct object for ease of use
+/// 
+/// # Arguments
+/// * `raw_object` - JsonValue object representing array of artists
+/// 
+pub fn new(raw_object: &JsonValue) -> Artists {
+    let href = &raw_object["href"].to_string();
+
+    let artists: Vec<Artist> = match &raw_object["items"] {
+        Array(items) => {items.iter().map(|item| Artist::new(item)).collect()}, // turn JsonValue Array type to vec of Artist objects 
+        _ => vec![], // default to empty vec 
+    };
+
+    let limit = match raw_object["limit"].as_i32() {
+        Some(limit) => limit,
+        None => 0, // default to 0
+    };
+
+    let next = match &raw_object["next"] {
+        Null => None,
+        _ => Some(raw_object["next"].to_string()),
+    };
+
+    let offset = match raw_object["offset"].as_i32() {
+        Some(offset) => offset,
+        None => 0, // default to 0
+    };
+
+    let previous = match &raw_object["previous"] {
+        Null => None,
+        _ => Some(raw_object["previous"].to_string()),
+    };
+
+    let total = match raw_object["total"].as_i32() {
+        Some(total) => total,
+        None => 0, // default to 0
+    };
+
+    Artists {
+        href: href.to_string(),
+        artists,
+        limit,
+        next,
+        offset,
+        previous,
+        total,
     }
 }
 }

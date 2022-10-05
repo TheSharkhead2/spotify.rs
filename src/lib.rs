@@ -8,6 +8,7 @@ mod tracks;
 mod users;
 
 pub use spotify::Spotify; // re-export Spotify struct
+pub use spotify::TimeRange; // re-export TimeRange enum
 
 #[cfg(test)]
 mod tests {
