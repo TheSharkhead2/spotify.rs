@@ -318,4 +318,26 @@ impl Spotify {
 
         return Ok(follows)
     }
+
+    /// Check if specified users follow a playlist. Returns a vector of bools: <https://developer.spotify.com/documentation/web-api/reference/#/operations/check-if-user-follows-playlist>
+    /// 
+    /// Requires scope: none
+    /// 
+    /// # Arguments
+    /// * `playlist_id` - The Spotify ID of the playlist.
+    /// * `user_ids` - A vector of the user Spotify IDs to check. Maximum 5 ids.
+    /// 
+    pub fn check_users_follow_playlist(&mut self, playlist_id: &str, user_ids: Vec<&str>) -> Result<Vec<bool>, SpotifyError> {
+        let url_extension = format!("playlists/{}/followers/contains?ids={}", playlist_id, user_ids.join(","));
+
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+
+        let mut follows: Vec<bool> = Vec::new();
+
+        for user in response.members() {
+            follows.push(user.as_bool().unwrap());
+        }
+
+        return Ok(follows)
+    }
 }
