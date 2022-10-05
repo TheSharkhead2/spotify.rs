@@ -4,7 +4,7 @@ use spotifyrs::{Spotify, TimeRange};
 fn general_testing() {
     let mut spotify = Spotify::authenticate(
         String::from("8888"),
-        String::from("user-read-private user-read-email user-library-read user-library-modify user-top-read"),
+        String::from("user-read-private user-read-email user-library-read user-library-modify user-top-read playlist-modify-public playlist-read-private playlist-modify-private"),
     );
     
     // println!("{:?}", spotify.get_album("1xJ7jIK1tT0aVoJw1fPE6r", None));
@@ -30,9 +30,10 @@ fn general_testing() {
     // println!("{:?}", spotify.get_track_audio_features("1Hg3GtuEEpPT8NU49xC71Z"));
     // println!("{:?}", spotify.get_track_audio_analysis("1Hg3GtuEEpPT8NU49xC71Z"));
     // println!("{:?}", spotify.get_recommendations(None, None, Some(vec!["1Hg3GtuEEpPT8NU49xC71Z"]), Some(vec![("target_danceability", "0.8")])));
-    println!("{:?}", spotify.get_current_users_profile());
+    // println!("{:?}", spotify.get_current_users_profile());
     // println!("{:?}", spotify.get_users_top_artists(Some(TimeRange::LongTerm), None, None));
     // println!("{:?}", spotify.get_users_top_tracks(Some(TimeRange::ShortTerm), None, None))
-    println!("{:?}", spotify.get_users_profile("kcm4s9xdvua5ft5glrsxii3ki"));
+    // println!("{:?}", spotify.get_users_profile("kcm4s9xdvua5ft5glrsxii3ki"));
+    println!("{:?}", spotify.follow_playlist("4yNivColKnMGbTe9P3lRjR", Some(false)));
 }
 

@@ -1,6 +1,7 @@
 use crate::srequest::RequestMethod;
 use crate::spotify::{Spotify, SpotifyError, Album, Tracks, DatedAlbums, Albums};
 use json::JsonValue::Boolean;
+use std::collections::HashMap;
 
 impl Spotify {
     /// Get an album: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-album
@@ -13,7 +14,7 @@ impl Spotify {
             url_extension.push_str(&format!("?market={}", market));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
 
         return Ok(Album::new(&response)); // format and return result
     }
@@ -28,7 +29,7 @@ impl Spotify {
             url_extension.push_str(&format!("&market={}", market));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
 
         let mut albums = Vec::new(); // create vector to store albums
         for album in response["albums"].members() {
@@ -63,7 +64,7 @@ impl Spotify {
             url_extension.push_str(&format!("&offset={}", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
 
         return Ok(Tracks::new(&response)); // format and return result
     }
@@ -95,7 +96,7 @@ impl Spotify {
             url_extension.push_str(&format!("&offset={}", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
 
         return Ok(DatedAlbums::new(&response)); // format and return result
     }
@@ -109,7 +110,11 @@ impl Spotify {
 
         self.check_scope("user-library-modify")?; // check scope
 
-        self.spotify_request(&url_extension, RequestMethod::Put)?; // make request
+        // create HashMap for request body
+        let mut body = HashMap::new();
+        body.insert("ids".to_string(), album_ids_string);
+
+        self.spotify_request(&url_extension, RequestMethod::Put(body))?; // make request
 
         return Ok(()); // return nothing
     }
@@ -123,7 +128,7 @@ impl Spotify {
 
         self.check_scope("user-library-modify")?; // check scope
 
-        self.spotify_request(&url_extension, RequestMethod::Delete)?; // make request
+        self.spotify_request::<String>(&url_extension, RequestMethod::Delete)?; // make request (abitrarily choose string as type parameter, not used here)
 
         return Ok(()); // return nothing
     }
@@ -137,7 +142,7 @@ impl Spotify {
 
         self.check_scope("user-library-read")?; // check scope
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
 
         let mut saved_albums = Vec::new(); // create vector to store saved albums
 
@@ -175,7 +180,7 @@ impl Spotify {
             url_extension.push_str(&format!("&offset={}", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
 
         return Ok(Albums::new(&response["albums"])); // format and return result        
     }

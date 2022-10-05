@@ -1,12 +1,14 @@
 use reqwest; 
 use json::{self, JsonValue, Null};
 use crate::spotify::{Spotify, SpotifyError};
+use std::collections::HashMap;
+use serde::ser::Serialize;
 
 /// Enum to store types of requests relevant to Spotify API
-pub enum RequestMethod {
+pub enum RequestMethod<V: Serialize> {
     Get,
     Post,
-    Put,
+    Put(HashMap<String, V>),
     Delete,
 }
  
@@ -20,7 +22,7 @@ impl Spotify {
     /// # Panics 
     /// On various parsing errors. Shouldn't happen? Probably.
     /// 
-    pub fn spotify_request(&mut self, url_extension: &str, request_method: RequestMethod) -> Result<JsonValue, SpotifyError> {
+    pub fn spotify_request<V: Serialize>(&mut self, url_extension: &str, request_method: RequestMethod<V>) -> Result<JsonValue, SpotifyError> {
         let access_token = self.access_token(); // get access token
 
         let client = reqwest::blocking::Client::new(); // create client
@@ -40,7 +42,7 @@ impl Spotify {
                 Ok(response) => response,
                 Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
             }},
-            RequestMethod::Put => {match client.put(&request_url).headers(headers).header("Content-Length", "0").send() {
+            RequestMethod::Put(body) => {match client.put(&request_url).headers(headers).header("Content-Type", "application/json").json(&body).send() {
                 Ok(response) => response,
                 Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
             }},
@@ -49,7 +51,6 @@ impl Spotify {
                 Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
             }},
         };
-        
         // if response is successful, read response 
         if response.status().is_success() {
             let response_body = json::parse(&response.text().unwrap());

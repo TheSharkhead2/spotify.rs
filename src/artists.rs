@@ -7,7 +7,7 @@ impl Spotify {
     pub fn get_artist(&mut self, artist_id: &str) -> Result<Artist, SpotifyError> {
         let url_extension = format!("artists/{}", artist_id);
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
 
         return Ok(Artist::new(&response)); // format and return result
     }
@@ -17,7 +17,7 @@ impl Spotify {
     pub fn get_several_artists(&mut self, artist_ids: Vec<&str>) -> Result<Vec<Artist>, SpotifyError> {
         let url_extension = format!("artists/?ids={}", artist_ids.join(",")); // base url with artist ids added
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
 
         let mut artists = Vec::new(); // create vector to store artists
         for artist in response["artists"].members() {
@@ -51,7 +51,7 @@ impl Spotify {
             url_extension.push_str(&format!("&offset={}", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
 
         return Ok(Albums::new(&response)); // format and return result
     }
@@ -61,7 +61,7 @@ impl Spotify {
     pub fn get_artist_top_tracks(&mut self, artist_id: &str, market: &str) -> Result<Vec<Artist>, SpotifyError> {
         let url_extension = format!("artists/{}/top-tracks?market={}", artist_id, market); // base url 
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
 
         let mut artists = Vec::new(); // create vector to store artists
         for artist in response["tracks"].members() {
@@ -75,7 +75,7 @@ impl Spotify {
     pub fn get_artist_related_artists(&mut self, artist_id: &str) -> Result<Vec<Artist>, SpotifyError> {
         let url_extension = format!("artists/{}/related-artists", artist_id); // base url 
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
 
         let mut artists = Vec::new(); // create vector to store artists
         for artist in response["artists"].members() {

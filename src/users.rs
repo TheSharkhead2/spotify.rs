@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::srequest::RequestMethod;
 use crate::spotify::{Spotify, SpotifyError, User, TimeRange, Artists, Tracks};
 
@@ -10,7 +12,7 @@ impl Spotify {
 
         self.check_scope("user-read-private user-read-email")?;
 
-        let response = self.spotify_request(url_extension, RequestMethod::Get)?;
+        let response = self.spotify_request::<String>(url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
 
         return Ok(User::new(&response))
     }
@@ -45,7 +47,7 @@ impl Spotify {
             url_extension.push_str(&format!("offset={}&", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
 
         return Ok(Artists::new(&response))
     }
@@ -80,7 +82,7 @@ impl Spotify {
             url_extension.push_str(&format!("offset={}&", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
 
         return Ok(Tracks::new(&response))
     }
@@ -90,8 +92,26 @@ impl Spotify {
     pub fn get_users_profile(&mut self, user_id: &str) -> Result<User, SpotifyError> {
         let url_extension = format!("users/{}", user_id);
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?;
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
 
         return Ok(User::new(&response))
+    }
+
+    /// Add current user as a follower to a playlist: <https://developer.spotify.com/documentation/web-api/reference/#/operations/follow-playlist>
+    /// Requires scope: playlist-modify-public playlist-read-private playlist-modify-private
+    pub fn follow_playlist(&mut self, playlist_id: &str, public: Option<bool>) -> Result<(), SpotifyError> {
+        let url_extension = format!("playlists/{}/followers", playlist_id);
+
+        self.check_scope("playlist-modify-public playlist-read-private playlist-modify-private")?;
+
+        // create HashMap for body
+        let mut body: HashMap<String, bool> = HashMap::new();
+        if let Some(public) = public { // only insert body param if supplied
+            body.insert("public".to_string(), public);
+        }
+
+        self.spotify_request(&url_extension, RequestMethod::Put(body))?;
+
+        return Ok(())
     }
 }
