@@ -113,7 +113,11 @@ impl Spotify {
 
         self.check_scope("user-library-modify")?; // check scope
 
-        self.spotify_request::<String>(&url_extension, RequestMethod::Delete)?; // make request (abitrarily choose string as type parameter, not used here)
+        // create HashMap for request body
+        let mut body = HashMap::new();
+        body.insert("ids".to_string(), track_ids);
+
+        self.spotify_request(&url_extension, RequestMethod::Delete(body))?; // make request (abitrarily choose string as type parameter, not used here)
 
         return Ok(()); // return nothing
     }

@@ -154,7 +154,9 @@ impl Spotify {
 
         self.check_scope("playlist-modify-private playlist-modify-public")?;
 
-        self.spotify_request::<String>(&url_extension, RequestMethod::Delete)?; // make request (abitrarily choose string as type parameter, not used here)
+        let body: HashMap<String, String> = HashMap::new(); // Create empty body (not necessary)
+
+        self.spotify_request::<String>(&url_extension, RequestMethod::Delete(body))?; // make request (abitrarily choose string as type parameter, not used here)
 
         return Ok(())
     }
@@ -166,7 +168,7 @@ impl Spotify {
     /// # Arguments
     /// * `limit` - The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
     /// 
-    pub fn get_followed_artists(&mut self, limit: Option<i32>) -> Result<Artists, SpotifyError>{
+    pub fn get_followed_artists(&mut self, limit: Option<i32>) -> Result<Artists, SpotifyError> {
         let mut url_extension = String::from("me/following?type=artist");
 
         self.check_scope("user-follow-read")?;
@@ -221,5 +223,99 @@ impl Spotify {
         self.spotify_request(&url_extension, RequestMethod::Put(body))?;
 
         return Ok(())
+    }
+
+    /// Unfollows specified artists. A derivative of: <https://developer.spotify.com/documentation/web-api/reference/#/operations/unfollow-artists-users>
+    /// 
+    /// Requires scope: user-follow-modify
+    /// 
+    /// # Arguments
+    /// * `artist_ids` - A vector of the artist Spotify IDs to unfollow.
+    /// 
+    pub fn unfollow_artists(&mut self, artist_ids: Vec<&str>) -> Result<(), SpotifyError> {
+        let url_extension = format!("me/following?type=artist&ids={}", artist_ids.join(","));
+
+        self.check_scope("user-follow-modify")?;
+
+        // create HashMap for body
+        let mut body: HashMap<String, Vec<&str>> = HashMap::new();
+        body.insert("ids".to_string(), artist_ids);
+
+        self.spotify_request(&url_extension, RequestMethod::Delete(body))?;
+
+        return Ok(())
+    }
+
+    /// Unfollows specified users. A derivative of: <https://developer.spotify.com/documentation/web-api/reference/#/operations/unfollow-artists-users>
+    /// 
+    /// Requires scope: user-follow-modify
+    /// 
+    /// # Arguments
+    /// * `user_ids` - A vector of the user Spotify IDs to unfollow.
+    /// 
+    pub fn unfollow_users(&mut self, user_ids: Vec<&str>) -> Result<(), SpotifyError> {
+        let url_extension = format!("me/following?type=user&ids={}", user_ids.join(","));
+
+        self.check_scope("user-follow-modify")?;
+
+        // create HashMap for body
+        let mut body: HashMap<String, Vec<&str>> = HashMap::new();
+        body.insert("ids".to_string(), user_ids);
+
+        self.spotify_request(&url_extension, RequestMethod::Delete(body))?;
+
+        return Ok(())
+    }
+
+    /// Check if user follows specific artists. Returns a vector of bools. A derivative of: <https://developer.spotify.com/documentation/web-api/reference/#/operations/check-current-user-follows>
+    /// 
+    /// Requires scope: user-follow-read
+    /// 
+    /// # Arguments
+    /// * `artist_ids` - A vector of the artist Spotify IDs to check.
+    /// 
+    /// # Panics
+    /// Panics if API returned value is not formatted as expected. Shouldn't happen. 
+    /// 
+    pub fn check_user_follows_artists(&mut self, artist_ids: Vec<&str>) -> Result<Vec<bool>, SpotifyError> {
+        let url_extension = format!("me/following/contains?type=artist&ids={}", artist_ids.join(","));
+
+        self.check_scope("user-follow-read")?;
+
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+
+        let mut follows: Vec<bool> = Vec::new();
+
+        for artist in response.members() {
+            follows.push(artist.as_bool().unwrap());
+        }
+
+        return Ok(follows)
+    }
+
+    /// Check if user follows specific users. Returns a vector of bools. A derivative of: <https://developer.spotify.com/documentation/web-api/reference/#/operations/check-current-user-follows>
+    /// 
+    /// Requires scope: user-follow-read
+    /// 
+    /// # Arguments
+    /// * `user_ids` - A vector of the user Spotify IDs to check.
+    /// 
+    /// # Panics
+    /// Panics if API returned value is not formatted as expected. Shouldn't happen.
+    /// 
+    pub fn check_user_follows_users(&mut self, user_ids: Vec<&str>) -> Result<Vec<bool>, SpotifyError> {
+        let url_extension = format!("me/following/contains?type=user&ids={}", user_ids.join(","));
+
+        self.check_scope("user-follow-read")?;
+
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+
+        let mut follows: Vec<bool> = Vec::new();
+
+        for user in response.members() {
+            follows.push(user.as_bool().unwrap());
+        }
+
+        return Ok(follows)
     }
 }

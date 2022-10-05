@@ -9,7 +9,7 @@ pub enum RequestMethod<V: Serialize> {
     Get,
     Post,
     Put(HashMap<String, V>),
-    Delete,
+    Delete(HashMap<String, V>),
 }
  
 impl Spotify {
@@ -46,7 +46,7 @@ impl Spotify {
                 Ok(response) => response,
                 Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
             }},
-            RequestMethod::Delete => {match client.delete(&request_url).headers(headers).send(){
+            RequestMethod::Delete(body) => {match client.delete(&request_url).headers(headers).header("Content-Type", "application/json").json(&body).send(){
                 Ok(response) => response,
                 Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
             }},
