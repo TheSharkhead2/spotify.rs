@@ -126,4 +126,22 @@ impl Spotify {
 
         return Ok(())
     }
+
+    /// Gets the current user's followed artists: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-followed>
+    /// 
+    /// Requires scope: user-follow-read
+    pub fn get_followed_artists(&mut self, limit: Option<i32>) -> Result<Artists, SpotifyError>{
+        let mut url_extension = String::from("me/following?type=artist");
+
+        self.check_scope("user-follow-read")?;
+
+        // add limit to string if supplied
+        if let Some(limit) = limit {
+            url_extension.push_str(&format!("&limit={}", limit));
+        }
+
+        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+
+        return Ok(Artists::new(&response["artists"]))
+    }
 }
