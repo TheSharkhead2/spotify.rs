@@ -17,6 +17,7 @@ use json;
 /// 
 /// # Panics
 /// When random number generation fails. See [get random docs](https://docs.rs/getrandom/latest/getrandom/#functions)
+/// 
 pub fn generate_verifier() -> (String, String) {
     let mut buf = [0u8; 32]; // empty list of 32 bytes 
 
@@ -224,6 +225,12 @@ pub fn get_access_token(authorization_code: &str, client_id: &str, code_verifier
     }
 }       
 
+/// Requests new refresh token from Spotify API. Returns new refresh token and time until it expires 
+/// 
+/// # Arguments
+/// * `refresh_token` - The refresh token used to request a new refresh token
+/// * `client_id` - The client id of the application
+/// 
 pub fn refresh_access_token(refresh_token: &str, client_id: &str) -> Result<(String, i64), Box<dyn std::error::Error>> {
     let request_uri = "https://accounts.spotify.com/api/token?"; // token request uri
 
