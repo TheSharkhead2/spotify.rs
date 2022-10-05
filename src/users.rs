@@ -98,11 +98,11 @@ impl Spotify {
     }
 
     /// Add current user as a follower to a playlist: <https://developer.spotify.com/documentation/web-api/reference/#/operations/follow-playlist>
-    /// Requires scope: playlist-modify-public playlist-read-private playlist-modify-private
+    /// Requires scope: playlist-modify-public playlist-modify-private
     pub fn follow_playlist(&mut self, playlist_id: &str, public: Option<bool>) -> Result<(), SpotifyError> {
         let url_extension = format!("playlists/{}/followers", playlist_id);
 
-        self.check_scope("playlist-modify-public playlist-read-private playlist-modify-private")?;
+        self.check_scope("playlist-modify-public playlist-modify-private")?;
 
         // create HashMap for body
         let mut body: HashMap<String, bool> = HashMap::new();
@@ -111,6 +111,18 @@ impl Spotify {
         }
 
         self.spotify_request(&url_extension, RequestMethod::Put(body))?;
+
+        return Ok(())
+    }
+
+    /// Remove current user as a follower to a playlist: <https://developer.spotify.com/documentation/web-api/reference/#/operations/unfollow-playlist>
+    /// Requires scope: playlist-modify-private playlist-modify-public
+    pub fn unfollow_playlist(&mut self, playlist_id: &str) -> Result<(), SpotifyError> {
+        let url_extension = format!("playlists/{}/followers", playlist_id);
+
+        self.check_scope("playlist-modify-private playlist-modify-public")?;
+
+        self.spotify_request::<String>(&url_extension, RequestMethod::Delete)?; // make request (abitrarily choose string as type parameter, not used here)
 
         return Ok(())
     }
