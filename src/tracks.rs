@@ -253,19 +253,15 @@ impl Spotify {
     ///     * `max_valence` - maximum valence value for track, between 0 and 1
     ///     * `target_valence` - target valence value for track, between 0 and 1
     /// 
-    /// # Panics 
-    /// * If ```seed_artists```, ```seed_tracks```, and ```seed_genres``` are all empty. Need to supply a seed value.
-    /// * If more than 5 seed values are supplied across `seed_artists`, `seed_tracks`, and `seed_genres`.
-    /// 
     pub fn get_recommendations(&mut self, seed_artists: Option<Vec<&str>>, seed_genres: Option<Vec<&str>>, seed_tracks: Option<Vec<&str>>, optional_parameters: Option<Vec<(&str, &str)>>) -> Result<Vec<Track>, SpotifyError> {
         // panic if not supplied with sufficient seed values
         if seed_artists == None && seed_genres == None && seed_tracks == None {
-            panic!("Must supply at least one seed value");
+            return Err(SpotifyError::InvalidRequest(String::from("Must supply at least one seed value")));
         }
 
         // panic if more than 5 seed values are supplied
         if match &seed_artists {Some(seed_artists) => seed_artists.len(), None => 0} + match &seed_genres {Some(seed_genres) => seed_genres.len(), None => 0} + match &seed_tracks {Some(seed_tracks) => seed_tracks.len(), None => 0} > 5 {
-            panic!("Cannot supply more than 5 seed values");
+            return Err(SpotifyError::InvalidRequest(String::from("Cannot supply more than 5 seed values")));
         }
 
         let mut url_extension = String::from("recommendations?");
