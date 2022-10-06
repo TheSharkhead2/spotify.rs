@@ -615,6 +615,7 @@ pub enum SpotifyError {
     BadOrExpiredToken(String), 
     RateLimitExceeded(String),
     BadRequest(String),
+    InvalidRequest(String),
     // Unknown,
 }
 
@@ -628,6 +629,7 @@ impl fmt::Debug for SpotifyError {
             SpotifyError::BadOrExpiredToken(e) => write!(f, "Bad or expired token: {}", e),
             SpotifyError::RateLimitExceeded(e) => write!(f, "Rate limited: {}", e),
             SpotifyError::BadRequest(e) => write!(f, "Bad request: {}", e),
+            SpotifyError::InvalidRequest(e) => write!(f, "Invalid request: {}", e),
             // SpotifyError::Unknown => write!(f, "Unknown error"),
         }
     }

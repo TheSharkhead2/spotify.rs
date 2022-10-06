@@ -2,14 +2,14 @@ use reqwest;
 use json::{self, JsonValue, Null};
 use crate::spotify::{Spotify, SpotifyError};
 use std::collections::HashMap;
-use serde::ser::Serialize;
+use serde_json::Value;
 
 /// Enum to store types of requests relevant to Spotify API
-pub enum RequestMethod<V: Serialize> {
+pub enum RequestMethod {
     Get,
     Post,
-    Put(HashMap<String, V>),
-    Delete(HashMap<String, V>),
+    Put(HashMap<String, Value>),
+    Delete(HashMap<String, Value>),
 }
  
 impl Spotify {
@@ -22,7 +22,7 @@ impl Spotify {
     /// # Panics 
     /// On various parsing errors. Shouldn't happen? Probably.
     /// 
-    pub fn spotify_request<V: Serialize>(&mut self, url_extension: &str, request_method: RequestMethod<V>) -> Result<JsonValue, SpotifyError> {
+    pub fn spotify_request(&mut self, url_extension: &str, request_method: RequestMethod) -> Result<JsonValue, SpotifyError> {
         let access_token = self.access_token(); // get access token
 
         let client = reqwest::blocking::Client::new(); // create client

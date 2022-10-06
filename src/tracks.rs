@@ -3,6 +3,7 @@ use crate::spotify::{Spotify, SpotifyError, Track, DatedTracks, FeatureTrack, An
 use json::JsonValue::Boolean;
 use querystring::stringify;
 use std::collections::HashMap;
+use serde_json::Value;
 
 impl Spotify {
     /// Get information on a single track: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-track>
@@ -15,7 +16,7 @@ impl Spotify {
     pub fn get_track(&mut self, track_id: &str) -> Result<Track, SpotifyError> {
         let url_extension = format!("tracks/{}", track_id);
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         return Ok(Track::new(&response)); // format and return result
     }
@@ -35,8 +36,7 @@ impl Spotify {
             url_extension.push_str(&format!("?market={}", market));
         }
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
-
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
         let mut tracks = Vec::new(); // create vector to store tracks
         for track in response["tracks"].members() {
             tracks.push(Track::new(&track)); // format track and push to vector
@@ -75,7 +75,7 @@ impl Spotify {
             url_extension.push_str(&format!("&offset={}", offset));
         }
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         return Ok(DatedTracks::new(&response)); // format and return result
     }
@@ -94,7 +94,7 @@ impl Spotify {
 
         // create HashMap for request body 
         let mut body = HashMap::new();
-        body.insert("ids".to_string(), track_ids.join(","));
+        body.insert("ids".to_string(), Value::Array(track_ids.iter().map(|&s| Value::String(s.to_string())).collect()));
 
         self.spotify_request(&url_extension, RequestMethod::Put(body))?; // make request
 
@@ -115,7 +115,7 @@ impl Spotify {
 
         // create HashMap for request body
         let mut body = HashMap::new();
-        body.insert("ids".to_string(), track_ids);
+        body.insert("ids".to_string(), Value::Array(track_ids.iter().map(|&s| Value::String(s.to_string())).collect()));
 
         self.spotify_request(&url_extension, RequestMethod::Delete(body))?; // make request (abitrarily choose string as type parameter, not used here)
 
@@ -134,7 +134,7 @@ impl Spotify {
 
         self.check_scope("user-library-read")?; // check scope
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
         let mut saved_tracks = Vec::new(); // create vector to store saved albums
 
@@ -158,7 +158,7 @@ impl Spotify {
     pub fn get_tracks_audio_features(&mut self, track_ids: Vec<&str>) -> Result<Vec<FeatureTrack>, SpotifyError> {
         let url_extension = format!("audio-features/?ids={}", track_ids.join(",")); // base url
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         let mut feature_tracks = Vec::new(); // create vector to store tracks
 
@@ -179,7 +179,7 @@ impl Spotify {
     pub fn get_track_audio_features(&mut self, track_id: &str) -> Result<FeatureTrack, SpotifyError> {
         let url_extension = format!("audio-features/{}", track_id); // base url
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         return Ok(FeatureTrack::new(&response)); // format and return track
     }
@@ -194,7 +194,7 @@ impl Spotify {
     pub fn get_track_audio_analysis(&mut self, track_id: &str) -> Result<AnalysisTrack, SpotifyError> {
         let url_extension = format!("audio-analysis/{}", track_id); // base url
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         return Ok(AnalysisTrack::new(&response)?); // format and return track
     }
@@ -289,7 +289,7 @@ impl Spotify {
             url_extension.push_str(&stringify(optional_parameters)); // stringify and add optional parameters
         }
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         let mut tracks = Vec::new(); // create vector to hold tracks
         for track in response["tracks"].members() {

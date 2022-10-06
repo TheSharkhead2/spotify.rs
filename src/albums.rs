@@ -2,6 +2,7 @@ use crate::srequest::RequestMethod;
 use crate::spotify::{Spotify, SpotifyError, Album, Tracks, DatedAlbums, Albums};
 use json::JsonValue::Boolean;
 use std::collections::HashMap;
+use serde_json::Value;
 
 impl Spotify {
     /// Get an album: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-album>
@@ -20,7 +21,7 @@ impl Spotify {
             url_extension.push_str(&format!("?market={}", market));
         }
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         return Ok(Album::new(&response)); // format and return result
     }
@@ -41,7 +42,7 @@ impl Spotify {
             url_extension.push_str(&format!("&market={}", market));
         }
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
         let mut albums = Vec::new(); // create vector to store albums
         for album in response["albums"].members() {
@@ -84,7 +85,7 @@ impl Spotify {
             url_extension.push_str(&format!("&offset={}", offset));
         }
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         return Ok(Tracks::new(&response)); // format and return result
     }
@@ -122,7 +123,7 @@ impl Spotify {
             url_extension.push_str(&format!("&offset={}", offset));
         }
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         return Ok(DatedAlbums::new(&response)); // format and return result
     }
@@ -143,7 +144,7 @@ impl Spotify {
 
         // create HashMap for request body
         let mut body = HashMap::new();
-        body.insert("ids".to_string(), album_ids_string);
+        body.insert("ids".to_string(), Value::Array(album_ids.iter().map(|s| Value::String(s.to_string())).collect()));
 
         self.spotify_request(&url_extension, RequestMethod::Put(body))?; // make request
 
@@ -166,9 +167,9 @@ impl Spotify {
 
         // Create HashMap for request body
         let mut body = HashMap::new();
-        body.insert("ids".to_string(), album_ids);
+        body.insert("ids".to_string(), Value::Array(album_ids.iter().map(|s| Value::String(s.to_string())).collect()));
 
-        self.spotify_request(&url_extension, RequestMethod::Delete(body))?; // make request (abitrarily choose string as type parameter, not used here)
+        self.spotify_request(&url_extension, RequestMethod::Delete(body))?; // make request
 
         return Ok(()); // return nothing
     }
@@ -187,7 +188,7 @@ impl Spotify {
 
         self.check_scope("user-library-read")?; // check scope
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         let mut saved_albums = Vec::new(); // create vector to store saved albums
 
@@ -232,7 +233,7 @@ impl Spotify {
             url_extension.push_str(&format!("&offset={}", offset));
         }
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         return Ok(Albums::new(&response["albums"])); // format and return result        
     }

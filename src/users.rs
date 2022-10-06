@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-
+use serde_json::Value;
 use crate::srequest::RequestMethod;
 use crate::spotify::{Spotify, SpotifyError, User, TimeRange, Artists, Tracks};
 
@@ -14,7 +14,7 @@ impl Spotify {
 
         self.check_scope("user-read-private user-read-email")?;
 
-        let response = self.spotify_request::<String>(url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(url_extension, RequestMethod::Get)?; // make request 
 
         return Ok(User::new(&response))
     }
@@ -56,7 +56,7 @@ impl Spotify {
             url_extension.push_str(&format!("offset={}&", offset));
         }
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         return Ok(Artists::new(&response))
     }
@@ -98,7 +98,7 @@ impl Spotify {
             url_extension.push_str(&format!("offset={}&", offset));
         }
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         return Ok(Tracks::new(&response))
     }
@@ -113,7 +113,7 @@ impl Spotify {
     pub fn get_users_profile(&mut self, user_id: &str) -> Result<User, SpotifyError> {
         let url_extension = format!("users/{}", user_id);
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         return Ok(User::new(&response))
     }
@@ -132,9 +132,9 @@ impl Spotify {
         self.check_scope("playlist-modify-public playlist-modify-private")?;
 
         // create HashMap for body
-        let mut body: HashMap<String, bool> = HashMap::new();
+        let mut body = HashMap::new();
         if let Some(public) = public { // only insert body param if supplied
-            body.insert("public".to_string(), public);
+            body.insert("public".to_string(), Value::Bool(public));
         }
 
         self.spotify_request(&url_extension, RequestMethod::Put(body))?;
@@ -154,9 +154,9 @@ impl Spotify {
 
         self.check_scope("playlist-modify-private playlist-modify-public")?;
 
-        let body: HashMap<String, String> = HashMap::new(); // Create empty body (not necessary)
+        let body: HashMap<String, Value> = HashMap::new(); // Create empty body (not necessary)
 
-        self.spotify_request::<String>(&url_extension, RequestMethod::Delete(body))?; // make request (abitrarily choose string as type parameter, not used here)
+        self.spotify_request(&url_extension, RequestMethod::Delete(body))?; // make request
 
         return Ok(())
     }
@@ -178,7 +178,7 @@ impl Spotify {
             url_extension.push_str(&format!("&limit={}", limit));
         }
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         return Ok(Artists::new(&response["artists"]))
     }
@@ -196,8 +196,8 @@ impl Spotify {
         self.check_scope("user-follow-modify")?;
 
         // create HashMap for body
-        let mut body: HashMap<String, Vec<&str>> = HashMap::new();
-        body.insert("ids".to_string(), artist_ids);
+        let mut body: HashMap<String, Value> = HashMap::new();
+        body.insert("ids".to_string(), Value::Array(artist_ids.iter().map(|&s| Value::String(s.to_string())).collect()));
 
         self.spotify_request(&url_extension, RequestMethod::Put(body))?;
 
@@ -217,8 +217,8 @@ impl Spotify {
         self.check_scope("user-follow-modify")?;
 
         // create HashMap for body
-        let mut body: HashMap<String, Vec<&str>> = HashMap::new();
-        body.insert("ids".to_string(), user_ids);
+        let mut body: HashMap<String, Value> = HashMap::new();
+        body.insert("ids".to_string(), Value::Array(user_ids.iter().map(|&s| Value::String(s.to_string())).collect()));
 
         self.spotify_request(&url_extension, RequestMethod::Put(body))?;
 
@@ -238,8 +238,8 @@ impl Spotify {
         self.check_scope("user-follow-modify")?;
 
         // create HashMap for body
-        let mut body: HashMap<String, Vec<&str>> = HashMap::new();
-        body.insert("ids".to_string(), artist_ids);
+        let mut body: HashMap<String, Value> = HashMap::new();
+        body.insert("ids".to_string(), Value::Array(artist_ids.iter().map(|&s| Value::String(s.to_string())).collect()));
 
         self.spotify_request(&url_extension, RequestMethod::Delete(body))?;
 
@@ -259,8 +259,8 @@ impl Spotify {
         self.check_scope("user-follow-modify")?;
 
         // create HashMap for body
-        let mut body: HashMap<String, Vec<&str>> = HashMap::new();
-        body.insert("ids".to_string(), user_ids);
+        let mut body: HashMap<String, Value> = HashMap::new();
+        body.insert("ids".to_string(), Value::Array(user_ids.iter().map(|&s| Value::String(s.to_string())).collect()));
 
         self.spotify_request(&url_extension, RequestMethod::Delete(body))?;
 
@@ -282,7 +282,7 @@ impl Spotify {
 
         self.check_scope("user-follow-read")?;
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         let mut follows: Vec<bool> = Vec::new();
 
@@ -308,7 +308,7 @@ impl Spotify {
 
         self.check_scope("user-follow-read")?;
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         let mut follows: Vec<bool> = Vec::new();
 
@@ -330,7 +330,7 @@ impl Spotify {
     pub fn check_users_follow_playlist(&mut self, playlist_id: &str, user_ids: Vec<&str>) -> Result<Vec<bool>, SpotifyError> {
         let url_extension = format!("playlists/{}/followers/contains?ids={}", playlist_id, user_ids.join(","));
 
-        let response = self.spotify_request::<String>(&url_extension, RequestMethod::Get)?; // make request (abitrarily choose string as type parameter, not used here)
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
         let mut follows: Vec<bool> = Vec::new();
 
