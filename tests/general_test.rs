@@ -36,13 +36,14 @@ fn general_testing() {
     // println!("{:?}", spotify.get_users_profile("kcm4s9xdvua5ft5glrsxii3ki"));
     // println!("{:?}", spotify.follow_playlist("4yNivColKnMGbTe9P3lRjR", Some(true)));
     // println!("{:?}", spotify.unfollow_playlist("4yNivColKnMGbTe9P3lRjR"));
-    println!("{:?}", spotify.get_followed_artists(None));
+    // println!("{:?}", spotify.get_followed_artists(None));
     // println!("{:?}", spotify.follow_artists(vec!["6eUKZXaKkcviH0Ku9w2n3V", "59sBwR0jPSTrbMtuTkRPN5"]));
     // println!("{:?}", spotify.follow_users(vec!["xk6cplfegqhw6rwezfuvr1198"]));
     // println!("{:?}", spotify.unfollow_artists(vec!["6eUKZXaKkcviH0Ku9w2n3V", "59sBwR0jPSTrbMtuTkRPN5"]));
     // println!("{:?}", spotify.unfollow_users(vec!["xk6cplfegqhw6rwezfuvr1198"]));
     // println!("{:?}", spotify.check_user_follows_artists(vec!["6eUKZXaKkcviH0Ku9w2n3V", "59sBwR0jPSTrbMtuTkRPN5"]));
     // println!("{:?}", spotify.check_user_follows_users(vec!["xk6cplfegqhw6rwezfuvr1198", "kcm4s9xdvua5ft5glrsxii3ki"]));
-    // println!("{:?}", spotify.check_users_follow_playlist("4soTsWdI5kIAxa9kACgJb4", vec!["kcm4s9xdvua5ft5glrsxii3ki", "ommmrjvmegv5jpe6cjfc97392", "jazzdancer16"]))
+    // println!("{:?}", spotify.check_users_follow_playlist("4soTsWdI5kIAxa9kACgJb4", vec!["kcm4s9xdvua5ft5glrsxii3ki", "ommmrjvmegv5jpe6cjfc97392", "jazzdancer16"]));
+    println!("{:?}", spotify.get_playlist("1SH1tptnz2C09EndCJb5Zz", None));
 }
 

@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use json::{JsonValue::{self, Array, Null}};
 
-use crate::spotify::{SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, Tracks, Albums, DatedAlbum, DatedAlbums, DatedTrack, DatedTracks, FeatureTrack, AnalysisTrack, Bar, Beat, Section, Segment, Tatum, SpotifyError, User, Artists};
+use crate::spotify::{SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, Tracks, Albums, DatedAlbum, DatedAlbums, DatedTrack, DatedTracks, FeatureTrack, AnalysisTrack, Bar, Beat, Section, Segment, Tatum, SpotifyError, User, Artists, Playlist, PlaylistTrack, PlaylistTracks};
 
 impl SpotifyImage {
     /// Take JsonValue object representing image from API request and turn into 
@@ -1142,6 +1142,171 @@ impl User {
             images,
             product,
             uri: uri.to_string(),
+        }
+    }
+}
+
+impl Playlist {
+    /// Takes JsonValue representing a Playlist and returns the Playlist Struct
+    /// 
+    /// # Arguments
+    /// * `raw_object` - JsonValue representing a Playlist
+    /// 
+    pub fn new(raw_object: &JsonValue) -> Playlist {
+        let collaborative = match raw_object["collaborative"].as_bool() {
+            Some(collaborative) => collaborative,
+            None => false, // default to false
+        };
+
+        let description = match raw_object["description"].as_str() {
+            Some(description) => Some(description.to_string()),
+            None => None, // default to None
+        };
+
+        let spotify_url = match raw_object["external_urls"]["spotify"].as_str() {
+            Some(spotify_url) => spotify_url.to_string(),
+            None => String::new(), // default to empty string
+        };
+
+        let total_followers = raw_object["followers"]["total"].as_i32().unwrap_or(0); // default to 0
+
+        let href = match raw_object["href"].as_str() {
+            Some(href) => String::from(href),
+            None => String::new(), // default to empty string
+        };
+
+        let id = match raw_object["id"].as_str() {
+            Some(id) => String::from(id),
+            None => String::new(), // default to empty string
+        };
+
+        let images = match &raw_object["images"] {
+            Array(images) => {images.iter().map(|image| SpotifyImage::new(image)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
+            _ => vec![], // default to empty vec 
+        };
+
+        let name = match raw_object["name"].as_str() {
+            Some(name) => String::from(name),
+            None => String::new(), // default to empty string
+        };
+
+        let owner = User::new(&raw_object["owner"]); 
+
+        let public = match raw_object["public"].as_bool() {
+            Some(public) => Some(public),
+            None => None, // default to none
+        };
+
+        let snapshot_id = match raw_object["snapshot_id"].as_str() {
+            Some(snapshot_id) => String::from(snapshot_id),
+            None => String::new(), // default to empty string
+        };
+
+        let tracks = PlaylistTracks::new(&raw_object["tracks"]);
+
+        let uri = match raw_object["uri"].as_str() {
+            Some(uri) => String::from(uri),
+            None => String::new(), // default to empty string
+        };
+
+        Playlist {
+            collaborative,
+            description,
+            spotify_url,
+            total_followers,
+            href,
+            id,
+            images,
+            name,
+            owner,
+            public,
+            snapshot_id,
+            tracks,
+            uri,
+        }
+    }
+}
+
+impl PlaylistTrack {
+    /// Takes JsonValue representing a PlaylistTrack and returns the PlaylistTrack Struct
+    /// 
+    /// # Arguments
+    /// * `raw_object` - JsonValue representing a PlaylistTrack
+    /// 
+    pub fn new(raw_object: &JsonValue) -> PlaylistTrack {
+        let added_at = match raw_object["added_at"].as_str() {
+            Some(added_at) => Some(NaiveDateTime::parse_from_str(added_at, "%Y-%m-%dT%H:%M:%S%.fZ").unwrap()), // parse string into NaiveDateTime 
+            None => None, // default to None
+        };
+
+        let added_by = User::new(&raw_object["added_by"]);
+
+        let is_local = match raw_object["is_local"].as_bool() {
+            Some(is_local) => is_local,
+            None => false, // default to false
+        };
+
+        let track = Track::new(&raw_object["track"]);
+
+        PlaylistTrack {
+            added_at,
+            added_by,
+            is_local,
+            track,
+        }
+    }
+}
+
+impl PlaylistTracks {
+    /// Takes JsonValue representing a PlaylistTracks and returns the PlaylistTracks Struct
+    /// 
+    /// # Arguments
+    /// * `raw_object` - JsonValue representing a PlaylistTracks
+    /// 
+    pub fn new(raw_object: &JsonValue) -> PlaylistTracks {
+        let href = match raw_object["href"].as_str() {
+            Some(href) => String::from(href),
+            None => String::new(), // default to empty string
+        };
+
+        let total = match raw_object["total"].as_i32() {
+            Some(total) => total,
+            None => 0, // default to 0
+        };
+
+        let tracks = match &raw_object["items"] {
+            Array(tracks) => {tracks.iter().map(|track| PlaylistTrack::new(track)).collect()}, // turn JsonValue Array type to vec of PlaylistTrack objects 
+            _ => vec![], // default to empty vec 
+        };
+
+        let next = match raw_object["next"].as_str() {
+            Some(next) => Some(String::from(next)),
+            None => None, // default to None
+        };
+
+        let previous = match raw_object["previous"].as_str() {
+            Some(previous) => Some(String::from(previous)),
+            None => None, // default to None
+        };
+
+        let limit = match raw_object["limit"].as_i32() {
+            Some(limit) => limit,
+            None => 0, // default to 0
+        };
+
+        let offset = match raw_object["offset"].as_i32() {
+            Some(offset) => offset,
+            None => 0, // default to 0
+        };
+
+        PlaylistTracks {
+            href,
+            total,
+            tracks,
+            next,
+            limit,
+            offset,
+            previous,
         }
     }
 }

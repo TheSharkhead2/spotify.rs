@@ -6,6 +6,7 @@ mod albums;
 mod artists;
 mod tracks;
 mod users;
+mod playlist;
 
 pub use spotify::{Spotify, SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, DatedAlbum, Albums, DatedAlbums, Artist, Artists, Track, DatedTrack, Tracks, DatedTracks, FeatureTrack, Bar, Beat, Section, Segment, Tatum, AnalysisTrack, User, TimeRange}; // re-export relevant structs and enums
 

@@ -53,16 +53,16 @@ impl Spotify {
         };
 
         let response_body = json::parse(&response.text().unwrap()); // parse response body
-        match response_body {
+        match response_body { // check for errors
             Ok(response_body) => {
-                if response_body["error"].is_null() {
+                if response_body["error"].is_null() { // if no error field then assume no error
                     Ok(response_body)
                 } else {
-                    match response_body["error"]["status"].as_i32() {
+                    match response_body["error"]["status"].as_i32() { // match various known errors
                         Some(401) => Err(SpotifyError::BadOrExpiredToken(response_body["error"]["message"].to_string())),
                         Some(403) => Err(SpotifyError::BadRequest(response_body["error"]["message"].to_string())),
                         Some(429) => Err(SpotifyError::RateLimitExceeded(response_body["error"]["message"].to_string())),
-                        _ => Err(SpotifyError::RequestError(format!("Error code: {}, message: {}", response_body["error"]["status"], response_body["error"]["message"]))),
+                        _ => Err(SpotifyError::RequestError(format!("Error code: {}, message: {}", response_body["error"]["status"], response_body["error"]["message"]))), // unknown error/general error
                     }
                     
                 }

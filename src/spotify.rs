@@ -518,6 +518,77 @@ impl fmt::Debug for User {
     }
 }
 
+/// Struct to represent a Spotify Playlist
+pub struct Playlist {
+    pub collaborative: bool, // true if the owner allows other users to modify the playlist
+    pub description: Option<String>, // The playlist description. Only returned for modified, verified playlists, otherwise null
+    pub spotify_url: String, // Spotify url for the playlist
+    pub total_followers: i32, // The total number of followers
+    pub href: String, // A link to the Web API endpoint providing full details of the playlist
+    pub id: String, // The Spotify ID for the playlist
+    pub images: Vec<SpotifyImage>, // The playlist cover image in different sizes 
+    pub name: String, // The name of the playlist
+    pub owner: User, // The user who owns the playlist
+    pub public: Option<bool>, // true if the playlist is public
+    pub snapshot_id: String, // The version identifier for the current playlist. Can be supplied in other requests to target a specific playlist version
+    pub tracks: PlaylistTracks, // The tracks of the playlist
+    pub uri: String, // The Spotify URI for the playlist
+}
+
+/// Implements Debug trait for Playlist struct
+impl fmt::Debug for Playlist {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Playlist")
+            .field("name", &self.name)
+            .field("description", &self.description)
+            .field("id", &self.id)
+            .field("total_followers", &self.total_followers)
+            .field("owner", &self.owner)
+            .field("tracks", &self.tracks)
+            .finish()
+    }
+}
+
+/// Struct to represent track in playlist
+pub struct PlaylistTrack {
+    pub added_at: Option<NaiveDateTime>, // The date and time the track was added.
+    pub added_by: User, // The Spotify user who added the track.
+    pub is_local: bool, // Whether this track is a local file or not.
+    pub track: Track, // The track.
+}
+
+/// Implements Debug trait for PlaylistTrack struct
+impl fmt::Debug for PlaylistTrack {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PlaylistTrack")
+            .field("added_at", &self.added_at)
+            .field("added_by", &self.added_by)
+            .field("track", &self.track)
+            .finish()
+    }
+}
+
+/// Struct to represent tracks in playlist
+pub struct PlaylistTracks {
+    pub href: String, // A link to the Web API endpoint where full details of the playlist's tracks can be retrieved.
+    pub total: i32, // The total number of tracks in the playlist.
+    pub tracks: Vec<PlaylistTrack>, // The tracks of the playlist.
+    pub next: Option<String>, // A link to the Web API endpoint where full details of the playlist's tracks can be retrieved.
+    pub limit: i32, // The maximum number of items in response
+    pub offset: i32, // The offset of the items returned
+    pub previous: Option<String>, // A link to the Web API endpoint where full details of the playlist's tracks can be retrieved.
+}
+
+/// Implements Debug trait for PlaylistTracks struct
+impl fmt::Debug for PlaylistTracks {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PlaylistTracks")
+            .field("total", &self.total)
+            .field("tracks", &self.tracks)
+            .finish()
+    }
+}
+
 /// Enum to represent possibilities for time range of user top tracks and artists
 pub enum TimeRange {
     ShortTerm,
