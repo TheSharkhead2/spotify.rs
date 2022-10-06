@@ -1,5 +1,5 @@
 use crate::srequest::RequestMethod;
-use crate::spotify::{Spotify, SpotifyError, Artist, Albums};
+use crate::spotify::{Spotify, SpotifyError, Artist, Album, SpotifyObject, SpotifyCollection};
 
 impl Spotify {
     /// Get information on a single aritst: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-artist>
@@ -47,7 +47,7 @@ impl Spotify {
     /// * `limit` - The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first item to return. Default: 0 (the first object). Use with limit to get the next set of items.
     /// 
-    pub fn get_artist_albums(&mut self, artist_id: &str, include_groups: Option<Vec<&str>>, limit: Option<u32>, market: Option<&str>, offset: Option<u32>) -> Result<Albums, SpotifyError>{
+    pub fn get_artist_albums(&mut self, artist_id: &str, include_groups: Option<Vec<&str>>, limit: Option<u32>, market: Option<&str>, offset: Option<u32>) -> Result<SpotifyCollection<Album>, SpotifyError>{
         let mut url_extension = format!("artists/{}/albums", artist_id); // base url 
 
         if include_groups != None || limit != None || market != None || offset != None { // if any optional parameters are set, add query question mark 
@@ -72,7 +72,7 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
-        return Ok(Albums::new(&response)); // format and return result
+        return Ok(SpotifyCollection::<Album>::new(&response)); // format and return result
     }
 
     /// Get artist's top tracks: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-artists-top-tracks>

@@ -1,8 +1,14 @@
 use chrono::{DateTime, Utc, Duration, NaiveDate, NaiveDateTime};
 use dotenv;
-use std::fmt;
+use std::fmt::{self, Debug};
+use json::JsonValue;
 
 use crate::authorization::{generate_verifier, get_authorization_code, get_access_token, refresh_access_token};
+
+/// Trait to represent single Spotify objects (i.e. Track, Artist, Album, etc.)
+pub trait SpotifyObject {
+    fn new(raw_object: &JsonValue) -> Self; // must implement new method
+}
 
 /// Struct to represent Spotify images (album art, etc.)
 pub struct SpotifyImage {
@@ -41,6 +47,31 @@ pub struct ExternalTrackIds {
     pub upc: Option<String>,
 }
 
+/// Struct to hold general collection of Spotify objects
+pub struct SpotifyCollection<T: SpotifyObject + Debug> {
+    pub href: String,
+    pub items: Vec<T>,
+    pub limit: i32,
+    pub next: Option<String>,
+    pub offset: i32,
+    pub previous: Option<String>,
+    pub total: i32,
+}
+
+/// Implements Debug trait for SpotifyCollection
+impl<T: SpotifyObject + Debug> fmt::Debug for SpotifyCollection<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SpotifyCollection")
+            .field("items", &self.items)
+            .field("limit", &self.limit)
+            .field("next", &self.next)
+            .field("offset", &self.offset)
+            .field("previous", &self.previous)
+            .field("total", &self.total)
+            .finish()
+    }
+}
+
 /// Struct to represent Album 
 pub struct Album {
     pub album_type: AlbumType, // Type of album: album, single, compilation 
@@ -56,7 +87,7 @@ pub struct Album {
     pub restriction_reason: RestrictionReason, // The reason for an album being restricted. Albums may be restricted if the content is not available in a given market, to the user's subscription type, or when the user's account is set to not play explicit content.
     pub uri: String, // The Spotify URI for the album  
     pub artists: Option<Vec<Artist>>, // The artists of the album. Can be None
-    pub tracks: Option<Tracks>, // The tracks of the album. Can be None
+    pub tracks: Option<SpotifyCollection<Track>>, // The tracks of the album. Can be None
 }
 
 /// Implements Debug trait for Album struct
@@ -89,51 +120,6 @@ impl fmt::Debug for DatedAlbum {
     }
 }
 
-/// Struct to represent a set of Albums
-pub struct Albums {
-    pub href: String, // A link to the Web API endpoint returning the full result of the request
-    pub albums: Vec<Album>, // The requested data
-    pub limit: i32, // The maximum number of items in the response (as set in the query or by default)
-    pub next: Option<String>, // URL to the next page of items. (null if none)
-    pub offset: i32, // The offset of the items returned (as set in the query or by default)
-    pub previous: Option<String>, // URL to the previous page of items. (null if none)
-    pub total: i32, // The total number of items available to return
-}
-
-impl fmt::Debug for Albums {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Albums")
-            .field("albums", &self.albums)
-            .field("limit", &self.limit)
-            .field("offset", &self.offset)
-            .field("total", &self.total)
-            .finish()
-    }
-}
-
-/// Struct to represent a set of dated Albums 
-pub struct DatedAlbums {
-    pub href: String, // A link to the Web API endpoint returning the full result of the request
-    pub albums: Vec<DatedAlbum>, // The requested data
-    pub limit: i32, // The maximum number of items in the response (as set in the query or by default)
-    pub next: Option<String>, // URL to the next page of items. (null if none)
-    pub offset: i32, // The offset of the items returned (as set in the query or by default)
-    pub previous: Option<String>, // URL to the previous page of items. (null if none)
-    pub total: i32, // The total number of items available to return
-}
-
-/// Implement Debug trait for DatedAlbums struct
-impl fmt::Debug for DatedAlbums {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("DatedAlbums")
-            .field("albums", &self.albums)
-            .field("limit", &self.limit)
-            .field("offset", &self.offset)
-            .field("total", &self.total)
-            .finish()
-    }
-}
-
 /// Struct to represent Artist 
 pub struct Artist {
     pub spotify_url: String, // The Spotify URL for the artist
@@ -153,29 +139,6 @@ impl fmt::Debug for Artist {
         f.debug_struct("Artist")
             .field("id", &self.id)
             .field("name", &self.name)
-            .finish()
-    }
-}
-
-/// Struct to represent a set of Artists
-pub struct Artists {
-    pub href: String, // A link to the Web API endpoint returning the full result of the request
-    pub artists: Vec<Artist>, // The requested data
-    pub limit: i32, // The maximum number of items in the response (as set in the query or by default)
-    pub next: Option<String>, // URL to the next page of items. (null if none)
-    pub offset: i32, // The offset of the items returned (as set in the query or by default)
-    pub previous: Option<String>, // URL to the previous page of items. (null if none)
-    pub total: i32, // The total number of items available to return
-}
-
-/// Implement Debug trait for Artists struct
-impl fmt::Debug for Artists {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Artists")
-            .field("artists", &self.artists)
-            .field("limit", &self.limit)
-            .field("offset", &self.offset)
-            .field("total", &self.total)
             .finish()
     }
 }
@@ -224,52 +187,6 @@ impl fmt::Debug for DatedTrack {
         f.debug_struct("DatedTrack")
             .field("track", &self.track)
             .field("date_added", &self.date_added)
-            .finish()
-    }
-}
-
-/// Struct to represent several Tracks and keep track of offsets and limits 
-pub struct Tracks {
-    pub href: String, // A link to the Web API endpoint returning the full result of the request
-    pub tracks: Vec<Track>, // The requested data
-    pub limit: i32, // The maximum number of items in the response (as set in the query or by default)
-    pub next: Option<String>, // URL to next page of items, None if none 
-    pub offset: i32, // The offset of the items returned (as set in the query or by default)
-    pub previous: Option<String>, // URL to previous page of items, None if none
-    pub total: i32, // The total number of items available to return
-}
-
-/// Implements Debug trait for Tracks struct
-impl fmt::Debug for Tracks {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Tracks")
-            .field("tracks", &self.tracks)
-            .field("limit", &self.limit)
-            .field("offset", &self.offset)
-            .field("total", &self.total)
-            .finish()
-    }
-}
-
-/// Struct to represent several DatedTracks
-pub struct DatedTracks {
-    pub href: String, // A link to the Web API endpoint returning the full result of the request
-    pub tracks: Vec<DatedTrack>, // The requested data
-    pub limit: i32, // The maximum number of items in the response (as set in the query or by default)
-    pub next: Option<String>, // URL to next page of items, None if none 
-    pub offset: i32, // The offset of the items returned (as set in the query or by default)
-    pub previous: Option<String>, // URL to previous page of items, None if none
-    pub total: i32, // The total number of items available to return
-}
-
-/// Implements Debug trait for DatedTracks struct
-impl fmt::Debug for DatedTracks {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("DatedTracks")
-            .field("tracks", &self.tracks)
-            .field("limit", &self.limit)
-            .field("offset", &self.offset)
-            .field("total", &self.total)
             .finish()
     }
 }
@@ -531,7 +448,7 @@ pub struct Playlist {
     pub owner: User, // The user who owns the playlist
     pub public: Option<bool>, // true if the playlist is public
     pub snapshot_id: String, // The version identifier for the current playlist. Can be supplied in other requests to target a specific playlist version
-    pub tracks: PlaylistTracks, // The tracks of the playlist
+    pub tracks: SpotifyCollection<PlaylistTrack>, // The tracks of the playlist
     pub uri: String, // The Spotify URI for the playlist
 }
 
@@ -564,27 +481,6 @@ impl fmt::Debug for PlaylistTrack {
             .field("added_at", &self.added_at)
             .field("added_by", &self.added_by)
             .field("track", &self.track)
-            .finish()
-    }
-}
-
-/// Struct to represent tracks in playlist
-pub struct PlaylistTracks {
-    pub href: String, // A link to the Web API endpoint where full details of the playlist's tracks can be retrieved.
-    pub total: i32, // The total number of tracks in the playlist.
-    pub tracks: Vec<PlaylistTrack>, // The tracks of the playlist.
-    pub next: Option<String>, // A link to the Web API endpoint where full details of the playlist's tracks can be retrieved.
-    pub limit: i32, // The maximum number of items in response
-    pub offset: i32, // The offset of the items returned
-    pub previous: Option<String>, // A link to the Web API endpoint where full details of the playlist's tracks can be retrieved.
-}
-
-/// Implements Debug trait for PlaylistTracks struct
-impl fmt::Debug for PlaylistTracks {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("PlaylistTracks")
-            .field("total", &self.total)
-            .field("tracks", &self.tracks)
             .finish()
     }
 }

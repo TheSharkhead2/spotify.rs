@@ -1,5 +1,5 @@
 use crate::srequest::RequestMethod;
-use crate::spotify::{Spotify, SpotifyError, Track, DatedTracks, FeatureTrack, AnalysisTrack};
+use crate::spotify::{Spotify, SpotifyError, Track, DatedTrack, FeatureTrack, AnalysisTrack, SpotifyObject, SpotifyCollection};
 use json::JsonValue::Boolean;
 use querystring::stringify;
 use std::collections::HashMap;
@@ -54,7 +54,7 @@ impl Spotify {
     /// * `market` - An ISO 3166-1 alpha-2 country code. 
     /// * `offset` - The index of the first track to return. Default: 0 (i.e., the first track). Use with limit to get the next set of tracks.
     /// 
-    pub fn get_user_saved_tracks(&mut self, limit: Option<u32>, market: Option<&str>, offset: Option<u32>) -> Result<DatedTracks, SpotifyError> {
+    pub fn get_user_saved_tracks(&mut self, limit: Option<u32>, market: Option<&str>, offset: Option<u32>) -> Result<SpotifyCollection<DatedTrack>, SpotifyError> {
         let mut url_extension = String::from("me/tracks"); // base url
 
         self.check_scope("user-library-read")?; // check scope
@@ -77,7 +77,7 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
-        return Ok(DatedTracks::new(&response)); // format and return result
+        return Ok(SpotifyCollection::<DatedTrack>::new(&response)); // format and return result
     }
 
     /// Save tracks into current user's library: <https://developer.spotify.com/documentation/web-api/reference/#/operations/save-tracks-user>

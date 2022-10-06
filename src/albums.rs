@@ -1,5 +1,5 @@
 use crate::srequest::RequestMethod;
-use crate::spotify::{Spotify, SpotifyError, Album, Tracks, DatedAlbums, Albums};
+use crate::spotify::{Spotify, SpotifyError, Album, Track, DatedAlbum, SpotifyObject, SpotifyCollection};
 use json::JsonValue::Boolean;
 use std::collections::HashMap;
 use serde_json::Value;
@@ -62,7 +62,7 @@ impl Spotify {
     /// * `limit` - The maximum number of tracks to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first track to return. Default: 0 (the first object). Use with limit to get the next set of tracks.
     /// 
-    pub fn get_album_tracks(&mut self, album_id: &str, market: Option<&str>, limit: Option<u32>, offset: Option<u32>) -> Result<Tracks, SpotifyError> {
+    pub fn get_album_tracks(&mut self, album_id: &str, market: Option<&str>, limit: Option<u32>, offset: Option<u32>) -> Result<SpotifyCollection<Track>, SpotifyError> {
         let mut url_extension = format!("albums/{}/tracks", album_id); // base url 
 
         // if any parameter is supplied, add to request as query parameter
@@ -87,7 +87,7 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
-        return Ok(Tracks::new(&response)); // format and return result
+        return Ok(SpotifyCollection::<Track>::new(&response)); // format and return result
     }
 
     /// Get albums saved in user's library: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-users-saved-albums>
@@ -98,7 +98,7 @@ impl Spotify {
     /// * `limit` - The maximum number of albums to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first album to return. Default: 0 (the first object). Use with limit to get the next set of albums.
     /// 
-    pub fn get_saved_albums(&mut self, limit: Option<u32>, market: Option<&str>, offset: Option<u32>) -> Result<DatedAlbums, SpotifyError> {
+    pub fn get_saved_albums(&mut self, limit: Option<u32>, market: Option<&str>, offset: Option<u32>) -> Result<SpotifyCollection<DatedAlbum>, SpotifyError> {
         let mut url_extension = String::from("me/albums"); // base url
 
         self.check_scope("user-library-read")?; // check scope
@@ -125,7 +125,7 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
-        return Ok(DatedAlbums::new(&response)); // format and return result
+        return Ok(SpotifyCollection::<DatedAlbum>::new(&response)); // format and return result
     }
 
     /// Save albums for current user: <https://developer.spotify.com/documentation/web-api/reference/#/operations/save-albums-user>
@@ -210,7 +210,7 @@ impl Spotify {
     /// * `limit` - The maximum number of albums to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first album to return. Default: 0 (the first object). Use with limit to get the next set of albums.
     /// 
-    pub fn get_new_releases(&mut self, country: Option<&str>, limit: Option<u32>, offset: Option<u32>) -> Result<Albums, SpotifyError> {
+    pub fn get_new_releases(&mut self, country: Option<&str>, limit: Option<u32>, offset: Option<u32>) -> Result<SpotifyCollection<Album>, SpotifyError> {
         let mut url_extension = String::from("browse/new-releases"); // base url
 
         // if any parameter is supplied, add to request as query parameter
@@ -235,6 +235,6 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
-        return Ok(Albums::new(&response["albums"])); // format and return result        
+        return Ok(SpotifyCollection::<Album>::new(&response["albums"])); // format and return result        
     }
 }

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use serde_json::Value;
 use crate::srequest::RequestMethod;
-use crate::spotify::{Spotify, SpotifyError, User, TimeRange, Artists, Tracks};
+use crate::spotify::{Spotify, SpotifyError, User, TimeRange, Artist, Track, SpotifyCollection};
 
 
 impl Spotify {
@@ -28,7 +28,7 @@ impl Spotify {
     /// * `limit` - The number of artists to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first artist to return. Default: 0 (i.e., the first artist). Use with limit to get the next set of artists.
     /// 
-    pub fn get_users_top_artists(&mut self, time_range: Option<TimeRange>, limit: Option<i32>, offset: Option<i32>) -> Result<Artists, SpotifyError> {
+    pub fn get_users_top_artists(&mut self, time_range: Option<TimeRange>, limit: Option<i32>, offset: Option<i32>) -> Result<SpotifyCollection<Artist>, SpotifyError> {
         let mut url_extension = String::from("me/top/artists");
 
         self.check_scope("user-top-read")?;
@@ -58,7 +58,7 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
-        return Ok(Artists::new(&response))
+        return Ok(SpotifyCollection::<Artist>::new(&response))
     }
 
     /// Gets the user's top tracks. A derivative of: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-users-top-artists-and-tracks>
@@ -70,7 +70,7 @@ impl Spotify {
     /// * `limit` - The number of tracks to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first track to return. Default: 0 (i.e., the first track). Use with limit to get the next set of tracks.
     /// 
-    pub fn get_users_top_tracks(&mut self, time_range: Option<TimeRange>, limit: Option<i32>, offset: Option<i32>) -> Result<Tracks, SpotifyError> {
+    pub fn get_users_top_tracks(&mut self, time_range: Option<TimeRange>, limit: Option<i32>, offset: Option<i32>) -> Result<SpotifyCollection<Track>, SpotifyError> {
         let mut url_extension = String::from("me/top/tracks");
 
         self.check_scope("user-top-read")?;
@@ -100,7 +100,7 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
-        return Ok(Tracks::new(&response))
+        return Ok(SpotifyCollection::<Track>::new(&response))
     }
 
     /// Gets the public profile for a user: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-users-profile>
@@ -168,7 +168,7 @@ impl Spotify {
     /// # Arguments
     /// * `limit` - The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
     /// 
-    pub fn get_followed_artists(&mut self, limit: Option<i32>) -> Result<Artists, SpotifyError> {
+    pub fn get_followed_artists(&mut self, limit: Option<i32>) -> Result<SpotifyCollection<Artist>, SpotifyError> {
         let mut url_extension = String::from("me/following?type=artist");
 
         self.check_scope("user-follow-read")?;
@@ -180,7 +180,7 @@ impl Spotify {
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request 
 
-        return Ok(Artists::new(&response["artists"]))
+        return Ok(SpotifyCollection::<Artist>::new(&response["artists"]))
     }
 
     /// Follows specified artists. A derivative of: <https://developer.spotify.com/documentation/web-api/reference/#/operations/follow-artists-users>
