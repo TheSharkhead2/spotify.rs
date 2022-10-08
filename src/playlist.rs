@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use serde_json::Value;
 use crate::srequest::RequestMethod;
-use crate::spotify::{Spotify, SpotifyError, Playlist};
+use crate::spotify::{Spotify, SpotifyError, Playlist, SpotifyCollection, PlaylistTrack};
 
 impl Spotify {
     /// Get a playlist owned by a Spotify user: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-playlist> 
@@ -68,5 +68,34 @@ impl Spotify {
         Ok(())
     }
 
-    
+    /// Get all items in playlist: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-playlists-tracks> 
+    /// Note: no support for episodes at the moment so unexpected results may occur with playlists that contain episodes
+    /// 
+    /// Required scope: none
+    /// 
+    /// # Arguments
+    /// * `playlist_id` - The Spotify ID of the playlist.
+    /// * `market` - An ISO 3166-1 alpha-2 country code.
+    /// * `limit` - The maximum number of items to return. Default: 100. Minimum: 0. Maximum: 100.
+    /// * `offset` - The index of the first item to return. Default: 0 (the first object). Use with limit to get the next set of items.
+    /// 
+    pub fn get_playlist_tracks(&mut self, playlist_id: &str, market: Option<&str>, limit: Option<i32>, offset: Option<i32>) -> Result<SpotifyCollection<PlaylistTrack>, SpotifyError> {
+        let mut url_extension = format!("playlists/{}/tracks?additional_types=track", playlist_id); // base url. Currently this only supports tracks, not episodes
+
+        if let Some(market) = market { // if market is set, add to url
+            url_extension.push_str(&format!("&market={}", market));
+        }
+
+        if let Some(limit) = limit { // if limit is set, add to url
+            url_extension.push_str(&format!("&limit={}", limit));
+        }
+
+        if let Some(offset) = offset { // if offset is set, add to url
+            url_extension.push_str(&format!("&offset={}", offset));
+        }
+
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+
+        return Ok(SpotifyCollection::<PlaylistTrack>::new(&response)); // format and return result
+    }
 }

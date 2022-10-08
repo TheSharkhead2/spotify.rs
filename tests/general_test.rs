@@ -17,7 +17,7 @@ fn general_testing() {
     // println!("{:?}", spotify.get_new_releases(None, None, None));
     // println!("{:?}", spotify.get_artist("59sBwR0jPSTrbMtuTkRPN5"));
     // println!("{:?}", spotify.get_several_artists(vec!["59sBwR0jPSTrbMtuTkRPN5", "6eUKZXaKkcviH0Ku9w2n3V"]));
-    println!("{:?}", spotify.get_artist_albums("6eUKZXaKkcviH0Ku9w2n3V", None, None, None, None));
+    // println!("{:?}", spotify.get_artist_albums("6eUKZXaKkcviH0Ku9w2n3V", None, None, None, None));
     // println!("{:?}", spotify.get_artist_top_tracks("6eUKZXaKkcviH0Ku9w2n3V", "US"));
     // println!("{:?}", spotify.get_artist_related_artists("6eUKZXaKkcviH0Ku9w2n3V"));
     // println!("{:?}", spotify.get_track("212AgAhFl3RJZGAK0LrMpX"));
@@ -46,5 +46,6 @@ fn general_testing() {
     // println!("{:?}", spotify.check_users_follow_playlist("4soTsWdI5kIAxa9kACgJb4", vec!["kcm4s9xdvua5ft5glrsxii3ki", "ommmrjvmegv5jpe6cjfc97392", "jazzdancer16"]));
     // println!("{:?}", spotify.get_playlist("1SH1tptnz2C09EndCJb5Zz", None));
     // println!("{:?}", spotify.change_playlist_details("40KoEtcGjMKLZJloarHBGw", Some("Craig Johnson"), Some(true), None, None));
+    println!("{:?}", spotify.get_playlist_tracks("3rplsOUSIqcwlCV1yHX5f7", None, Some(100), None));
 }
 
