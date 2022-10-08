@@ -132,4 +132,72 @@ impl Spotify {
 
         Ok(())
     }
+
+    /// Replace tracks in user's playlist. A derivative of: <https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks> 
+    /// Returns the new snapshot ID of the playlist. 
+    /// Note: Currently there is only support for spotifiy tracks, not episodes. 
+    /// 
+    /// Required scope: playlist-modify-public playlist-modify-private
+    /// 
+    /// # Arguments
+    /// * `playlist_id` - The Spotify ID of the playlist.
+    /// * `track_ids` - A list of Spotify track URIs to add, can be a maximum of 100.
+    /// 
+    pub fn replace_playlist_tracks(&mut self, playlist_id: &str, track_ids: Vec<&str>) -> Result<String, SpotifyError> {
+        let url_extension = format!("playlists/{}/tracks", playlist_id); // base url
+
+        self.check_scope("playlist-modify-public playlist-modify-private")?;
+
+        let track_uris = Value::Array(track_ids.iter().map(|x| Value::String(format!("spotify:track:{}", x))).collect()); // create vector of track uris
+
+        let mut body: HashMap<String, Value> = HashMap::new(); // create body
+
+        body.insert(String::from("uris"), track_uris); // add track uris to body
+
+        let response = self.spotify_request(&url_extension, RequestMethod::Put(body))?; // make request
+
+        return match response["snapshot_id"].as_str() { // return snapshot id
+            Some(snapshot_id) => Ok(String::from(snapshot_id)),
+            None => Err(SpotifyError::RequestError(String::from("No snapshot id returned"))),
+        };
+    }
+
+    /// Reorder tracks in user's playlist. A derivative of: <https://developer.spotify.com/documentation/web-api/reference/#/operations/reorder-or-replace-playlists-tracks>
+    /// Returns the new snapshot ID of the playlist.
+    /// 
+    /// Required scope: playlist-modify-public playlist-modify-private
+    /// 
+    /// # Arguments
+    /// * `playlist_id` - The Spotify ID of the playlist.
+    /// * `range_start` - The position of the first track to be reordered.
+    /// * `insert_before` - The position where the tracks should be inserted.
+    /// * `range_length` - The amount of tracks to be reordered. Defaults to 1 if not set.
+    /// * `snapshot_id` - The playlist's snapshot ID against which you want to make the changes.
+    /// 
+    pub fn reorder_playlist_tracks(&mut self, playlist_id: &str, range_start: i32, insert_before: i32, range_length: Option<i32>, snapshot_id: Option<&str>) -> Result<String, SpotifyError> {
+        let url_extension = format!("playlists/{}/tracks", playlist_id); // base url
+
+        self.check_scope("playlist-modify-public playlist-modify-private")?;
+
+        let mut body: HashMap<String, Value> = HashMap::new(); // create body
+
+        body.insert(String::from("range_start"), Value::Number(Number::from(range_start))); // add range start to body
+        body.insert(String::from("insert_before"), Value::Number(Number::from(insert_before))); // add insert before to body
+
+        if let Some(range_length) = range_length { // if range length is set, add to body
+            body.insert(String::from("range_length"), Value::Number(Number::from(range_length)));
+        }
+
+        if let Some(snapshot_id) = snapshot_id { // if snapshot id is set, add to body
+            body.insert(String::from("snapshot_id"), Value::String(String::from(snapshot_id)));
+        }
+
+        let response = self.spotify_request(&url_extension, RequestMethod::Put(body))?; // make request
+
+        return match response["snapshot_id"].as_str() { // return snapshot id
+            Some(snapshot_id) => Ok(String::from(snapshot_id)),
+            None => Err(SpotifyError::RequestError(String::from("No snapshot id returned"))),
+        };
+    }
+    
 }
