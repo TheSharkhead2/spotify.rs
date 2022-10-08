@@ -448,7 +448,7 @@ pub struct Playlist {
     pub owner: User, // The user who owns the playlist
     pub public: Option<bool>, // true if the playlist is public
     pub snapshot_id: String, // The version identifier for the current playlist. Can be supplied in other requests to target a specific playlist version
-    pub tracks: SpotifyCollection<PlaylistTrack>, // The tracks of the playlist
+    pub tracks: Option<SpotifyCollection<PlaylistTrack>>, // The tracks of the playlist
     pub uri: String, // The Spotify URI for the playlist
 }
 

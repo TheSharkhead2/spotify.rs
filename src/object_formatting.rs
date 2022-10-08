@@ -892,13 +892,13 @@ impl User {
     }
 }
 
-impl Playlist {
+impl SpotifyObject for Playlist {
     /// Takes JsonValue representing a Playlist and returns the Playlist Struct
     /// 
     /// # Arguments
     /// * `raw_object` - JsonValue representing a Playlist
     /// 
-    pub fn new(raw_object: &JsonValue) -> Playlist {
+    fn new(raw_object: &JsonValue) -> Playlist {
         let collaborative = match raw_object["collaborative"].as_bool() {
             Some(collaborative) => collaborative,
             None => false, // default to false
@@ -948,7 +948,10 @@ impl Playlist {
             None => String::new(), // default to empty string
         };
 
-        let tracks = SpotifyCollection::<PlaylistTrack>::new(&raw_object["tracks"]);
+        let tracks = match &raw_object["tracks"] {
+            Null => None,
+            tracks => Some(SpotifyCollection::<PlaylistTrack>::new(tracks)), // format tracks if they exist
+        };
 
         let uri = match raw_object["uri"].as_str() {
             Some(uri) => String::from(uri),

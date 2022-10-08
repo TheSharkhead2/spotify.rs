@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use serde_json::{Value, Number, Map};
 use crate::srequest::RequestMethod;
-use crate::spotify::{Spotify, SpotifyError, Playlist, SpotifyCollection, PlaylistTrack};
+use crate::spotify::{Spotify, SpotifyError, SpotifyObject, Playlist, SpotifyCollection, PlaylistTrack};
 
 impl Spotify {
     /// Get a playlist owned by a Spotify user: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-playlist> 
@@ -235,5 +235,35 @@ impl Spotify {
             Some(snapshot_id) => Ok(String::from(snapshot_id)),
             None => Err(SpotifyError::RequestError(String::from("No snapshot id returned"))),
         };
+    }
+
+    /// Get current user's playlists: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-a-list-of-current-users-playlists>
+    /// 
+    /// Required scope: playlist-read-private playlist-read-collaborative
+    /// 
+    /// # Arguments
+    /// * `limit` - The maximum number of playlists to return. Default: 20. Minimum: 1. Maximum: 50.
+    /// * `offset` - The index of the first playlist to return. Default: 0 (the first object). Use with limit to get the next set of playlists.
+    /// 
+    pub fn get_users_playlists(&mut self, limit: Option<i32>, offset: Option<i32>) -> Result<SpotifyCollection<Playlist>, SpotifyError> {
+        let mut url_extension = String::from("me/playlists"); // base url
+
+        self.check_scope("playlist-read-private playlist-read-collaborative")?;
+
+        if !limit.is_none() || !offset.is_none() { // if one optional parameter is specified
+            url_extension.push_str("?"); // add ? to url
+        }
+
+        if let Some(limit) = limit { // if limit is set, add to url
+            url_extension.push_str(&format!("limit={}&", limit));
+        }
+
+        if let Some(offset) = offset { // if offset is set, add to url
+            url_extension.push_str(&format!("offset={}&", offset));
+        }
+
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+
+        return Ok(SpotifyCollection::<Playlist>::new(&response)); // return page of playlists
     }
 }
