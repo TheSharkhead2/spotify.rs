@@ -49,6 +49,7 @@ fn general_testing() {
     // println!("{:?}", spotify.get_playlist_tracks("40KoEtcGjMKLZJloarHBGw", None, Some(100), None));
     // println!("{:?}", spotify.add_tracks_to_playlist("1SH1tptnz2C09EndCJb5Zz", vec!["212AgAhFl3RJZGAK0LrMpX","5QYnNhTKsN3kE7OaqILA1U"], None));
     // println!("{:?}", spotify.replace_playlist_tracks("40KoEtcGjMKLZJloarHBGw", vec!["212AgAhFl3RJZGAK0LrMpX","5QYnNhTKsN3kE7OaqILA1U"]));
-    println!("{:?}", spotify.reorder_playlist_tracks("40KoEtcGjMKLZJloarHBGw", 1, 0, None, None));
+    // println!("{:?}", spotify.reorder_playlist_tracks("40KoEtcGjMKLZJloarHBGw", 1, 0, None, None));
+    println!("{:?}", spotify.remove_playlist_tracks("40KoEtcGjMKLZJloarHBGw", vec!["212AgAhFl3RJZGAK0LrMpX"], None));
 }
 

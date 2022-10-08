@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use serde_json::{Value, Number};
+use serde_json::{Value, Number, Map};
 use crate::srequest::RequestMethod;
 use crate::spotify::{Spotify, SpotifyError, Playlist, SpotifyCollection, PlaylistTrack};
 
@@ -200,4 +200,40 @@ impl Spotify {
         };
     }
     
+    /// Remove tracks from user's playlist: <https://developer.spotify.com/documentation/web-api/reference/#/operations/remove-tracks-playlist> 
+    /// Returns the new snapshot ID of the playlist.
+    /// Note: currently only support for spotify tracks, not episodes.
+    /// 
+    /// Required scope: playlist-modify-public playlist-modify-private
+    /// 
+    /// # Arguments
+    /// * `playlist_id` - The Spotify ID of the playlist.
+    /// * `track_ids` - A list of Spotify track URIs to remove, can be a maximum of 100.
+    /// * `snapshot_id` - The playlist's snapshot ID against which you want to make the changes.
+    /// 
+    pub fn remove_playlist_tracks(&mut self, playlist_id: &str, track_ids: Vec<&str>, snapshot_id: Option<&str>) -> Result<String, SpotifyError> {
+        let url_extension = format!("playlists/{}/tracks", playlist_id); // base url
+
+        self.check_scope("playlist-modify-public playlist-modify-private")?;
+
+        let mut body: HashMap<String, Value> = HashMap::new(); // create body
+
+        // create a vector of Object mappings from "uri" to the uri of each track
+        body.insert(String::from("tracks"), Value::Array(track_ids.iter().map(|x| Value::Object({ // insert tracks field into body
+            let mut m = Map::new(); // new blank map for each object
+            m.insert(String::from("uri"), Value::String(format!("spotify:track:{}", x))); // format track id into uri and insert into map under field "uri"
+            m // return map into array
+        })).collect())); // collect into array
+
+        if let Some(snapshot_id) = snapshot_id { // if snapshot id is set, add to body
+            body.insert(String::from("snapshot_id"), Value::String(String::from(snapshot_id)));
+        }
+
+        let response = self.spotify_request(&url_extension, RequestMethod::Delete(body))?; // make request
+
+        return match response["snapshot_id"].as_str() { // return snapshot id
+            Some(snapshot_id) => Ok(String::from(snapshot_id)),
+            None => Err(SpotifyError::RequestError(String::from("No snapshot id returned"))),
+        };
+    }
 }
