@@ -4,7 +4,7 @@ use spotifyrs::{Spotify, TimeRange};
 fn general_testing() {
     let mut spotify = Spotify::authenticate(
         String::from("8888"),
-        String::from("user-follow-modify playlist-read-collaborative playlist-read-private"),
+        String::from("user-follow-modify playlist-read-collaborative playlist-read-private playlist-modify-public playlist-modify-private"),
     );
     
     // println!("{:?}", spotify.get_album("1xJ7jIK1tT0aVoJw1fPE6r", None));
@@ -52,6 +52,7 @@ fn general_testing() {
     // println!("{:?}", spotify.reorder_playlist_tracks("40KoEtcGjMKLZJloarHBGw", 1, 0, None, None));
     // println!("{:?}", spotify.remove_playlist_tracks("40KoEtcGjMKLZJloarHBGw", vec!["212AgAhFl3RJZGAK0LrMpX"], None));
     // println!("{:?}", spotify.get_current_users_playlists(None, None));
-    println!("{:?}", spotify.get_users_playlists("kcm4s9xdvua5ft5glrsxii3ki", None, None));
+    // println!("{:?}", spotify.get_users_playlists("kcm4s9xdvua5ft5glrsxii3ki", None, None));
+    println!("{:?}", spotify.create_playlist("ommmrjvmegv5jpe6cjfc97392", "I made playlist", None, None, Some("I made this playlist with the spotify api")));
 }
 

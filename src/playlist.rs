@@ -267,7 +267,7 @@ impl Spotify {
         return Ok(SpotifyCollection::<Playlist>::new(&response)); // return playlists
     }
 
-    /// get a specified user's playlists: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-list-users-playlists>
+    /// Get a specified user's playlists: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-list-users-playlists>
     /// 
     /// Required scope: playlist-read-private playlist-read-collaborative
     /// 
@@ -296,5 +296,42 @@ impl Spotify {
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
         return Ok(SpotifyCollection::<Playlist>::new(&response)); // return playlists
+    }
+
+    /// Create a playlist for the current user: <https://developer.spotify.com/documentation/web-api/reference/#/operations/create-playlist> 
+    /// 
+    /// Required scope: playlist-modify-public playlist-modify-private
+    /// 
+    /// # Arguments
+    /// * `user_id` - The user's Spotify user ID.
+    /// * `name` - The name for the new playlist 
+    /// * `public` - Defaults to true. If true the playlist will be public, if false it will be private.
+    /// * `collaborative` - Defaults to false. If true the playlist will be collaborative. Note that to create a collaborative playlist you must also set public to false.
+    /// * `description` - Value for playlist description as displayed in Spotify Clients and in the Web API.
+    /// 
+    pub fn create_playlist(&mut self, user_id: &str, name: &str, public: Option<bool>, collaborative: Option<bool>, description: Option<&str>) -> Result<Playlist, SpotifyError> {
+        let url_extension = format!("users/{}/playlists", user_id); // base url
+
+        self.check_scope("playlist-modify-public playlist-modify-private")?;
+
+        let mut body: HashMap<String, Value> = HashMap::new(); // create body
+
+        body.insert(String::from("name"), Value::String(String::from(name))); // insert name into body
+
+        if let Some(public) = public { // if public is set, add to body
+            body.insert(String::from("public"), Value::Bool(public));
+        }
+
+        if let Some(collaborative) = collaborative { // if collaborative is set, add to body
+            body.insert(String::from("collaborative"), Value::Bool(collaborative));
+        }
+
+        if let Some(description) = description { // if description is set, add to body
+            body.insert(String::from("description"), Value::String(String::from(description)));
+        }
+
+        let response = self.spotify_request(&url_extension, RequestMethod::Post(body))?; // make request
+
+        return Ok(Playlist::new(&response)); // return playlist
     }
 }
