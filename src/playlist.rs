@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use serde_json::Value;
+use serde_json::{Value, Number};
 use crate::srequest::RequestMethod;
 use crate::spotify::{Spotify, SpotifyError, Playlist, SpotifyCollection, PlaylistTrack};
 
@@ -97,5 +97,39 @@ impl Spotify {
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
         return Ok(SpotifyCollection::<PlaylistTrack>::new(&response)); // format and return result
+    }
+
+    /// Add one or more tracks to a user's playlist: <https://developer.spotify.com/documentation/web-api/reference/#/operations/add-tracks-to-playlist>
+    /// Note: currently only supports tracks, not episodes. 
+    /// 
+    /// Required scope: playlist-modify-public playlist-modify-private
+    /// 
+    /// # Arguments
+    /// * `playlist_id` - The Spotify ID of the playlist.
+    /// * `track_ids` - A list of Spotify track URIs to add, can be a maximum of 100. 
+    /// * `position` - The position to insert the tracks, a zero-based index. For example, to insert the tracks in the first position: position=0; to insert the tracks in the third position: position=2. If omitted, the tracks will be appended to the playlist.
+    /// 
+    pub fn add_tracks_to_playlist(&mut self, playlist_id: &str, track_ids: Vec<&str>, position: Option<i32>) -> Result<(), SpotifyError> {
+        let url_extension = format!("playlists/{}/tracks", playlist_id); // base url
+
+        self.check_scope("playlist-modify-public playlist-modify-private")?;
+
+        let mut track_uris: Vec<String> = Vec::new(); // create vector of track uris
+
+        for track_id in track_ids { // add track ids to vector
+            track_uris.push(format!("spotify:track:{}", track_id)); // format track ids into uris
+        }
+
+        let mut body: HashMap<String, Value> = HashMap::new(); // create body
+
+        body.insert(String::from("uris"), Value::Array(track_uris.iter().map(|x| Value::String(x.to_string())).collect())); // add track uris to body
+
+        if let Some(position) = position { // if position is set, add to body
+            body.insert(String::from("position"), Value::Number(Number::from(position)));
+        }
+
+        self.spotify_request(&url_extension, RequestMethod::Post(body))?; // make request 
+
+        Ok(())
     }
 }

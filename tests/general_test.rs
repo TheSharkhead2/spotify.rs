@@ -46,6 +46,7 @@ fn general_testing() {
     // println!("{:?}", spotify.check_users_follow_playlist("4soTsWdI5kIAxa9kACgJb4", vec!["kcm4s9xdvua5ft5glrsxii3ki", "ommmrjvmegv5jpe6cjfc97392", "jazzdancer16"]));
     // println!("{:?}", spotify.get_playlist("1SH1tptnz2C09EndCJb5Zz", None));
     // println!("{:?}", spotify.change_playlist_details("40KoEtcGjMKLZJloarHBGw", Some("Craig Johnson"), Some(true), None, None));
-    println!("{:?}", spotify.get_playlist_tracks("3rplsOUSIqcwlCV1yHX5f7", None, Some(100), None));
+    // println!("{:?}", spotify.get_playlist_tracks("3rplsOUSIqcwlCV1yHX5f7", None, Some(100), None));
+    println!("{:?}", spotify.add_tracks_to_playlist("1SH1tptnz2C09EndCJb5Zz", vec!["212AgAhFl3RJZGAK0LrMpX","5QYnNhTKsN3kE7OaqILA1U"], None));
 }
 

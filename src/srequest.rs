@@ -7,7 +7,7 @@ use serde_json::Value;
 /// Enum to store types of requests relevant to Spotify API
 pub enum RequestMethod {
     Get,
-    Post,
+    Post(HashMap<String, Value>),
     Put(HashMap<String, Value>),
     Delete(HashMap<String, Value>),
 }
@@ -38,7 +38,7 @@ impl Spotify {
                 Ok(response) => response,
                 Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
             }},
-            RequestMethod::Post => {match client.post(&request_url).headers(headers).send() {
+            RequestMethod::Post(body) => {match client.post(&request_url).headers(headers).header("Content-Type", "application/json").json(&body).send() {
                 Ok(response) => response,
                 Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
             }},
