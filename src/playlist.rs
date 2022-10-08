@@ -245,7 +245,7 @@ impl Spotify {
     /// * `limit` - The maximum number of playlists to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first playlist to return. Default: 0 (the first object). Use with limit to get the next set of playlists.
     /// 
-    pub fn get_users_playlists(&mut self, limit: Option<i32>, offset: Option<i32>) -> Result<SpotifyCollection<Playlist>, SpotifyError> {
+    pub fn get_current_users_playlists(&mut self, limit: Option<i32>, offset: Option<i32>) -> Result<SpotifyCollection<Playlist>, SpotifyError> {
         let mut url_extension = String::from("me/playlists"); // base url
 
         self.check_scope("playlist-read-private playlist-read-collaborative")?;
