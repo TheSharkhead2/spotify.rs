@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use chrono::NaiveDateTime;
 use serde_json::{Value, Number, Map};
 use crate::srequest::RequestMethod;
-use crate::spotify::{Spotify, SpotifyError, SpotifyObject, Playlist, SpotifyCollection, PlaylistTrack};
+use crate::spotify::{Spotify, SpotifyError, SpotifyObject, Playlist, SpotifyCollection, PlaylistTrack, SpotifyImage};
 
 impl Spotify {
     /// Get a playlist owned by a Spotify user: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-playlist> 
@@ -411,5 +411,26 @@ impl Spotify {
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
 
         return Ok(SpotifyCollection::<Playlist>::new(&response["playlists"])) // return playlists
+    }
+
+    /// Gets the current image associated with a playlist: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-playlist-cover> 
+    /// 
+    /// Required scope: none 
+    /// 
+    /// # Arguments
+    /// * `playlist_id` - The Spotify ID for the playlist.
+    /// 
+    pub fn get_playlist_cover_image(&mut self, playlist_id: &str) -> Result<Vec<SpotifyImage>, SpotifyError> {
+        let url_extension = format!("playlists/{}/images", playlist_id); // base url
+
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+
+        let mut images: Vec<SpotifyImage> = Vec::new(); // create vector to store images
+
+        for image in response.members() {
+            images.push(SpotifyImage::new(&image)); // add image to vector
+        }
+
+        return Ok(images); // return images
     }
 }

@@ -17,6 +17,17 @@ pub struct SpotifyImage {
     pub width: i32,
 }
 
+/// Implements the Debug trait for SpotifyImage
+impl Debug for SpotifyImage {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SpotifyImage")
+            .field("url", &self.url)
+            .field("height", &self.height)
+            .field("width", &self.width)
+            .finish()
+    }
+}
+
 /// Enum to represent three states of album type 
 pub enum AlbumType {
     Album,

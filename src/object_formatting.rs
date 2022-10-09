@@ -14,7 +14,7 @@ impl SpotifyImage {
     /// # Panics 
     /// If height or width value can't be converted to i32 (shouldn't happen)
     /// 
-    fn new(image: &JsonValue) -> SpotifyImage {
+    pub fn new(image: &JsonValue) -> SpotifyImage {
         SpotifyImage {
             url: image["url"].to_string(),
             height: match image["height"].as_i32() {

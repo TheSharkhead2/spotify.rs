@@ -55,7 +55,8 @@ fn general_testing() {
     // println!("{:?}", spotify.get_users_playlists("kcm4s9xdvua5ft5glrsxii3ki", None, None));
     // println!("{:?}", spotify.create_playlist("ommmrjvmegv5jpe6cjfc97392", "I made playlist", None, None, Some("I made this playlist with the spotify api")));
     // println!("{:?}", spotify.get_featured_playlists(None, None, None, None, None));
-    println!("{:?}", spotify.get_categorys_playlists("hiphop", None, None, None));
+    // println!("{:?}", spotify.get_categorys_playlists("hiphop", None, None, None));
     // println!("{:?}", spotify.get_several_browse_categories(None, None, None, None));
+    println!("{:?}", spotify.get_playlist_cover_image("3rplsOUSIqcwlCV1yHX5f7"));
 }
 
