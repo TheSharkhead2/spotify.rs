@@ -433,4 +433,6 @@ impl Spotify {
 
         return Ok(images); // return images
     }
+
+    // TODO: implement: https://developer.spotify.com/documentation/web-api/reference/#/operations/upload-custom-playlist-cover. However, unclear how image is uploaded.
 }

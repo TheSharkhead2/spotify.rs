@@ -41,4 +41,32 @@ impl Spotify {
         Ok(SpotifyCollection::<Category>::new(&response["categories"])) // return collection
     }
 
+    /// Gets a single Spotify category: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-a-category> 
+    /// 
+    /// Requires scope: None
+    /// 
+    /// # Arguments
+    /// * `category_id` - The Spotify category ID for the category.
+    /// * `country` - An ISO 3166-1 alpha-2 country code.
+    /// * `locale` - The desired language, consisting of an ISO 639 language code and an ISO 3166-1 alpha-2 country code, joined by an underscore.
+    /// 
+    pub fn get_single_browse_category(&mut self, category_id: &str, country: Option<&str>, locale: Option<&str>) -> Result<Category, SpotifyError> {
+        let mut url_extension = format!("browse/categories/{}", category_id); // base url 
+
+        if !country.is_none() || !locale.is_none() { // if any optional arguments are present
+            url_extension.push_str("?"); // add ? to url
+        }
+
+        if let Some(country) = country {
+            url_extension.push_str(&format!("country={}&", country)); // add country to url
+        }
+
+        if let Some(locale) = locale {
+            url_extension.push_str(&format!("locale={}&", locale)); // add locale to url
+        }
+
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // send request
+
+        Ok(Category::new(&response)) // return category
+    } 
 }
