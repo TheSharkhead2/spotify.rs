@@ -72,6 +72,24 @@ impl<T: SpotifyObject + Debug> fmt::Debug for SpotifyCollection<T> {
     }
 }
 
+/// Struct to represent Spotify category 
+pub struct Category {
+    pub href: String,
+    pub icons: Vec<SpotifyImage>,
+    pub id: String,
+    pub name: String,
+}
+
+/// Implements Debug trait for Category
+impl fmt::Debug for Category {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Category")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .finish()
+    }
+}
+
 /// Struct to represent Album 
 pub struct Album {
     pub album_type: AlbumType, // Type of album: album, single, compilation 

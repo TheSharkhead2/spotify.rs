@@ -378,4 +378,38 @@ impl Spotify {
 
         return Ok(SpotifyCollection::<Playlist>::new(&response["playlists"])) // return playlists (or albums?)
     }
+
+    /// Get a set of Spotify playlsits tagged with a particular category: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-a-categories-playlists>
+    /// 
+    /// Required scope: none
+    /// 
+    /// # Arguments
+    /// * `category_id` - The Spotify category ID for the category.
+    /// * `country` - An ISO 3166-1 alpha-2 country code. 
+    /// * `limit` - The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
+    /// * `offset` - The index of the first item to return. Default: 0 (the first object). Use with limit to get the next set of items.
+    /// 
+    pub fn get_categorys_playlists(&mut self, category_id: &str, country: Option<&str>, limit: Option<i32>, offset: Option<i32>) -> Result<SpotifyCollection<Playlist>, SpotifyError> {
+        let mut url_extension = format!("browse/categories/{}/playlists", category_id); // base url
+
+        if !country.is_none() || !limit.is_none() || !offset.is_none() { // if one optional parameter is specified
+            url_extension.push_str("?"); // add ? to url
+        }
+
+        if let Some(country) = country { // if country is set, add to url
+            url_extension.push_str(&format!("country={}&", country));
+        }
+
+        if let Some(limit) = limit { // if limit is set, add to url
+            url_extension.push_str(&format!("limit={}&", limit));
+        }
+
+        if let Some(offset) = offset { // if offset is set, add to url
+            url_extension.push_str(&format!("offset={}&", offset));
+        }
+
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+
+        return Ok(SpotifyCollection::<Playlist>::new(&response["playlists"])) // return playlists
+    }
 }

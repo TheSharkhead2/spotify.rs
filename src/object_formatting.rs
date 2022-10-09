@@ -2,7 +2,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 use json::{JsonValue::{self, Array, Null}};
 use std::fmt::Debug;
 
-use crate::spotify::{SpotifyImage, AlbumType, SpotifyObject, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, DatedAlbum, DatedTrack, FeatureTrack, AnalysisTrack, Bar, Beat, Section, Segment, Tatum, SpotifyError, User, Playlist, PlaylistTrack, SpotifyCollection};
+use crate::spotify::{SpotifyImage, AlbumType, SpotifyObject, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, DatedAlbum, DatedTrack, FeatureTrack, AnalysisTrack, Bar, Beat, Section, Segment, Tatum, SpotifyError, User, Playlist, PlaylistTrack, SpotifyCollection, Category};
 
 impl SpotifyImage {
     /// Take JsonValue object representing image from API request and turn into 
@@ -1051,6 +1051,37 @@ impl<T: SpotifyObject + Debug> SpotifyCollection<T> {
             limit,
             offset,
             previous,
+        }
+    }
+}
+
+impl SpotifyObject for Category {
+    fn new(raw_object: &JsonValue) -> Category {
+        let href = match raw_object["href"].as_str() {
+            Some(href) => String::from(href),
+            None => String::new(), // default to empty string
+        };
+
+        let icons = match &raw_object["icons"] {
+            Array(icons) => {icons.iter().map(|icon| SpotifyImage::new(icon)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
+            _ => vec![], // default to empty vec 
+        };
+
+        let id = match raw_object["id"].as_str() {
+            Some(id) => String::from(id),
+            None => String::new(), // default to empty string
+        };
+
+        let name = match raw_object["name"].as_str() {
+            Some(name) => String::from(name),
+            None => String::new(), // default to empty string
+        };
+
+        Category {
+            href,
+            icons,
+            id,
+            name,
         }
     }
 }
