@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use chrono::NaiveDateTime;
 use serde_json::{Value, Number, Map};
 use crate::srequest::RequestMethod;
 use crate::spotify::{Spotify, SpotifyError, SpotifyObject, Playlist, SpotifyCollection, PlaylistTrack};
@@ -333,5 +334,48 @@ impl Spotify {
         let response = self.spotify_request(&url_extension, RequestMethod::Post(body))?; // make request
 
         return Ok(Playlist::new(&response)); // return playlist
+    }
+
+    /// Gets playlists featured in Browse tab: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-featured-playlists> 
+    /// 
+    /// Required scope: none
+    /// 
+    /// # Arguments
+    /// * `country` - An ISO 3166-1 alpha-2 country code. Will return the featured playlists for that country.
+    /// * `locale` - The desired language, consisting of an ISO 639 language code and an ISO 3166-1 alpha-2 country code, joined by an underscore. For example: es_MX, meaning “Spanish (Mexico)”. Provide this parameter if you want the results returned in a particular language. Note that, if locale is not supplied, or if the specified language is not available, all strings will be returned in the Spotify default language (American English). The locale parameter, combined with the country parameter, may give odd results if not carefully matched. For example, country=SE&locale=de_DE will return a list of categories relevant to Sweden but as German language strings.
+    /// * `limit` - The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
+    /// * `offset` - The index of the first item to return. Default: 0 (the first object). Use with limit to get the next set of items.
+    /// * `timestamp` - A timestamp for which the playlists would be relevant. Defaults to current time if not provided 
+    /// 
+    pub fn get_featured_playlists(&mut self, country: Option<&str>, locale: Option<&str>, limit: Option<i32>, offset: Option<i32>, timestamp: Option<NaiveDateTime>) -> Result<SpotifyCollection<Playlist>, SpotifyError> {
+        let mut url_extension = String::from("browse/featured-playlists"); // base url
+
+        if !country.is_none() || !locale.is_none() || !limit.is_none() || !offset.is_none() || !timestamp.is_none() { // if one optional parameter is specified
+            url_extension.push_str("?"); // add ? to url
+        }
+
+        if let Some(country) = country { // if country is set, add to url
+            url_extension.push_str(&format!("country={}&", country));
+        }
+
+        if let Some(locale) = locale { // if locale is set, add to url
+            url_extension.push_str(&format!("locale={}&", locale));
+        }
+
+        if let Some(limit) = limit { // if limit is set, add to url
+            url_extension.push_str(&format!("limit={}&", limit));
+        }
+
+        if let Some(offset) = offset { // if offset is set, add to url
+            url_extension.push_str(&format!("offset={}&", offset));
+        }
+
+        if let Some(timestamp) = timestamp { // if timestamp is set, add to url
+            url_extension.push_str(&format!("timestamp={}&", timestamp.format("%Y-%m-%dT%H:%M:%S")));
+        }
+
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+
+        return Ok(SpotifyCollection::<Playlist>::new(&response["playlists"])) // return playlists (or albums?)
     }
 }
