@@ -59,6 +59,7 @@ fn general_testing() {
     // println!("{:?}", spotify.get_several_browse_categories(None, None, None, None));
     // println!("{:?}", spotify.get_playlist_cover_image("3rplsOUSIqcwlCV1yHX5f7"));
     // println!("{:?}", spotify.get_single_browse_category("hiphop", None, None));
-    println!("{:?}", spotify.get_available_genre_seeds());
+    // println!("{:?}", spotify.get_available_genre_seeds());
+    println!("{:?}", spotify.get_available_markets());
 }
 
