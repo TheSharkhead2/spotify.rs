@@ -532,6 +532,107 @@ impl fmt::Debug for TimeRange {
     }
 }
 
+/// Enum representing repeat state of user playback
+pub enum RepeatState {
+    Track, // track is repeating
+    Context, // context is repeating
+    Off, // no repeat
+}
+
+/// Implements debug trait for RepeatState
+impl fmt::Debug for RepeatState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            RepeatState::Track => write!(f, "Track"),
+            RepeatState::Context => write!(f, "Context"),
+            RepeatState::Off => write!(f, "Off"),
+        }
+    }
+}
+
+/// Struct to represent a playback device 
+pub struct Device {
+    pub id: String, // The device ID. 
+    pub is_active: bool, // If this device is the currently active device.
+    pub is_private_session: bool, // If this device is currently in a private session.
+    pub is_restricted: bool, // If playback on this device is currently restricted.
+    pub name: String, // A reasonable human name for the device. 
+    pub device_type: String, // The type of device. Such as: "computer", "smartphone", "speaker" 
+    pub volume_percent: Option<i32>, // The current volume in percent. Between 0 and 100. 
+}
+
+/// Implements Debug trait for Device struct
+impl fmt::Debug for Device {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Device")
+            .field("id", &self.id)
+            .field("is active", &self.is_active)
+            .field("name", &self.name)
+            .field("device_type", &self.device_type)
+            .field("volume_percent", &self.volume_percent)
+            .finish()
+    }
+}
+
+/// Struct representing allowed actions for a given playback state
+pub struct PlaybackActions {
+    pub interrupting_playback: bool, // If true, the user can go to the next track.
+    pub pausing: bool, // If true, the user can pause the playback.
+    pub resuming: bool, // If true, the user can resume the playback.
+    pub seeking: bool, // If true, the user can seek to a specific position in the currently playing track.
+    pub skipping_next: bool, // If true, the user can skip to the next track.
+    pub skipping_prev: bool, // If true, the user can skip to the previous track.
+    pub toggling_repeat_context: bool, // If true, the user can toggle repeat mode for the context.
+    pub toggling_repeat_track: bool, // If true, the user can toggle repeat mode for the track.
+    pub toggling_shuffle: bool, // If true, the user can toggle shuffle mode.
+    pub transferring_playback: bool, // If true, the user can transfer playback to a different device.
+}
+
+/// Implements Debug trait for PlaybackActions struct
+impl fmt::Debug for PlaybackActions {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PlaybackActions")
+            .field("interrupting_playback", &self.interrupting_playback)
+            .field("pausing", &self.pausing)
+            .field("resuming", &self.resuming)
+            .field("seeking", &self.seeking)
+            .field("skipping_next", &self.skipping_next)
+            .field("skipping_prev", &self.skipping_prev)
+            .field("toggling_repeat_context", &self.toggling_repeat_context)
+            .field("toggling_repeat_track", &self.toggling_repeat_track)
+            .field("toggling_shuffle", &self.toggling_shuffle)
+            .field("transferring_playback", &self.transferring_playback)
+            .finish()
+    }
+}
+
+/// Struct representing playback state
+pub struct Playback {
+    pub device: Device, // Information on the device the user is playing on
+    pub repeat_state: RepeatState, // The repeat state of the user's playback.
+    pub shuffle_state: bool, // The shuffle state of the user's playback.
+    pub timestamp: Option<NaiveDateTime>, // The timestamp when data was fetched
+    pub progress: Option<i32>, // The progress into the currently playing track. 
+    pub is_playing: bool, // If something is currently playing.
+    pub track: Option<Track>, // The track that is currently playing
+    pub actions: PlaybackActions, // The allowed actions for the current playback state
+}
+
+/// Implements debug trait for Playback struct 
+impl fmt::Debug for Playback {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Playback")
+            .field("device", &self.device)
+            .field("repeat_state", &self.repeat_state)
+            .field("shuffle_state", &self.shuffle_state)
+            .field("timestamp", &self.timestamp)
+            .field("progress", &self.progress)
+            .field("is_playing", &self.is_playing)
+            .field("track", &self.track)
+            .finish()
+    }
+}
+
 /// Error object for Spotify struct
 pub enum SpotifyError {
     RequestError(String),

@@ -4,7 +4,7 @@ use spotifyrs::{Spotify, TimeRange};
 fn general_testing() {
     let mut spotify = Spotify::authenticate(
         String::from("8888"),
-        String::from("user-follow-modify playlist-read-collaborative playlist-read-private playlist-modify-public playlist-modify-private"),
+        String::from("user-read-playback-state"),
     );
     
     // println!("{:?}", spotify.get_album("1xJ7jIK1tT0aVoJw1fPE6r", None));
@@ -60,6 +60,7 @@ fn general_testing() {
     // println!("{:?}", spotify.get_playlist_cover_image("3rplsOUSIqcwlCV1yHX5f7"));
     // println!("{:?}", spotify.get_single_browse_category("hiphop", None, None));
     // println!("{:?}", spotify.get_available_genre_seeds());
-    println!("{:?}", spotify.get_available_markets());
+    // println!("{:?}", spotify.get_available_markets());
+    println!("{:?}", spotify.get_playback_state(None));
 }
 

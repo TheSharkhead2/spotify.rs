@@ -2,7 +2,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 use json::{JsonValue::{self, Array, Null}};
 use std::fmt::Debug;
 
-use crate::spotify::{SpotifyImage, AlbumType, SpotifyObject, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, DatedAlbum, DatedTrack, FeatureTrack, AnalysisTrack, Bar, Beat, Section, Segment, Tatum, SpotifyError, User, Playlist, PlaylistTrack, SpotifyCollection, Category};
+use crate::spotify::{SpotifyImage, AlbumType, SpotifyObject, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, DatedAlbum, DatedTrack, FeatureTrack, AnalysisTrack, Bar, Beat, Section, Segment, Tatum, SpotifyError, User, Playlist, PlaylistTrack, SpotifyCollection, Category, RepeatState, Device, PlaybackActions, Playback};
 
 impl SpotifyImage {
     /// Take JsonValue object representing image from API request and turn into 
@@ -1007,6 +1007,11 @@ impl SpotifyObject for PlaylistTrack {
 }
 
 impl<T: SpotifyObject + Debug> SpotifyCollection<T> {
+    /// Takes JsonValue representing a collection of spotify objects and returns SpotifyCollection of objects 
+    /// 
+    /// # Arguments
+    /// * `raw_object` - JsonValue representing a collection of spotify objects
+    /// 
     pub fn new(raw_object: &JsonValue) -> SpotifyCollection<T> {
         let href = match raw_object["href"].as_str() {
             Some(href) => String::from(href),
@@ -1056,6 +1061,11 @@ impl<T: SpotifyObject + Debug> SpotifyCollection<T> {
 }
 
 impl SpotifyObject for Category {
+    /// Takes JsonValue representing a Category and returns the Category Struct
+    /// 
+    /// # Arguments
+    /// * `raw_object` - JsonValue representing a Category
+    /// 
     fn new(raw_object: &JsonValue) -> Category {
         let href = match raw_object["href"].as_str() {
             Some(href) => String::from(href),
@@ -1082,6 +1092,188 @@ impl SpotifyObject for Category {
             icons,
             id,
             name,
+        }
+    }
+}
+
+impl Device {
+    /// Takes JsonValue representing a playback device and returns the Device struct 
+    /// 
+    /// # Arguments
+    /// * `raw_object` - JsonValue representing a playback device
+    /// 
+    pub fn new(raw_object: &JsonValue) -> Device {
+        let id = match raw_object["id"].as_str() {
+            Some(id) => String::from(id),
+            None => String::new(), // default to empty string
+        };
+
+        let is_active = match raw_object["is_active"].as_bool() {
+            Some(is_active) => is_active,
+            None => false, // default to false
+        };
+
+        let is_private_session = match raw_object["is_private_session"].as_bool() {
+            Some(is_private_session) => is_private_session,
+            None => false, // default to false
+        };
+
+        let is_restricted = match raw_object["is_restricted"].as_bool() {
+            Some(is_restricted) => is_restricted,
+            None => false, // default to false
+        };
+
+        let name = match raw_object["name"].as_str() {
+            Some(name) => String::from(name),
+            None => String::new(), // default to empty string
+        };
+
+        let device_type = match raw_object["type"].as_str() {
+            Some(r#type) => String::from(r#type),
+            None => String::new(), // default to empty string
+        };
+
+        let volume_percent = match raw_object["volume_percent"].as_i32() {
+            Some(volume_percent) => Some(volume_percent),
+            None => None, // default to 0
+        };
+
+        Device {
+            id,
+            is_active,
+            is_private_session,
+            is_restricted,
+            name,
+            device_type,
+            volume_percent,
+        }
+    }
+}
+
+impl PlaybackActions {
+    /// Takes JsonValue representing possible playback actions and returns PlaybackActions struct
+    /// 
+    /// # Arguments
+    /// * `raw_object` - JsonValue representing possible playback actions
+    /// 
+    pub fn new(raw_object: &JsonValue) -> PlaybackActions {
+        let interrupting_playback = match raw_object["interrupting_playback"].as_bool() {
+            Some(interrupting_playback) => interrupting_playback,
+            None => false, // default to false
+        };
+
+        let pausing = match raw_object["pausing"].as_bool() {
+            Some(pausing) => pausing,
+            None => false, // default to false
+        };
+
+        let resuming = match raw_object["resuming"].as_bool() {
+            Some(resuming) => resuming,
+            None => false, // default to false
+        };
+
+        let seeking = match raw_object["seeking"].as_bool() {
+            Some(seeking) => seeking,
+            None => false, // default to false
+        };
+
+        let skipping_next = match raw_object["skipping_next"].as_bool() {
+            Some(skipping_next) => skipping_next,
+            None => false, // default to false
+        };
+
+        let skipping_prev = match raw_object["skipping_prev"].as_bool() {
+            Some(skipping_prev) => skipping_prev,
+            None => false, // default to false
+        };
+
+        let toggling_repeat_context = match raw_object["toggling_repeat_context"].as_bool() {
+            Some(toggling_repeat_context) => toggling_repeat_context,
+            None => false, // default to false
+        };
+
+        let toggling_shuffle = match raw_object["toggling_shuffle"].as_bool() {
+            Some(toggling_shuffle) => toggling_shuffle,
+            None => false, // default to false
+        };
+
+        let toggling_repeat_track = match raw_object["toggling_repeat_track"].as_bool() {
+            Some(toggling_repeat_track) => toggling_repeat_track,
+            None => false, // default to false
+        };
+
+        let transferring_playback = match raw_object["transferring_playback"].as_bool() {
+            Some(transferring_playback) => transferring_playback,
+            None => false, // default to false
+        };
+
+        PlaybackActions {
+            interrupting_playback,
+            pausing,
+            resuming,
+            seeking,
+            skipping_next,
+            skipping_prev,
+            toggling_repeat_context,
+            toggling_shuffle,
+            toggling_repeat_track,
+            transferring_playback,
+        }
+    }
+}
+
+impl Playback {
+    /// Takes JsonValue representing playback state and returns Playback struct 
+    /// 
+    /// # Arguments
+    /// * `raw_object` - JsonValue representing playback state
+    /// 
+    pub fn new(raw_object: &JsonValue) -> Playback {
+        let timestamp = match raw_object["timestamp"].as_i64() {
+            Some(timestamp) => Some(NaiveDateTime::from_timestamp(timestamp/1000, 0)), // parse timestamp into NaiveDateTime (timestamp is in ms)
+            None => None, // default to None
+        };
+
+        let device = Device::new(&raw_object["device"]);
+
+        let repeat_state = match &raw_object["repeat_state"].as_str() {
+            Some("off") => RepeatState::Off,
+            Some("track") => RepeatState::Track,
+            Some("context") => RepeatState::Context,
+            _ => RepeatState::Off, // default to off
+        };
+
+        let shuffle_state = match &raw_object["shuffle_state"].as_str() {
+            Some("on") => true, 
+            _ => false, // default to false
+        };
+
+        let progress = match raw_object["progress_ms"].as_i32() {
+            Some(progress_ms) => Some(progress_ms),
+            None => None, // default to 0
+        };
+
+        let is_playing = match raw_object["is_playing"].as_bool() {
+            Some(is_playing) => is_playing,
+            None => false, // default to false
+        };
+
+        let track = match &raw_object["item"] {
+            Null => None,
+            item => Some(Track::new(item)), // format item if it exists
+        };
+
+        let actions = PlaybackActions::new(&raw_object["actions"]);
+
+        Playback {
+            device,
+            repeat_state,
+            shuffle_state,
+            timestamp,
+            progress,
+            is_playing,
+            track,
+            actions,
         }
     }
 }
