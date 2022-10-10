@@ -1,5 +1,7 @@
+use std::collections::HashMap;
 use crate::srequest::RequestMethod;
 use crate::spotify::{Spotify, SpotifyError, Playback}; 
+use serde_json::Value;
 
 impl Spotify {
     /// Gets current playback state of current user: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-information-about-the-users-current-playback> 
@@ -21,5 +23,27 @@ impl Spotify {
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // send request
 
         return Ok(Playback::new(&response)); // return playback
+    }
+
+    /// Transfers playback to another device and whether or not the new device should play: <https://developer.spotify.com/documentation/web-api/reference/#/operations/transfer-a-users-playback>
+    /// 
+    /// Requires scope: user-modify-playback-state
+    /// 
+    /// # Arguments
+    /// * `device_id` - The device id to transfer playback to
+    /// * `play` - Whether or not to start playback on the new device
+    /// 
+    pub fn transfer_playback(&mut self, device_id: &str, play: bool) -> Result<(), SpotifyError> {
+        let url_extension = String::from("me/player"); // create url extension
+
+        self.check_scope("user-modify-playback-state")?; // check scope
+
+        let mut body: HashMap<String, Value> = HashMap::new(); // create body
+        body.insert("device_ids".to_string(), Value::Array(vec![Value::String(device_id.to_string())])); // insert device id
+        body.insert("play".to_string(), Value::Bool(play)); // insert play
+
+        self.spotify_request(&url_extension, RequestMethod::Put(body))?; // send request
+
+        Ok(())
     }
 }
