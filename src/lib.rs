@@ -12,7 +12,7 @@ mod genres;
 mod markets;
 mod player;
 
-pub use spotify::{Spotify, SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, DatedAlbum, Artist, Track, DatedTrack, FeatureTrack, Bar, Beat, Section, Segment, Tatum, AnalysisTrack, User, TimeRange, Playlist, PlaylistTrack, SpotifyCollection, SpotifyContext, Device, Playback, PlaybackActions}; // re-export relevant structs and enums
+pub use spotify::{Spotify, SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, DatedAlbum, Artist, Track, DatedTrack, FeatureTrack, Bar, Beat, Section, Segment, Tatum, AnalysisTrack, User, TimeRange, Playlist, PlaylistTrack, SpotifyCollection, SpotifyContext, Device, Playback, PlaybackActions, RepeatState}; // re-export relevant structs and enums
 
 #[cfg(test)]
 mod tests {

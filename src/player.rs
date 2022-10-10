@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::srequest::RequestMethod;
-use crate::spotify::{Spotify, SpotifyError, Playback, Device, SpotifyContext}; 
+use crate::spotify::{Spotify, SpotifyError, Playback, Device, SpotifyContext, RepeatState}; 
 use serde_json::{Value, Map, Number};
 
 impl Spotify {
@@ -224,6 +224,28 @@ impl Spotify {
     /// 
     pub fn seek_position(&mut self, position: i32, device_id: Option<&str>) -> Result<(), SpotifyError> {
         let mut url_extension = format!("me/player/seek?position_ms={}", position); // create url extension
+
+        self.check_scope("user-modify-playback-state")?; // check scope
+
+        if let Some(device_id) = device_id {
+            url_extension.push_str(&format!("&device_id={}", device_id)); // if device_id is supplied, then add it to url extension
+        }
+
+        self.spotify_request(&url_extension, RequestMethod::Put(HashMap::new()))?; // send request
+
+        return Ok(())
+    }
+
+    /// Sets the repeat mode for the user's playback: <https://developer.spotify.com/documentation/web-api/reference/#/operations/set-repeat-mode-on-users-playback> 
+    /// 
+    /// Requires scope: user-modify-playback-state
+    /// 
+    /// # Arguments
+    /// * `state` - The repeat state to set. Valid values are: track, context, off
+    /// * `device_id` - The id of the device to set repeat mode on
+    /// 
+    pub fn set_repeat_mode(&mut self, state: RepeatState, device_id: Option<&str>) -> Result<(), SpotifyError> {
+        let mut url_extension = format!("me/player/repeat?state={}", state.to_string()); // create url extension
 
         self.check_scope("user-modify-playback-state")?; // check scope
 

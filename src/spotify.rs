@@ -571,6 +571,17 @@ impl fmt::Debug for RepeatState {
     }
 }
 
+impl RepeatState {
+    /// Converts RepeatState to string
+    pub fn to_string(&self) -> String {
+        match self {
+            RepeatState::Track => String::from("track"),
+            RepeatState::Context => String::from("context"),
+            RepeatState::Off => String::from("off"),
+        }
+    }
+}
+
 /// Struct to represent a playback device 
 pub struct Device {
     pub id: String, // The device ID. 
