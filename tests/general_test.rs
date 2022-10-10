@@ -1,7 +1,7 @@
 use spotifyrs::Spotify;
 // use spotifyrs::TimeRange;
 // use spotifyrs::SpotifyContext;
-use spotifyrs::RepeatState;
+// use spotifyrs::RepeatState;
 
 #[test]
 fn general_testing() {
@@ -73,8 +73,9 @@ fn general_testing() {
     // println!("{:?}", spotify.skip_next(None));
     // println!("{:?}", spotify.skip_previous(None));
     // println!("{:?}", spotify.seek_position(1234, None));
-    println!("{:?}", spotify.set_repeat_mode(RepeatState::Context, None));
-    println!("{:?}", spotify.set_playback_volume(1, None));
+    // println!("{:?}", spotify.set_repeat_mode(RepeatState::Context, None));
+    // println!("{:?}", spotify.set_playback_volume(1, None));
+    println!("{:?}", spotify.toggle_shuffle(true, None));
 
 }
 

@@ -279,4 +279,26 @@ impl Spotify {
 
         return Ok(())
     }
+
+    /// Toggles shuffle state: <https://developer.spotify.com/documentation/web-api/reference/#/operations/toggle-shuffle-for-users-playback>
+    /// 
+    /// Requires scope: user-modify-playback-state
+    /// 
+    /// # Arguments
+    /// * `state` - The shuffle state to set. Valid values are: true, false
+    /// * `device_id` - The id of the device to set shuffle on
+    /// 
+    pub fn toggle_shuffle(&mut self, state: bool, device_id: Option<&str>) -> Result<(), SpotifyError> {
+        let mut url_extension = format!("me/player/shuffle?state={}", state); // create url extension
+
+        self.check_scope("user-modify-playback-state")?; // check scope
+
+        if let Some(device_id) = device_id {
+            url_extension.push_str(&format!("&device_id={}", device_id)); // if device_id is supplied, then add it to url extension
+        }
+
+        self.spotify_request(&url_extension, RequestMethod::Put(HashMap::new()))?; // send request
+
+        return Ok(())
+    }
 }
