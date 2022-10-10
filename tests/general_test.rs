@@ -1,5 +1,6 @@
 use spotifyrs::Spotify;
 // use spotifyrs::TimeRange;
+use spotifyrs::SpotifyContext;
 
 #[test]
 fn general_testing() {
@@ -65,7 +66,8 @@ fn general_testing() {
     // println!("{:?}", spotify.get_playback_state(None));
     // println!("{:?}", spotify.transfer_playback("", false));
     // println!("{:?}", spotify.get_available_devices());
-    println!("{:?}", spotify.get_currently_playing_track(None));
+    // println!("{:?}", spotify.get_currently_playing_track(None));
+    println!("{:?}", spotify.start_resume_playback(None, Some(SpotifyContext::Album(String::from("1xJ7jIK1tT0aVoJw1fPE6r"))), None, None, Some("4j9TBVRJVzEPG6wjALFyMt"), Some(8753)));
 
 }
 

@@ -58,6 +58,27 @@ pub struct ExternalTrackIds {
     pub upc: Option<String>,
 }
 
+/// Enum to represent different spotify contexts 
+pub enum SpotifyContext {
+    Track(String),
+    Album(String),
+    Playlist(String),
+    Artist(String),
+}
+
+
+impl SpotifyContext {
+    /// Function to grab spotify URI from SpotifyContext enum
+    pub fn uri(&self) -> String {
+        match self {
+            SpotifyContext::Track(id) => format!("spotify:track:{}", id),
+            SpotifyContext::Album(id) => format!("spotify:album:{}", id),
+            SpotifyContext::Playlist(id) => format!("spotify:playlist:{}", id),
+            SpotifyContext::Artist(id) => format!("spotify:artist:{}", id),
+        }
+    }
+}
+
 /// Struct to hold general collection of Spotify objects
 pub struct SpotifyCollection<T: SpotifyObject + Debug> {
     pub href: String,

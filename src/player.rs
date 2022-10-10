@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use crate::srequest::RequestMethod;
-use crate::spotify::{Spotify, SpotifyError, Playback, Device}; 
-use serde_json::Value;
+use crate::spotify::{Spotify, SpotifyError, Playback, Device, SpotifyContext}; 
+use serde_json::{Value, Map, Number};
 
 impl Spotify {
     /// Gets current playback state of current user: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-information-about-the-users-current-playback> 
@@ -87,5 +87,67 @@ impl Spotify {
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // send request
 
         return Ok(Playback::new(&response)); // return playback
+    }
+
+    /// Start a new context in player or resume playback of a device: <https://developer.spotify.com/documentation/web-api/reference/#/operations/start-a-users-playback> 
+    /// 
+    /// Requires scope: user-modify-playback-state
+    /// 
+    /// # Arguments
+    /// * `device_id` - The id of the device to start playback on
+    /// * `context` - The context to start playback on. Valid contexts: Album, Artist, Playlist
+    /// * `track_ids` - The track ids to start playback on
+    /// * `offset_position` - Indicates where in the context the playback should start. For example, starting on the 2nd song of an album with offset=1. 
+    /// * `offset_track` - Indicates which track in context to begin playback on. This is a track id. Note: this will be ignored if offset_position is set.
+    /// * `position_ms` - Where in the song to begin playback
+    /// 
+    pub fn start_resume_playback(&mut self, device_id: Option<&str>, context: Option<SpotifyContext>, track_ids: Option<Vec<&str>>, offset_position: Option<i32>, offset_track: Option<&str>, position_ms: Option<i32>) -> Result<(), SpotifyError> {
+        let mut url_extension = String::from("me/player/play"); // create url extension
+
+        self.check_scope("user-modify-playback-state")?; // check scope
+
+        if let Some(device_id) = device_id {
+            url_extension.push_str(&format!("?device_id={}", device_id)); // if device_id is supplied, then add it to url extension
+        }
+
+        let mut body: HashMap<String, Value> = HashMap::new(); // create body
+
+        if let Some(context) = context {
+            body.insert("context_uri".to_string(), Value::String(context.uri())); // if context is supplied, then add it to body
+        }
+
+        if let Some(track_ids) = track_ids {
+            let mut tracks: Vec<Value> = Vec::new(); // create vector to store track ids
+
+            for track_id in track_ids {
+                tracks.push(Value::String(track_id.to_string())); // push track id to vector
+            }
+
+            body.insert("uris".to_string(), Value::Array(tracks)); // insert track ids into body
+        }
+
+        if let Some(offset) = offset_position {
+            let mut m = Map::new();
+            m.insert("position".to_string(), Value::Number(Number::from(offset))); // if offset_position is supplied, then add it to body
+
+            body.insert("offset".to_string(), Value::Object(m)); // if offset is supplied, then add it to body
+        }
+
+        if offset_position.is_none() { //if offset_position wasn't supplied 
+            if let Some(track_id) = offset_track {
+                let mut m = Map::new();
+                m.insert("uri".to_string(), Value::String(format!("spotify:track:{}", track_id))); // if offset_track is supplied, then add it to body
+
+                body.insert("offset".to_string(), Value::Object(m)); // if offset is supplied, then add it to body
+            }
+        }
+
+        if let Some(position_ms) = position_ms {
+            body.insert("position_ms".to_string(), Value::Number(Number::from(position_ms))); // if position_ms is supplied, then add it to body
+        }
+
+        self.spotify_request(&url_extension, RequestMethod::Put(body))?; // send request
+
+        return Ok(())
     }
 }
