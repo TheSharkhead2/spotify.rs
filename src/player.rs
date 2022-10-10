@@ -213,4 +213,26 @@ impl Spotify {
 
         return Ok(())
     }
+
+    /// Seeks to specified position in currently playing track: <https://developer.spotify.com/documentation/web-api/reference/#/operations/seek-to-position-in-currently-playing-track> 
+    /// 
+    /// Requires scope: user-modify-playback-state
+    /// 
+    /// # Arguments
+    /// * `position` - The position in milliseconds to seek to
+    /// * `device_id` - The id of the device to seek on
+    /// 
+    pub fn seek_position(&mut self, position: i32, device_id: Option<&str>) -> Result<(), SpotifyError> {
+        let mut url_extension = format!("me/player/seek?position_ms={}", position); // create url extension
+
+        self.check_scope("user-modify-playback-state")?; // check scope
+
+        if let Some(device_id) = device_id {
+            url_extension.push_str(&format!("&device_id={}", device_id)); // if device_id is supplied, then add it to url extension
+        }
+
+        self.spotify_request(&url_extension, RequestMethod::Put(HashMap::new()))?; // send request
+
+        return Ok(())
+    }
 }
