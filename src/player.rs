@@ -257,4 +257,26 @@ impl Spotify {
 
         return Ok(())
     }
+
+    /// Sets the volume for the user's playback: <https://developer.spotify.com/documentation/web-api/reference/#/operations/set-volume-for-users-playback> 
+    /// 
+    /// Requires scope: user-modify-playback-state
+    /// 
+    /// # Arguments
+    /// * `volume` - The volume to set. Must be a value from 0 to 100 inclusive
+    /// * `device_id` - The id of the device to set volume on
+    /// 
+    pub fn set_playback_volume(&mut self, volume: i32, device_id: Option<&str>) -> Result<(), SpotifyError> {
+        let mut url_extension = format!("me/player/volume?volume_percent={}", volume); // create url extension
+
+        self.check_scope("user-modify-playback-state")?; // check scope
+
+        if let Some(device_id) = device_id {
+            url_extension.push_str(&format!("&device_id={}", device_id)); // if device_id is supplied, then add it to url extension
+        }
+
+        self.spotify_request(&url_extension, RequestMethod::Put(HashMap::new()))?; // send request
+
+        return Ok(())
+    }
 }
