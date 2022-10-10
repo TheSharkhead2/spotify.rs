@@ -66,4 +66,26 @@ impl Spotify {
 
         return Ok(devices); // return vector
     }
+
+    /// Gets the currently playing track: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-the-users-currently-playing-track>
+    /// Note: Currently this only supports tracks and not episodes. Weird behavior may occur if an episode is being played. 
+    /// 
+    /// Requires scope: user-read-currently-playing
+    /// 
+    /// # Arguments
+    /// * `market` - An ISO 3166-1 alpha-2 country code which the returned track should be in the market of 
+    /// 
+    pub fn get_currently_playing_track(&mut self, market: Option<&str>) -> Result<Playback, SpotifyError> {
+        let mut url_extension = String::from("me/player/currently-playing?additional_types=track"); // create url extension. Only supporting tracks right now
+
+        self.check_scope("user-read-currently-playing")?; // check scope
+
+        if let Some(market) = market { // if market is Some then add it to url extension
+            url_extension.push_str(&format!("&market={}", market));
+        }
+
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // send request
+
+        return Ok(Playback::new(&response)); // return playback
+    }
 }

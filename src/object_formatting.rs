@@ -1234,7 +1234,10 @@ impl Playback {
             None => None, // default to None
         };
 
-        let device = Device::new(&raw_object["device"]);
+        let device = match &raw_object["device"] {
+            Null => None, // default to None
+            device => Some(Device::new(device)), // turn JsonValue into Device struct
+        };
 
         let repeat_state = match &raw_object["repeat_state"].as_str() {
             Some("off") => RepeatState::Off,
@@ -1263,7 +1266,10 @@ impl Playback {
             item => Some(Track::new(item)), // format item if it exists
         };
 
-        let actions = PlaybackActions::new(&raw_object["actions"]);
+        let actions = match &raw_object["actions"] {
+            Null => None,
+            actions => Some(PlaybackActions::new(actions)), // format actions if they exist
+        };
 
         Playback {
             device,

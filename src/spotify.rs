@@ -608,14 +608,14 @@ impl fmt::Debug for PlaybackActions {
 
 /// Struct representing playback state
 pub struct Playback {
-    pub device: Device, // Information on the device the user is playing on
+    pub device: Option<Device>, // Information on the device the user is playing on
     pub repeat_state: RepeatState, // The repeat state of the user's playback.
     pub shuffle_state: bool, // The shuffle state of the user's playback.
     pub timestamp: Option<NaiveDateTime>, // The timestamp when data was fetched
     pub progress: Option<i32>, // The progress into the currently playing track. 
     pub is_playing: bool, // If something is currently playing.
     pub track: Option<Track>, // The track that is currently playing
-    pub actions: PlaybackActions, // The allowed actions for the current playback state
+    pub actions: Option<PlaybackActions>, // The allowed actions for the current playback state
 }
 
 /// Implements debug trait for Playback struct 
