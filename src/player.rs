@@ -171,4 +171,46 @@ impl Spotify {
 
         return Ok(())
     }
+
+    /// Skips the currently playing track to the next track: <https://developer.spotify.com/documentation/web-api/reference/#/operations/skip-users-playback-to-next-track> 
+    /// 
+    /// Requires scope: user-modify-playback-state
+    /// 
+    /// # Arguments
+    /// * `device_id` - The id of the device to skip on 
+    /// 
+    pub fn skip_next(&mut self, device_id: Option<&str>) -> Result<(), SpotifyError> {
+        let mut url_extension = String::from("me/player/next"); // create url extension
+
+        self.check_scope("user-modify-playback-state")?; // check scope
+
+        if let Some(device_id) = device_id {
+            url_extension.push_str(&format!("?device_id={}", device_id)); // if device_id is supplied, then add it to url extension
+        }
+
+        self.spotify_request(&url_extension, RequestMethod::Post(HashMap::new()))?; // send request
+
+        return Ok(())
+    }
+
+    /// Skips the currently playing track to the previous track: <https://developer.spotify.com/documentation/web-api/reference/#/operations/skip-users-playback-to-previous-track>
+    /// 
+    /// Requires scope: user-modify-playback-state
+    /// 
+    /// # Arguments
+    /// * `device_id` - The id of the device to skip on
+    /// 
+    pub fn skip_previous(&mut self, device_id: Option<&str>) -> Result<(), SpotifyError> {
+        let mut url_extension = String::from("me/player/previous"); // create url extension
+
+        self.check_scope("user-modify-playback-state")?; // check scope
+
+        if let Some(device_id) = device_id {
+            url_extension.push_str(&format!("?device_id={}", device_id)); // if device_id is supplied, then add it to url extension
+        }
+
+        self.spotify_request(&url_extension, RequestMethod::Post(HashMap::new()))?; // send request
+
+        return Ok(())
+    }
 }
