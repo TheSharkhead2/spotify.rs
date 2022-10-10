@@ -60,7 +60,6 @@ pub struct ExternalTrackIds {
 
 /// Enum to represent different spotify contexts 
 pub enum SpotifyContext {
-    Track(String),
     Album(String),
     Playlist(String),
     Artist(String),
@@ -71,10 +70,46 @@ impl SpotifyContext {
     /// Function to grab spotify URI from SpotifyContext enum
     pub fn uri(&self) -> String {
         match self {
-            SpotifyContext::Track(id) => format!("spotify:track:{}", id),
             SpotifyContext::Album(id) => format!("spotify:album:{}", id),
             SpotifyContext::Playlist(id) => format!("spotify:playlist:{}", id),
             SpotifyContext::Artist(id) => format!("spotify:artist:{}", id),
+        }
+    }
+
+    /// Function to turn JsonValue general context into SpotifyContext enum 
+    /// 
+    /// # Arguments
+    /// * `context` - JsonValue representing information on the context returned by Spotify API 
+    /// 
+    pub fn new(context: &JsonValue) -> Option<SpotifyContext> {
+        let context_type = match context["type"].as_str() {
+            Some(t) => t,
+            None => return None, // if unable to find type of context, return None
+        };
+
+        let context_uri = match context["uri"].as_str() {
+            Some(uri) => uri, 
+            None => return None, // if unable to find uri of context, return None
+        };
+
+        let context_id = context_uri.split(':').last().unwrap(); // this technically can panic, but it shouldn't if the uri exists
+
+        match context_type {
+            "album" => Some(SpotifyContext::Album(context_id.to_string())),
+            "playlist" => Some(SpotifyContext::Playlist(context_id.to_string())),
+            "artist" => Some(SpotifyContext::Artist(context_id.to_string())),
+            _ => None,
+        }
+    }
+}
+
+/// Implements Debug trait for SpotifyContext
+impl Debug for SpotifyContext {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SpotifyContext::Album(id) => f.debug_struct("SpotifyContext").field("type", &"album").field("id", &id).finish(),
+            SpotifyContext::Playlist(id) => f.debug_struct("SpotifyContext").field("type", &"playlist").field("id", &id).finish(),
+            SpotifyContext::Artist(id) => f.debug_struct("SpotifyContext").field("type", &"artist").field("id", &id).finish(),
         }
     }
 }
@@ -531,6 +566,24 @@ impl fmt::Debug for PlaylistTrack {
             .field("added_at", &self.added_at)
             .field("added_by", &self.added_by)
             .field("track", &self.track)
+            .finish()
+    }
+}
+
+/// Struct to represent track played by user (ie in recently played)
+pub struct PlayedTrack {
+    pub track: Track, // The track the user listened to.
+    pub played_at: Option<NaiveDateTime>, // The date and time the track was played.
+    pub context: Option<SpotifyContext>, // The context the track was played from.
+}
+
+/// Implements Debug trait for PlayedTrack struct
+impl fmt::Debug for PlayedTrack {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PlayedTrack")
+            .field("track", &self.track)
+            .field("played_at", &self.played_at)
+            .field("context", &self.context)
             .finish()
     }
 }

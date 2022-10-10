@@ -2,7 +2,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 use json::{JsonValue::{self, Array, Null}};
 use std::fmt::Debug;
 
-use crate::spotify::{SpotifyImage, AlbumType, SpotifyObject, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, DatedAlbum, DatedTrack, FeatureTrack, AnalysisTrack, Bar, Beat, Section, Segment, Tatum, SpotifyError, User, Playlist, PlaylistTrack, SpotifyCollection, Category, RepeatState, Device, PlaybackActions, Playback};
+use crate::spotify::{SpotifyImage, AlbumType, SpotifyObject, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, DatedAlbum, DatedTrack, FeatureTrack, AnalysisTrack, Bar, Beat, Section, Segment, Tatum, SpotifyError, User, Playlist, PlaylistTrack, SpotifyCollection, Category, RepeatState, Device, PlaybackActions, Playback, PlayedTrack, SpotifyContext};
 
 impl SpotifyImage {
     /// Take JsonValue object representing image from API request and turn into 
@@ -1280,6 +1280,30 @@ impl Playback {
             is_playing,
             track,
             actions,
+        }
+    }
+}
+
+impl SpotifyObject for PlayedTrack {
+    /// Takes JsonValue representing played track and returns PlayedTrack struct
+    /// 
+    /// # Arguments
+    /// * `raw_object` - JsonValue representing played track
+    /// 
+    fn new(raw_object: &JsonValue) -> PlayedTrack {
+        let track = Track::new(&raw_object["track"]);
+
+        let played_at = match &raw_object["played_at"].as_str() {
+            Some(played_at) => Some(NaiveDateTime::parse_from_str(played_at, "%Y-%m-%dT%H:%M:%S%.fZ").unwrap()), // parse played_at into NaiveDateTime
+            None => None, // default to None
+        };
+
+        let context = SpotifyContext::new(&raw_object["context"]);
+
+        PlayedTrack {
+            track,
+            played_at,
+            context,
         }
     }
 }

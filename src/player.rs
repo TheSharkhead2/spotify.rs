@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use crate::srequest::RequestMethod;
-use crate::spotify::{Spotify, SpotifyError, Playback, Device, SpotifyContext, RepeatState}; 
+use crate::spotify::{Spotify, SpotifyError, Playback, Device, SpotifyContext, RepeatState, SpotifyCollection, PlayedTrack}; 
+use chrono::NaiveDateTime;
 use serde_json::{Value, Map, Number};
 
 impl Spotify {
@@ -300,5 +301,42 @@ impl Spotify {
         self.spotify_request(&url_extension, RequestMethod::Put(HashMap::new()))?; // send request
 
         return Ok(())
+    }
+
+    /// Returns user's recently played items: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-recently-played>
+    /// 
+    /// Requires scope: user-read-recently-played
+    /// 
+    /// # Arguments
+    /// * `after` - Returns all items *after* this time stamp. 
+    /// * `before` - Returns all items *before* this time stamp. Will be ignored if after is specified 
+    /// * `limit` - The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50
+    /// 
+    pub fn get_recently_played_tracks(&mut self, after: Option<NaiveDateTime>, before: Option<NaiveDateTime>, limit: Option<i32>) -> Result<SpotifyCollection<PlayedTrack>, SpotifyError> {
+        let mut url_extension = String::from("me/player/recently-played"); // create url extension
+
+        self.check_scope("user-read-recently-played")?; // check scope
+
+        if !after.is_none() || !before.is_none() || !limit.is_none() {
+            url_extension.push_str("?"); // if any of the optional arguments are supplied, then add a ? to the url extension
+        }
+
+        if let Some(after) = after {
+            url_extension.push_str(&format!("&after={}", after.timestamp_millis())); // if after is supplied, then add it to url extension
+        }
+
+        if after.is_none() { // only if after isn't supplied consider before
+            if let Some(before) = before {
+                url_extension.push_str(&format!("&before={}", before.timestamp_millis())); // if before is supplied, then add it to url extension
+            }
+        }
+
+        if let Some(limit) = limit {
+            url_extension.push_str(&format!("&limit={}", limit)); // if limit is supplied, then add it to url extension
+        }
+
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // send request
+
+        return Ok(SpotifyCollection::<PlayedTrack>::new(&response)); // return response
     }
 }

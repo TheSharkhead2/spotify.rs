@@ -7,7 +7,7 @@ use spotifyrs::Spotify;
 fn general_testing() {
     let mut spotify = Spotify::authenticate(
         String::from("8888"),
-        String::from("user-modify-playback-state user-read-currently-playing"),
+        String::from("user-modify-playback-state user-read-currently-playing user-read-recently-played"),
     );
     
     // println!("{:?}", spotify.get_album("1xJ7jIK1tT0aVoJw1fPE6r", None));
@@ -75,7 +75,8 @@ fn general_testing() {
     // println!("{:?}", spotify.seek_position(1234, None));
     // println!("{:?}", spotify.set_repeat_mode(RepeatState::Context, None));
     // println!("{:?}", spotify.set_playback_volume(1, None));
-    println!("{:?}", spotify.toggle_shuffle(true, None));
+    // println!("{:?}", spotify.toggle_shuffle(true, None));
+    println!("{:?}", spotify.get_recently_played_tracks(None, None, None));
 
 }
 
