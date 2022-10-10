@@ -64,5 +64,7 @@ fn general_testing() {
     // println!("{:?}", spotify.get_available_markets());
     // println!("{:?}", spotify.get_playback_state(None));
     // println!("{:?}", spotify.transfer_playback("", false));
+    println!("{:?}", spotify.get_available_devices());
+
 }
 

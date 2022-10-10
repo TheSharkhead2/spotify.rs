@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::srequest::RequestMethod;
-use crate::spotify::{Spotify, SpotifyError, Playback}; 
+use crate::spotify::{Spotify, SpotifyError, Playback, Device}; 
 use serde_json::Value;
 
 impl Spotify {
@@ -44,6 +44,26 @@ impl Spotify {
 
         self.spotify_request(&url_extension, RequestMethod::Put(body))?; // send request
 
-        Ok(())
+        return Ok(());
+    }
+
+    /// Gets all the available spotify devices for playback: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-a-users-available-devices>
+    /// 
+    /// Requires scope: user-read-playback-state
+    /// 
+    pub fn get_available_devices(&mut self) -> Result<Vec<Device>, SpotifyError> {
+        let url_extension = String::from("me/player/devices"); // create url extension
+
+        self.check_scope("user-read-playback-state")?;
+
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // send request
+
+        let mut devices: Vec<Device> = Vec::new(); // empty vector to store devices 
+
+        for device in response["devices"].members() { // iterate through devices
+            devices.push(Device::new(&device)); // push device to vector
+        }
+
+        return Ok(devices); // return vector
     }
 }
