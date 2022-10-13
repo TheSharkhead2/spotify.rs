@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::srequest::RequestMethod;
-use crate::spotify::{Spotify, SpotifyError, Playback, Device, SpotifyContext, RepeatState, SpotifyCollection, PlayedTrack}; 
+use crate::spotify::{Spotify, SpotifyError, Playback, Device, SpotifyContext, RepeatState, SpotifyCollection, PlayedTrack, Track, SpotifyObject}; 
 use chrono::NaiveDateTime;
 use serde_json::{Value, Map, Number};
 
@@ -338,5 +338,28 @@ impl Spotify {
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // send request
 
         return Ok(SpotifyCollection::<PlayedTrack>::new(&response)); // return response
+    }
+
+    /// Returns the user's currently playing track and queue: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-queue> 
+    /// Note: This wrapper currently only supports tracks and unexpected errors may occur if the queue contains episodes
+    /// 
+    /// Requires scope: user-read-currently-playing user-read-playback-state
+    /// 
+    pub fn get_users_queue(&mut self) -> Result<(Track, Vec<Track>), SpotifyError> {
+        let url_extension = String::from("me/player/queue"); // create url extension
+
+        self.check_scope("user-read-currently-playing user-read-playback-state")?; // check scope
+
+        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // send request
+
+        let track = Track::new(&response["currently_playing"]); // get and format currently playing field
+
+        let mut tracks = Vec::new(); // create vector to store tracks
+
+        for track in response["queue"].members() {
+            tracks.push(Track::new(&track)); // add track to vector
+        }
+
+        return Ok((track, tracks)); // return response
     }
 }
