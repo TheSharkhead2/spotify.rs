@@ -362,4 +362,27 @@ impl Spotify {
 
         return Ok((track, tracks)); // return response
     }
+
+    /// Adds specified item to the playback queue: <https://developer.spotify.com/documentation/web-api/reference/#/operations/add-to-queue>
+    /// Note: currently only tracks are supported, episode ids will have unexpected results
+    /// 
+    /// Requires scope: user-modify-playback-state
+    /// 
+    /// # Arguments
+    /// * `track_id` - The id of the track to add to the queue
+    /// * `device_id` - The id of the device to add the track to
+    /// 
+    pub fn add_track_to_queue(&mut self, track_id: &str, device_id: Option<&str>) -> Result<(), SpotifyError> {
+        let mut url_extension = format!("me/player/queue?uri=spotify:track:{}", track_id); // create url extension (specifically with track as input)
+
+        self.check_scope("user-modify-playback-state")?; // check scope
+
+        if let Some(device_id) = device_id {
+            url_extension.push_str(&format!("&device_id={}", device_id)); // if device_id is supplied, then add it to url extension
+        };
+
+        self.spotify_request(&url_extension, RequestMethod::Post(HashMap::new()))?; // send request
+
+        return Ok(()); // return response
+    }
 }
