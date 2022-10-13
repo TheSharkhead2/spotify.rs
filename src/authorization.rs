@@ -78,11 +78,7 @@ pub fn get_authorization_code(client_id: &str, localhost_port: &str, redirect_ur
     }
 
     // listen for authorization code from redirect uri and parse option result
-    if let Some(auth_code) = listen_for_auth_code(localhost_port, &state) {
-        Ok(auth_code) // return authorization code
-    } else {
-        Err("Failed to receive authorization code".into()) // if None is returned, unknown error has occured
-    } 
+    return listen_for_auth_code(localhost_port, &state);
 }
 
 /// Listens on specified port for the authorization code utilizing `handle_connection()`. This is a modified version of code 
@@ -96,7 +92,7 @@ pub fn get_authorization_code(client_id: &str, localhost_port: &str, redirect_ur
 /// # Panics 
 /// On any authorization error.
 /// 
-fn listen_for_auth_code(port: &str, state: &str) -> Option<String> {
+fn listen_for_auth_code(port: &str, state: &str) -> Result<String, Box<dyn std::error::Error>> {
     let listener = TcpListener::bind(String::from("127.0.0.1:") + &port).unwrap(); // listen on specified port for localhost
 
     // on connection, process information for auth code
@@ -108,15 +104,15 @@ fn listen_for_auth_code(port: &str, state: &str) -> Option<String> {
         match auth_code {
             Some(result) => {
                 match result {
-                    Ok(code) => return Some(code),
-                    Err(e) => panic!("Error: {}", e),
+                    Ok(code) => return Ok(code),
+                    Err(e) => return Err(e),
                 }
             },
             None => continue,
         }
 
     }
-    None
+    Err("Failed to find authorization code.".into())
 }
 
 /// Handles connection to localhost port to do error handling/detection and state validation. Returns authorization code. 

@@ -8,7 +8,7 @@ fn general_testing() {
     let mut spotify = Spotify::authenticate(
         String::from("8888"),
         String::from("user-modify-playback-state"),
-    );
+    ).unwrap();
     
     // println!("{:?}", spotify.get_album("1xJ7jIK1tT0aVoJw1fPE6r", None));
     // println!("{:?}", spotify.get_albums(vec!["1xJ7jIK1tT0aVoJw1fPE6r", "1xJ7jIK1tT0aVoJw1fPE6r"], None));

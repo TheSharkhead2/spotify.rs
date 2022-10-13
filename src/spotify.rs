@@ -727,6 +727,7 @@ pub enum SpotifyError {
     RateLimitExceeded(String),
     BadRequest(String),
     InvalidRequest(String),
+    AuthenticationError(String),
     // Unknown,
 }
 
@@ -741,6 +742,7 @@ impl fmt::Debug for SpotifyError {
             SpotifyError::RateLimitExceeded(e) => write!(f, "Rate limited: {}", e),
             SpotifyError::BadRequest(e) => write!(f, "Bad request: {}", e),
             SpotifyError::InvalidRequest(e) => write!(f, "Invalid request: {}", e),
+            SpotifyError::AuthenticationError(e) => write!(f, "Authentication error: {}", e),
             // SpotifyError::Unknown => write!(f, "Unknown error"),
         }
     }
@@ -763,7 +765,7 @@ impl Spotify {
     /// * `localhost_port` - The localhost port fort the redirect uri. Note: currently there is only support for localhost redirect uris. 
     /// * `scope` - The scope of the Spotify API. See <https://developer.spotify.com/documentation/general/guides/authorization/scopes/> for more information.
     /// 
-    pub fn authenticate(localhost_port: String, scope: String) -> Spotify {
+    pub fn authenticate(localhost_port: String, scope: String) -> Result<Spotify, SpotifyError> {
         let client_id = dotenv::var("CLIENT_ID").unwrap(); // grab client_id from .env
 
         let (code_verifier, code_challenge) = generate_verifier(); // generate code verifier and code challenge
@@ -776,18 +778,18 @@ impl Spotify {
             Ok(auth_code) => {
                  get_access_token(&auth_code, &client_id, &code_verifier, &redirect_uri).unwrap() // get access token (be lazy with error handling and just panic if request is bad)
             },
-            Err(e) => panic!("{}", e),
+            Err(e) => return Err(SpotifyError::AuthenticationError(e.to_string())),
         };
 
         let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
 
-        Spotify {
+        Ok(Spotify {
             client_id: client_id,
             scope: scope,
             access_token: access_token,
             refresh_token: refresh_token,
             expires_at: expires_at,
-        }
+        })
     }
 
     /// Checks to see if required scope is present in current scope 
