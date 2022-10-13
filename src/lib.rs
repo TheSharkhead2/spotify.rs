@@ -12,13 +12,5 @@ mod genres;
 mod markets;
 mod player;
 
-pub use spotify::{Spotify, SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, DatedAlbum, Artist, Track, DatedTrack, FeatureTrack, Bar, Beat, Section, Segment, Tatum, AnalysisTrack, User, TimeRange, Playlist, PlaylistTrack, SpotifyCollection, SpotifyContext, Device, Playback, PlaybackActions, RepeatState, PlayedTrack}; // re-export relevant structs and enums
+pub use spotify::{Spotify, SpotifyImage, AlbumType, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, SpotifyContext, SpotifyCollection, Category, Album, DatedAlbum, Artist, Track, DatedTrack, FeatureTrack, Bar, Beat, Section, Segment, Tatum, AnalysisTrack, User, Playlist, PlaylistTrack, TimeRange, RepeatState, Device, PlaybackActions, Playback, SpotifyError}; // re-export relevant structs and enums
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
-}
