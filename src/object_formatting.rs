@@ -1,19 +1,25 @@
 use chrono::{NaiveDate, NaiveDateTime};
-use json::{JsonValue::{self, Array, Null}};
+use json::JsonValue::{self, Array, Null};
 use std::fmt::Debug;
 
-use crate::spotify::{SpotifyImage, AlbumType, SpotifyObject, RestrictionReason, ReleaseDatePrecision, ExternalTrackIds, Album, Artist, Track, DatedAlbum, DatedTrack, FeatureTrack, AnalysisTrack, Bar, Beat, Section, Segment, Tatum, SpotifyError, User, Playlist, PlaylistTrack, SpotifyCollection, Category, RepeatState, Device, PlaybackActions, Playback, PlayedTrack, SpotifyContext};
+use crate::spotify::{
+    Album, AlbumType, AnalysisTrack, Artist, Bar, Beat, Category, DatedAlbum, DatedTrack, Device,
+    ExternalTrackIds, FeatureTrack, Playback, PlaybackActions, PlayedTrack, Playlist,
+    PlaylistTrack, ReleaseDatePrecision, RepeatState, RestrictionReason, Section, Segment,
+    SpotifyCollection, SpotifyContext, SpotifyError, SpotifyImage, SpotifyObject, Tatum, Track,
+    User,
+};
 
 impl SpotifyImage {
-    /// Take JsonValue object representing image from API request and turn into 
+    /// Take JsonValue object representing image from API request and turn into
     /// SpotifyImage object (for ease of use).
-    /// 
-    /// # Arguments 
+    ///
+    /// # Arguments
     /// * `image` - JsonValue object representing image from API request
-    /// 
-    /// # Panics 
+    ///
+    /// # Panics
     /// If height or width value can't be converted to i32 (shouldn't happen)
-    /// 
+    ///
     pub fn new(image: &JsonValue) -> SpotifyImage {
         SpotifyImage {
             url: image["url"].to_string(),
@@ -30,11 +36,11 @@ impl SpotifyImage {
 }
 
 impl ExternalTrackIds {
-    /// Takes JsonValue object representing possible external ids and formats them into ExternalTrackIds struct 
-    /// 
+    /// Takes JsonValue object representing possible external ids and formats them into ExternalTrackIds struct
+    ///
     /// # Arguments
     /// * `external_ids` - JsonValue object representing possible external ids
-    /// 
+    ///
     fn new(external_ids: &JsonValue) -> ExternalTrackIds {
         ExternalTrackIds {
             isrc: match external_ids["isrc"].as_str() {
@@ -55,17 +61,17 @@ impl ExternalTrackIds {
 
 impl SpotifyObject for Album {
     /// Takes JsonValue object representing album and formats it into struct for ease of use
-    /// 
+    ///
     /// # Arguments
     /// * `raw_object` - JsonValue object representing album
-    /// 
+    ///
     fn new(raw_object: &JsonValue) -> Album {
         let album_type = match raw_object["album_type"].as_str() {
             Some("album") => AlbumType::Album,
             Some("single") => AlbumType::Single,
             Some("compilation") => AlbumType::Compilation,
             Some(_) => AlbumType::Album, // default to album
-            None => AlbumType::Album, // default to album
+            None => AlbumType::Album,    // default to album
         };
 
         let total_tracks = match raw_object["total_tracks"].as_i32() {
@@ -74,19 +80,22 @@ impl SpotifyObject for Album {
         };
 
         let available_markets: Vec<String> = match &raw_object["avaliable_markets"] {
-            Array(markets) => {markets.iter().map(|market| market.to_string()).collect()}, // turn JsonValue Array type to vec of Strings 
-            _ => vec![], // default to empty vec 
+            Array(markets) => markets.iter().map(|market| market.to_string()).collect(), // turn JsonValue Array type to vec of Strings
+            _ => vec![], // default to empty vec
         };
 
-        let spotify_url = &raw_object["external_urls"]["spotify"].to_string(); 
+        let spotify_url = &raw_object["external_urls"]["spotify"].to_string();
 
         let href = &raw_object["href"].to_string();
 
         let id = &raw_object["id"].to_string();
 
         let images = match &raw_object["images"] {
-            Array(images) => {images.iter().map(|image| SpotifyImage::new(image)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
-            _ => vec![], // default to empty vec 
+            Array(images) => images
+                .iter()
+                .map(|image| SpotifyImage::new(image))
+                .collect(), // turn JsonValue Array type to vec of SpotifyImage objects
+            _ => vec![], // default to empty vec
         };
 
         let name = &raw_object["name"].to_string();
@@ -96,7 +105,7 @@ impl SpotifyObject for Album {
             Some("month") => ReleaseDatePrecision::Month,
             Some("day") => ReleaseDatePrecision::Day,
             Some(_) => ReleaseDatePrecision::None, // default to none
-            None => ReleaseDatePrecision::None, // default to none
+            None => ReleaseDatePrecision::None,    // default to none
         };
 
         let release_date = {
@@ -105,15 +114,22 @@ impl SpotifyObject for Album {
                 Null => None, // default to no date
                 date_string => {
                     let date_string_temp = match release_date_precision {
-                        ReleaseDatePrecision::Year => Some(NaiveDate::parse_from_str(&date_string.to_string(), "%Y")),
-                        ReleaseDatePrecision::Month => Some(NaiveDate::parse_from_str(&date_string.to_string(), "%Y-%m")),
-                        ReleaseDatePrecision::Day => Some(NaiveDate::parse_from_str(&date_string.to_string(), "%Y-%m-%d")),
+                        ReleaseDatePrecision::Year => {
+                            Some(NaiveDate::parse_from_str(&date_string.to_string(), "%Y"))
+                        }
+                        ReleaseDatePrecision::Month => {
+                            Some(NaiveDate::parse_from_str(&date_string.to_string(), "%Y-%m"))
+                        }
+                        ReleaseDatePrecision::Day => Some(NaiveDate::parse_from_str(
+                            &date_string.to_string(),
+                            "%Y-%m-%d",
+                        )),
                         ReleaseDatePrecision::None => None, // default to no date
-                    }; 
+                    };
                     match date_string_temp {
                         Some(Ok(date)) => Some(date),
                         Some(Err(_)) => None, // default to no date
-                        None => None, // pass through none
+                        None => None,         // pass through none
                     }
                 }
             }
@@ -130,12 +146,12 @@ impl SpotifyObject for Album {
         let uri = &raw_object["uri"].to_string();
 
         let artists: Option<Vec<Artist>> = match &raw_object["artists"] {
-            Array(artists) => {Some(artists.iter().map(|artist| Artist::new(artist)).collect())}, // turn JsonValue Array type to vec of Artist objects 
+            Array(artists) => Some(artists.iter().map(|artist| Artist::new(artist)).collect()), // turn JsonValue Array type to vec of Artist objects
             _ => None, // if artist array can't be found, return None
         };
 
         let tracks = match &raw_object["tracks"] {
-            Null => None, 
+            Null => None,
             _ => Some(SpotifyCollection::<Track>::new(&raw_object["tracks"])),
         };
 
@@ -155,20 +171,22 @@ impl SpotifyObject for Album {
             artists,
             tracks,
         }
-
     }
 }
 
 impl SpotifyObject for DatedAlbum {
-    /// Takes JsonValue object for DatedAlbum and formats it 
-    /// 
+    /// Takes JsonValue object for DatedAlbum and formats it
+    ///
     /// # Arguments
     /// * `raw_object` - JsonValue object representing DatedAlbum
-    /// 
+    ///
     fn new(raw_object: &JsonValue) -> DatedAlbum {
         let added_at = match &raw_object["added_at"] {
             Null => None, // default to no date
-            date_string => Some(NaiveDateTime::parse_from_str(&date_string.to_string(), "%Y-%m-%dT%H:%M:%S%.fZ").unwrap()),
+            date_string => Some(
+                NaiveDateTime::parse_from_str(&date_string.to_string(), "%Y-%m-%dT%H:%M:%S%.fZ")
+                    .unwrap(),
+            ),
         };
 
         let album = Album::new(&raw_object["album"]);
@@ -181,12 +199,12 @@ impl SpotifyObject for DatedAlbum {
 }
 
 impl SpotifyObject for Artist {
-    /// Take JsonValue object representing artist from API request and turn into Artist struct for 
-    /// ease of use. 
-    /// 
-    /// # Arguments 
-    /// * `raw_object` - JsonValue object representing artist from API request 
-    /// 
+    /// Take JsonValue object representing artist from API request and turn into Artist struct for
+    /// ease of use.
+    ///
+    /// # Arguments
+    /// * `raw_object` - JsonValue object representing artist from API request
+    ///
     fn new(raw_object: &JsonValue) -> Artist {
         let spotify_url = &raw_object["external_urls"]["spotify"].to_string();
 
@@ -196,8 +214,8 @@ impl SpotifyObject for Artist {
         };
 
         let genres: Vec<String> = match &raw_object["genres"] {
-            Array(genres) => {genres.iter().map(|genre| genre.to_string()).collect()}, // turn JsonValue Array type to vec of Strings 
-            _ => vec![], // default to empty vec 
+            Array(genres) => genres.iter().map(|genre| genre.to_string()).collect(), // turn JsonValue Array type to vec of Strings
+            _ => vec![], // default to empty vec
         };
 
         let href = &raw_object["href"].to_string();
@@ -205,8 +223,11 @@ impl SpotifyObject for Artist {
         let id = &raw_object["id"].to_string();
 
         let images = match &raw_object["images"] {
-            Array(images) => {images.iter().map(|image| SpotifyImage::new(image)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
-            _ => vec![], // default to empty vec 
+            Array(images) => images
+                .iter()
+                .map(|image| SpotifyImage::new(image))
+                .collect(), // turn JsonValue Array type to vec of SpotifyImage objects
+            _ => vec![], // default to empty vec
         };
 
         let name = &raw_object["name"].to_string();
@@ -233,25 +254,25 @@ impl SpotifyObject for Artist {
 }
 
 impl SpotifyObject for Track {
-    /// Format a single track in the form of a JsonValue from API request into struct for ease of use 
-    /// 
+    /// Format a single track in the form of a JsonValue from API request into struct for ease of use
+    ///
     /// # Arguments
     /// * `raw_object` - JsonValue object representing track from API request
-    /// 
+    ///
     fn new(raw_object: &JsonValue) -> Track {
         let album = match &raw_object["album"] {
-            Null => None, // if album object doesn't exist, return None 
+            Null => None, // if album object doesn't exist, return None
             _ => Some(Album::new(&raw_object["album"])), // if album object exists, format it
         };
 
         let artists: Option<Vec<Artist>> = match &raw_object["artists"] {
-            Array(artists) => {Some(artists.iter().map(|artist| Artist::new(artist)).collect())}, // turn JsonValue Array type to vec of Artist objects 
+            Array(artists) => Some(artists.iter().map(|artist| Artist::new(artist)).collect()), // turn JsonValue Array type to vec of Artist objects
             _ => None, // default to None
         };
 
         let available_markets: Vec<String> = match &raw_object["available_markets"] {
-            Array(markets) => {markets.iter().map(|market| market.to_string()).collect()}, // turn JsonValue Array type to vec of Strings 
-            _ => vec![], // default to empty vec 
+            Array(markets) => markets.iter().map(|market| market.to_string()).collect(), // turn JsonValue Array type to vec of Strings
+            _ => vec![], // default to empty vec
         };
 
         let disc_number = match raw_object["disc_number"].as_i32() {
@@ -270,7 +291,11 @@ impl SpotifyObject for Track {
         };
 
         let external_ids = match &raw_object["external_ids"] {
-            Null => ExternalTrackIds { isrc: None, ean: None, upc: None }, // if external_ids object doesn't exist, just set all ids to None 
+            Null => ExternalTrackIds {
+                isrc: None,
+                ean: None,
+                upc: None,
+            }, // if external_ids object doesn't exist, just set all ids to None
             _ => ExternalTrackIds::new(&raw_object["external_ids"]), // if external_ids object exists, format it
         };
 
@@ -295,8 +320,8 @@ impl SpotifyObject for Track {
         };
 
         let preview_url = match raw_object["preview_url"] {
-            Null => None, 
-            _ => Some(raw_object["preview_url"].to_string()), // if not null, assume string preview url exists 
+            Null => None,
+            _ => Some(raw_object["preview_url"].to_string()), // if not null, assume string preview url exists
         };
 
         let track_number = match raw_object["track_number"].as_i32() {
@@ -335,14 +360,17 @@ impl SpotifyObject for Track {
 
 impl SpotifyObject for DatedTrack {
     /// Takes JsonValue for DatedTrack and formats it
-    /// 
+    ///
     /// # Arguments
     /// * `raw_object` - JsonValue object representing DatedTrack from API request
-    /// 
+    ///
     fn new(raw_object: &JsonValue) -> DatedTrack {
         let added_at = match &raw_object["added_at"] {
             Null => None, // default to no date
-            date_string => Some(NaiveDateTime::parse_from_str(&date_string.to_string(), "%Y-%m-%dT%H:%M:%S%.fZ").unwrap()),
+            date_string => Some(
+                NaiveDateTime::parse_from_str(&date_string.to_string(), "%Y-%m-%dT%H:%M:%S%.fZ")
+                    .unwrap(),
+            ),
         };
 
         let track = Track::new(&raw_object["track"]);
@@ -356,10 +384,10 @@ impl SpotifyObject for DatedTrack {
 
 impl FeatureTrack {
     /// Takes JsonValue representing audio features for a track and formats it into FeatureTrack struct
-    /// 
+    ///
     /// # Arguments
     /// * `raw_object` - JsonValue object representing audio features for a track from API request
-    /// 
+    ///
     pub fn new(raw_object: &JsonValue) -> FeatureTrack {
         let acousticness = match raw_object["acousticness"].as_f64() {
             Some(acousticness) => acousticness,
@@ -458,14 +486,16 @@ impl FeatureTrack {
 
 impl AnalysisTrack {
     /// Takes JsonValue representing audion analysis and formats it into AnalysisTrack struct
-    /// 
+    ///
     /// # Arguments
     /// * `raw_object` - JsonValue object representing audio analysis for a track from API request
     ///
     pub fn new(raw_object: &JsonValue) -> Result<AnalysisTrack, SpotifyError> {
         // Check for errors before formatting. An error has occured on status code = 1
         if let Some(1) = raw_object["meta"]["status_code"].as_i32() {
-            return Err(SpotifyError::FailedRequest(raw_object["meta"]["detailed_status"].to_string()))
+            return Err(SpotifyError::FailedRequest(
+                raw_object["meta"]["detailed_status"].to_string(),
+            ));
         }
 
         let analyzer_version = raw_object["meta"]["analyzer_version"].to_string();
@@ -500,7 +530,7 @@ impl AnalysisTrack {
             Some(analysis_sample_rate) => analysis_sample_rate,
             None => 0, // default to 0
         };
-        
+
         let analysis_channels = match raw_object["track"]["analysis_channels"].as_i32() {
             Some(analysis_channels) => analysis_channels,
             None => 0, // default to 0
@@ -536,10 +566,11 @@ impl AnalysisTrack {
             None => 0, // default to 0
         };
 
-        let time_signature_confidence = match raw_object["track"]["time_signature_confidence"].as_f64() {
-            Some(time_signature_confidence) => time_signature_confidence,
-            None => 0.0, // default to 0.0
-        };
+        let time_signature_confidence =
+            match raw_object["track"]["time_signature_confidence"].as_f64() {
+                Some(time_signature_confidence) => time_signature_confidence,
+                None => 0.0, // default to 0.0
+            };
 
         let key = match raw_object["track"]["key"].as_i32() {
             Some(key) => key,
@@ -579,7 +610,8 @@ impl AnalysisTrack {
 
         let mut bars: Vec<Bar> = Vec::new(); // empty vector for Bar objects
 
-        for bar in raw_object["bars"].members() { // loop through array and format Bar objects
+        for bar in raw_object["bars"].members() {
+            // loop through array and format Bar objects
             let start = match bar["start"].as_f64() {
                 Some(start) => start,
                 None => 0.0, // default to 0.0
@@ -604,7 +636,8 @@ impl AnalysisTrack {
 
         let mut beats: Vec<Beat> = Vec::new(); // empty vector for Beat objects
 
-        for beat in raw_object["beats"].members() { // loop through array and format Beat objects
+        for beat in raw_object["beats"].members() {
+            // loop through array and format Beat objects
             let start = match beat["start"].as_f64() {
                 Some(start) => start,
                 None => 0.0, // default to 0.0
@@ -629,7 +662,8 @@ impl AnalysisTrack {
 
         let mut sections: Vec<Section> = Vec::new(); // empty vector for Section objects
 
-        for section in raw_object["sections"].members() { // loop through array and format Section objects
+        for section in raw_object["sections"].members() {
+            // loop through array and format Section objects
             let start = match section["start"].as_f64() {
                 Some(start) => start,
                 None => 0.0, // default to 0.0
@@ -708,7 +742,8 @@ impl AnalysisTrack {
 
         let mut segments: Vec<Segment> = Vec::new(); // empty vector for Segment objects
 
-        for segment in raw_object["segments"].members() { // loop through array and format Segment objects
+        for segment in raw_object["segments"].members() {
+            // loop through array and format Segment objects
             let start = match segment["start"].as_f64() {
                 Some(start) => start,
                 None => 0.0, // default to 0.0
@@ -744,9 +779,15 @@ impl AnalysisTrack {
                 None => 0.0, // default to 0.0
             };
 
-            let pitches: Vec<f64> = segment["pitches"].members().map(|p| p.as_f64().unwrap()).collect();
+            let pitches: Vec<f64> = segment["pitches"]
+                .members()
+                .map(|p| p.as_f64().unwrap())
+                .collect();
 
-            let timbre: Vec<f64> = segment["timbre"].members().map(|t| t.as_f64().unwrap()).collect();
+            let timbre: Vec<f64> = segment["timbre"]
+                .members()
+                .map(|t| t.as_f64().unwrap())
+                .collect();
 
             segments.push(Segment {
                 start,
@@ -763,7 +804,8 @@ impl AnalysisTrack {
 
         let mut tatums: Vec<Tatum> = Vec::new(); // empty vector for Tatum objects
 
-        for tatum in raw_object["tatums"].members() { // loop through array and format Tatum objects
+        for tatum in raw_object["tatums"].members() {
+            // loop through array and format Tatum objects
             let start = match tatum["start"].as_f64() {
                 Some(start) => start,
                 None => 0.0, // default to 0.0
@@ -826,11 +868,11 @@ impl AnalysisTrack {
 }
 
 impl User {
-    /// Takes JsonValue representing a User and returns the User Struct 
-    /// 
+    /// Takes JsonValue representing a User and returns the User Struct
+    ///
     /// # Arguments
     /// * `raw_object` - JsonValue representing a User
-    /// 
+    ///
     pub fn new(raw_object: &JsonValue) -> User {
         let country = match raw_object["country"].as_str() {
             Some(country) => Some(country.to_string()),
@@ -838,7 +880,7 @@ impl User {
         };
 
         let display_name = match raw_object["display_name"].as_str() {
-            Some("null") => None, // default to None 
+            Some("null") => None, // default to None
             Some(display_name) => Some(display_name.to_string()),
             None => None, // default to None
         };
@@ -864,8 +906,11 @@ impl User {
         };
 
         let images = match &raw_object["images"] {
-            Array(images) => {images.iter().map(|image| SpotifyImage::new(image)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
-            _ => vec![], // default to empty vec 
+            Array(images) => images
+                .iter()
+                .map(|image| SpotifyImage::new(image))
+                .collect(), // turn JsonValue Array type to vec of SpotifyImage objects
+            _ => vec![], // default to empty vec
         };
 
         let product = match raw_object["product"].as_str() {
@@ -894,10 +939,10 @@ impl User {
 
 impl SpotifyObject for Playlist {
     /// Takes JsonValue representing a Playlist and returns the Playlist Struct
-    /// 
+    ///
     /// # Arguments
     /// * `raw_object` - JsonValue representing a Playlist
-    /// 
+    ///
     fn new(raw_object: &JsonValue) -> Playlist {
         let collaborative = match raw_object["collaborative"].as_bool() {
             Some(collaborative) => collaborative,
@@ -927,8 +972,11 @@ impl SpotifyObject for Playlist {
         };
 
         let images = match &raw_object["images"] {
-            Array(images) => {images.iter().map(|image| SpotifyImage::new(image)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
-            _ => vec![], // default to empty vec 
+            Array(images) => images
+                .iter()
+                .map(|image| SpotifyImage::new(image))
+                .collect(), // turn JsonValue Array type to vec of SpotifyImage objects
+            _ => vec![], // default to empty vec
         };
 
         let name = match raw_object["name"].as_str() {
@@ -936,7 +984,7 @@ impl SpotifyObject for Playlist {
             None => String::new(), // default to empty string
         };
 
-        let owner = User::new(&raw_object["owner"]); 
+        let owner = User::new(&raw_object["owner"]);
 
         let public = match raw_object["public"].as_bool() {
             Some(public) => Some(public),
@@ -978,13 +1026,15 @@ impl SpotifyObject for Playlist {
 
 impl SpotifyObject for PlaylistTrack {
     /// Takes JsonValue representing a PlaylistTrack and returns the PlaylistTrack Struct
-    /// 
+    ///
     /// # Arguments
     /// * `raw_object` - JsonValue representing a PlaylistTrack
-    /// 
+    ///
     fn new(raw_object: &JsonValue) -> PlaylistTrack {
         let added_at = match raw_object["added_at"].as_str() {
-            Some(added_at) => Some(NaiveDateTime::parse_from_str(added_at, "%Y-%m-%dT%H:%M:%S%.fZ").unwrap()), // parse string into NaiveDateTime 
+            Some(added_at) => {
+                Some(NaiveDateTime::parse_from_str(added_at, "%Y-%m-%dT%H:%M:%S%.fZ").unwrap())
+            } // parse string into NaiveDateTime
             None => None, // default to None
         };
 
@@ -1007,11 +1057,11 @@ impl SpotifyObject for PlaylistTrack {
 }
 
 impl<T: SpotifyObject + Debug> SpotifyCollection<T> {
-    /// Takes JsonValue representing a collection of spotify objects and returns SpotifyCollection of objects 
-    /// 
+    /// Takes JsonValue representing a collection of spotify objects and returns SpotifyCollection of objects
+    ///
     /// # Arguments
     /// * `raw_object` - JsonValue representing a collection of spotify objects
-    /// 
+    ///
     pub fn new(raw_object: &JsonValue) -> SpotifyCollection<T> {
         let href = match raw_object["href"].as_str() {
             Some(href) => String::from(href),
@@ -1024,8 +1074,8 @@ impl<T: SpotifyObject + Debug> SpotifyCollection<T> {
         };
 
         let items = match &raw_object["items"] {
-            Array(items) => {items.iter().map(|item| T::new(item)).collect()}, // turn JsonValue Array type to vec of T objects 
-            _ => vec![], // default to empty vec 
+            Array(items) => items.iter().map(|item| T::new(item)).collect(), // turn JsonValue Array type to vec of T objects
+            _ => vec![],                                                     // default to empty vec
         };
 
         let next = match raw_object["next"].as_str() {
@@ -1062,10 +1112,10 @@ impl<T: SpotifyObject + Debug> SpotifyCollection<T> {
 
 impl SpotifyObject for Category {
     /// Takes JsonValue representing a Category and returns the Category Struct
-    /// 
+    ///
     /// # Arguments
     /// * `raw_object` - JsonValue representing a Category
-    /// 
+    ///
     fn new(raw_object: &JsonValue) -> Category {
         let href = match raw_object["href"].as_str() {
             Some(href) => String::from(href),
@@ -1073,8 +1123,8 @@ impl SpotifyObject for Category {
         };
 
         let icons = match &raw_object["icons"] {
-            Array(icons) => {icons.iter().map(|icon| SpotifyImage::new(icon)).collect()}, // turn JsonValue Array type to vec of SpotifyImage objects 
-            _ => vec![], // default to empty vec 
+            Array(icons) => icons.iter().map(|icon| SpotifyImage::new(icon)).collect(), // turn JsonValue Array type to vec of SpotifyImage objects
+            _ => vec![], // default to empty vec
         };
 
         let id = match raw_object["id"].as_str() {
@@ -1097,11 +1147,11 @@ impl SpotifyObject for Category {
 }
 
 impl Device {
-    /// Takes JsonValue representing a playback device and returns the Device struct 
-    /// 
+    /// Takes JsonValue representing a playback device and returns the Device struct
+    ///
     /// # Arguments
     /// * `raw_object` - JsonValue representing a playback device
-    /// 
+    ///
     pub fn new(raw_object: &JsonValue) -> Device {
         let id = match raw_object["id"].as_str() {
             Some(id) => String::from(id),
@@ -1152,10 +1202,10 @@ impl Device {
 
 impl PlaybackActions {
     /// Takes JsonValue representing possible playback actions and returns PlaybackActions struct
-    /// 
+    ///
     /// # Arguments
     /// * `raw_object` - JsonValue representing possible playback actions
-    /// 
+    ///
     pub fn new(raw_object: &JsonValue) -> PlaybackActions {
         let interrupting_playback = match raw_object["interrupting_playback"].as_bool() {
             Some(interrupting_playback) => interrupting_playback,
@@ -1223,19 +1273,19 @@ impl PlaybackActions {
 }
 
 impl Playback {
-    /// Takes JsonValue representing playback state and returns Playback struct 
-    /// 
+    /// Takes JsonValue representing playback state and returns Playback struct
+    ///
     /// # Arguments
     /// * `raw_object` - JsonValue representing playback state
-    /// 
+    ///
     pub fn new(raw_object: &JsonValue) -> Playback {
         let timestamp = match raw_object["timestamp"].as_i64() {
-            Some(timestamp) => Some(NaiveDateTime::from_timestamp(timestamp/1000, 0)), // parse timestamp into NaiveDateTime (timestamp is in ms)
+            Some(timestamp) => Some(NaiveDateTime::from_timestamp(timestamp / 1000, 0)), // parse timestamp into NaiveDateTime (timestamp is in ms)
             None => None, // default to None
         };
 
         let device = match &raw_object["device"] {
-            Null => None, // default to None
+            Null => None,                        // default to None
             device => Some(Device::new(device)), // turn JsonValue into Device struct
         };
 
@@ -1247,7 +1297,7 @@ impl Playback {
         };
 
         let shuffle_state = match &raw_object["shuffle_state"].as_str() {
-            Some("on") => true, 
+            Some("on") => true,
             _ => false, // default to false
         };
 
@@ -1286,15 +1336,17 @@ impl Playback {
 
 impl SpotifyObject for PlayedTrack {
     /// Takes JsonValue representing played track and returns PlayedTrack struct
-    /// 
+    ///
     /// # Arguments
     /// * `raw_object` - JsonValue representing played track
-    /// 
+    ///
     fn new(raw_object: &JsonValue) -> PlayedTrack {
         let track = Track::new(&raw_object["track"]);
 
         let played_at = match &raw_object["played_at"].as_str() {
-            Some(played_at) => Some(NaiveDateTime::parse_from_str(played_at, "%Y-%m-%dT%H:%M:%S%.fZ").unwrap()), // parse played_at into NaiveDateTime
+            Some(played_at) => {
+                Some(NaiveDateTime::parse_from_str(played_at, "%Y-%m-%dT%H:%M:%S%.fZ").unwrap())
+            } // parse played_at into NaiveDateTime
             None => None, // default to None
         };
 

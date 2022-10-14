@@ -10,7 +10,7 @@
 //         String::from("8888"),
 //         String::from("user-modify-playback-state"),
 //     ).unwrap();
-    
+
 //     // println!("{:?}", spotify.get_album("1xJ7jIK1tT0aVoJw1fPE6r", None));
 //     // println!("{:?}", spotify.get_albums(vec!["1xJ7jIK1tT0aVoJw1fPE6r", "1xJ7jIK1tT0aVoJw1fPE6r"], None));
 //     // println!("{:?}", spotify.get_album_tracks("1xJ7jIK1tT0aVoJw1fPE6r", None, None, None));
@@ -82,4 +82,3 @@
 //     println!("{:?}", spotify.add_track_to_queue("212AgAhFl3RJZGAK0LrMpX", None));
 
 // }
-

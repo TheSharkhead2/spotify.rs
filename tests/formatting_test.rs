@@ -1,10 +1,10 @@
 use json::object;
-use spotifyrs::{SpotifyObject, Album, Artist, Track, Playlist};
+use spotifyrs::{Album, Artist, Playlist, SpotifyObject, Track};
 
-// I am not sure what these songs are, or if they exist, but Copilot thought they did 
+// I am not sure what these songs are, or if they exist, but Copilot thought they did
 #[test]
 fn album_formatting() {
-    let album_json = object!{
+    let album_json = object! {
         "album_type": "album",
         "total_tracks": 10,
         "available_markets": ["CA", "US", "ES"],
@@ -30,7 +30,7 @@ fn album_formatting() {
 
 #[test]
 fn artist_formatting() {
-    let artist_json = object!{
+    let artist_json = object! {
         "external_urls": {
             "spotify": "https://open.spotify.com/artist/0OdUWJ0sBjDrqHygGUXeCF"
         },
@@ -53,7 +53,7 @@ fn artist_formatting() {
 
 #[test]
 fn track_formatting() {
-    let track_json = object!{
+    let track_json = object! {
         "album": {
             "album_type": "album",
             "artists": [
@@ -123,7 +123,7 @@ fn track_formatting() {
 
 #[test]
 fn playlist_formatting() {
-    let playlist_json = object!{
+    let playlist_json = object! {
         "collaborative": false,
         "description": "A playlist featuring Arcade Fire",
         "external_urls": {
