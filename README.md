@@ -2,7 +2,7 @@
 spotifyrs aims to be a relatively easy to use wrapper for the Spotify API. It is still currently under development (see [issues and roadmap](#-Issues-and-Roadmap)); however, it can be used for most purposes in its current state. 
 This wrapper allows you to interact with the Spotify API using simple method calls and consistent objects that give you a consistent way to access the data returned by the API. 
 
-See the [documentation](docs.rs/spotifyrs) for a quick start guide. 
+See the [documentation](www.docs.rs/spotifyrs) for a quick start guide. 
 
 If you see any issues with this crate, please [submit an issue](https://github.com/TheSharkhead2/spotify.rs/issues) or make a pull request! If you submit an issue I will try to get to it as soon as possible, this is still an early version, so not all the problems have been worked out. 
 
