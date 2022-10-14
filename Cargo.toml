@@ -2,6 +2,8 @@
 name = "spotifyrs"
 version = "0.1.0"
 edition = "2021"
+description = "A Rust-built wrapper for the Spotify Web API that focuses on consistent and reliable developer interaction with the many objects in the API (artists, tracks, etc)"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
