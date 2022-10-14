@@ -1,4 +1,4 @@
-//! spotifyrs aims to be a relatively easy to use wrapper for the Spotify API. It is still currently under development (see [issues]()); however, it can be used for most purposes in its current state.
+//! spotifyrs aims to be a relatively easy to use wrapper for the Spotify API. It is still currently under development (see [issues and roadmap](https://github.com/TheSharkhead2/spotify.rs#issues-and-roadmap)); however, it can be used for most purposes in its current state.
 //! This wrapper allows you to interact with the Spotify API using simple method calls and consistent objects that give you a consistent way to access the data returned by the API.
 //!
 //! # Authorization codeflow

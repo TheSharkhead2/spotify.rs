@@ -1,5 +1,5 @@
 # Spotifyrs
-spotifyrs aims to be a relatively easy to use wrapper for the Spotify API. It is still currently under development (see [issues](#-Issues-and-Roadmap)); however, it can be used for most purposes in its current state. 
+spotifyrs aims to be a relatively easy to use wrapper for the Spotify API. It is still currently under development (see [issues and roadmap](#-Issues-and-Roadmap)); however, it can be used for most purposes in its current state. 
 This wrapper allows you to interact with the Spotify API using simple method calls and consistent objects that give you a consistent way to access the data returned by the API. 
 
 See the [documentation]() for a quick start guide. 
