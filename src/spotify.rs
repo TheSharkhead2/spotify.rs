@@ -742,6 +742,7 @@ pub enum SpotifyError {
     BadRequest(String),
     InvalidRequest(String),
     AuthenticationError(String),
+    NotAuthenticated,
     // Unknown,
 }
 
@@ -759,6 +760,7 @@ impl fmt::Debug for SpotifyError {
             SpotifyError::BadRequest(e) => write!(f, "Bad request: {}", e),
             SpotifyError::InvalidRequest(e) => write!(f, "Invalid request: {}", e),
             SpotifyError::AuthenticationError(e) => write!(f, "Authentication error: {}", e),
+            SpotifyError::NotAuthenticated => write!(f, "Not authenticated"),
             // SpotifyError::Unknown => write!(f, "Unknown error"),
         }
     }
@@ -766,14 +768,26 @@ impl fmt::Debug for SpotifyError {
 
 /// An authenticated instance of the Spotify API client. Can be used to make requests in the given scope.
 pub struct Spotify {
-    client_id: String,
-    scope: String,
-    access_token: String,
-    refresh_token: String,
-    expires_at: DateTime<Utc>,
+    client_id: Option<String>,
+    scope: Option<String>,
+    access_token: Option<String>,
+    refresh_token: Option<String>,
+    expires_at: Option<DateTime<Utc>>,
 }
 
 impl Spotify {
+    /// Creates a blank Spotify object 
+    /// 
+    pub fn new() -> Spotify {
+        Spotify { 
+            client_id: None, 
+            scope: None, 
+            access_token: None, 
+            refresh_token: None, 
+            expires_at: None 
+        }
+    }
+
     /// Creates a new Spotify object by authenticating with the Spotify API using the PKCE codeflow.
     /// Grabs `client_id` from `.env` file.
     ///
@@ -781,7 +795,7 @@ impl Spotify {
     /// * `localhost_port` - The localhost port fort the redirect uri. Note: currently there is only support for localhost redirect uris.
     /// * `scope` - The scope of the Spotify API. See <https://developer.spotify.com/documentation/general/guides/authorization/scopes/> for more information.
     ///
-    pub fn authenticate(localhost_port: String, scope: String) -> Result<Spotify, SpotifyError> {
+    pub fn authenticate(&mut self, localhost_port: String, scope: String) -> Result<(), SpotifyError> {
         let client_id = dotenv::var("CLIENT_ID").unwrap(); // grab client_id from .env
 
         let (code_verifier, code_challenge) = generate_verifier(); // generate code verifier and code challenge
@@ -806,13 +820,14 @@ impl Spotify {
 
         let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
 
-        Ok(Spotify {
-            client_id: client_id,
-            scope: scope,
-            access_token: access_token,
-            refresh_token: refresh_token,
-            expires_at: expires_at,
-        })
+        // update all of the Spotify object's fields
+        self.client_id = Some(client_id);
+        self.scope = Some(scope);
+        self.access_token = Some(access_token);
+        self.refresh_token = Some(refresh_token);
+        self.expires_at = Some(expires_at);
+
+        Ok(())
     }
 
     /// Checks to see if required scope is present in current scope
@@ -821,7 +836,10 @@ impl Spotify {
     /// * `scope` - A string slice that holds required scope
     ///
     pub fn check_scope(&self, scope: &str) -> Result<(), SpotifyError> {
-        let scopes: Vec<&str> = self.scope.split_whitespace().collect();
+        let scopes: Vec<&str> = match &self.scope {
+            Some(scope) => scope.split_whitespace().collect(), // collect scopes into vector
+            None => Vec::new(), // if scope isn't set, then assume no scope
+        };
         let required_scopes: Vec<&str> = scope.split_whitespace().collect();
 
         let missing_scopes: Vec<&str> = required_scopes
@@ -838,20 +856,33 @@ impl Spotify {
     }
 
     /// Returns the access token. If the token is expired, it will be refreshed.
-    pub fn access_token(&mut self) -> String {
-        // if access token is expired, refresh it
-        if Utc::now() > self.expires_at {
-            let (access_token, expires_at) = self.refresh();
-            self.access_token = access_token;
-            self.expires_at = expires_at;
-        }
-        return self.access_token.clone(); // return access token
+    pub fn access_token(&mut self) -> Result<String, SpotifyError> {
+        if self.access_token.is_none() { // don't proceed if access toekn is not set
+            return Err(SpotifyError::NotAuthenticated);
+        };
+
+        match self.expires_at {
+            Some(expires_at) => {
+                // if access token is expired, refresh it
+                if Utc::now() > expires_at {
+                    let (access_token, expires_at) = self.refresh()?;
+                    self.access_token = Some(access_token);
+                    self.expires_at = Some(expires_at);
+                }
+                return Ok(self.access_token.clone().unwrap()); // return access token. Can assume that the access token is set because already returned error if not
+            },
+            None => return Err(SpotifyError::NotAuthenticated),
+        };
+        
     }
 
     /// Refreshes the access token and returns the new access token and the time it expires
-    fn refresh(&self) -> (String, DateTime<Utc>) {
+    fn refresh(&self) -> Result<(String, DateTime<Utc>), SpotifyError> {
+        if self.refresh_token.is_none() || self.client_id.is_none() { // if client id or refresh token is not set, return error
+            return Err(SpotifyError::NotAuthenticated);
+        }
         let (access_token, expires_in) =
-            match refresh_access_token(&self.refresh_token, &self.client_id) {
+            match refresh_access_token(&self.refresh_token.as_ref().unwrap(), &self.client_id.as_ref().unwrap()) { // can unwrap because they are set
                 Ok((access_token, expires_in)) => (access_token, expires_in),
                 Err(e) => panic!("{}", e), // on error panic
             };
@@ -859,6 +890,6 @@ impl Spotify {
         let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
 
         // return access token and time when access token expires
-        (access_token, expires_at)
+        Ok((access_token, expires_at))
     }
 }

@@ -27,7 +27,7 @@ impl Spotify {
         url_extension: &str,
         request_method: RequestMethod,
     ) -> Result<JsonValue, SpotifyError> {
-        let access_token = self.access_token(); // get access token
+        let access_token = self.access_token()?; // get access token
 
         let client = reqwest::blocking::Client::new(); // create client
 

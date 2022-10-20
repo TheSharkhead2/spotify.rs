@@ -13,7 +13,8 @@
 //! ```rust
 //! use spotifyrs::Spotify;
 //!
-//! let mut spotify = Spotify::authenticate(String::from("8080"), String::from("user-read-private user-read-email")).unwrap();
+//! let mut spotify = Spotify::new(); // create blank object
+//! spotify.authenticate(String::from("8080"), String::from("user-read-private user-read-email")).unwrap(); // authenticate it
 //! ```
 //! This will open a browser window and prompt the user to authorize your application. Once they do, they will be redirected to an html page confirming the authorization. You can then use the `Spotify` object to make requests to the API.
 //! This can return an error if the user cancels the request. Be warned, this method will also not automatically timeout and will indefinitely hang waiting for the user to authorize if the user closes the browser.
