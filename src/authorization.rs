@@ -247,7 +247,7 @@ pub fn get_access_token(
 pub fn refresh_access_token(
     refresh_token: &str,
     client_id: &str,
-) -> Result<(String, i64), Box<dyn std::error::Error>> {
+) -> Result<(String, i64, String), Box<dyn std::error::Error>> {
     let request_uri = "https://accounts.spotify.com/api/token?"; // token request uri
 
     let client = reqwest::blocking::Client::new();
@@ -273,8 +273,12 @@ pub fn refresh_access_token(
         let access_token = response_body["access_token"].to_string(); // get access token from response
         let expires_in_str = response_body["expires_in"].to_string(); // get expires in from response
         let expires_in: i64 = expires_in_str.parse().unwrap(); // parse expires in to i64
+        let new_refresh_token = match response_body["refresh_token"] { // get refresh token from response
+            json::JsonValue::Null => refresh_token.to_string(),
+            _ => response_body["refresh_token"].to_string(),
+        };
 
-        return Ok((access_token, expires_in)); // return access token and expires in
+        return Ok((access_token, expires_in, new_refresh_token)); // return access token and expires in and new refresh token
     } else {
         return Err(format!("Error: {}", response.status()).into()); // return error if response is not successful
     }

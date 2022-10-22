@@ -10,7 +10,7 @@
 //! CLIENT_ID=your_client_id
 //! ```
 //! Then, you can simply create a new `Spotify` object with the `authenticate` method, which will be used to make all requests to the API. You need to pass in the localhost port you want to use for the redirect URI and the scope you need:
-//! ```rust
+//! ```ignore
 //! use spotifyrs::Spotify;
 //!
 //! let mut spotify = Spotify::new(); // create blank object
@@ -23,14 +23,14 @@
 //!
 //! # Examples
 //! We can get information on a specific artist:
-//! ```rust
+//! ```ignore
 //! let artist: Artist = spotify.get_artist("59sBwR0jPSTrbMtuTkRPN5").unwrap();
 //!
 //! assert_eq!(artist.name, "Wild Rivers");
 //! ```
 //!
 //! Alternatively, we can get the tracks in the current user's queue:
-//! ```rust
+//! ```ignore
 //! let (currently_playing, queue) = spotify.get_users_queue().unwrap();
 //! ```
 //!

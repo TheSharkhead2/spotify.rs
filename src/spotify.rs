@@ -2,6 +2,7 @@ use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, Utc};
 use dotenv;
 use json::JsonValue;
 use std::fmt::{self, Debug};
+use std::fs;
 
 use crate::authorization::{
     generate_verifier, get_access_token, get_authorization_code, refresh_access_token,
@@ -743,6 +744,8 @@ pub enum SpotifyError {
     InvalidRequest(String),
     AuthenticationError(String),
     NotAuthenticated,
+    FileError(String),
+    NoFile,
     // Unknown,
 }
 
@@ -761,6 +764,8 @@ impl fmt::Debug for SpotifyError {
             SpotifyError::InvalidRequest(e) => write!(f, "Invalid request: {}", e),
             SpotifyError::AuthenticationError(e) => write!(f, "Authentication error: {}", e),
             SpotifyError::NotAuthenticated => write!(f, "Not authenticated"),
+            SpotifyError::FileError(e) => write!(f, "File error: {}", e),
+            SpotifyError::NoFile => write!(f, "No file present"),
             // SpotifyError::Unknown => write!(f, "Unknown error"),
         }
     }
@@ -865,9 +870,10 @@ impl Spotify {
             Some(expires_at) => {
                 // if access token is expired, refresh it
                 if Utc::now() > expires_at {
-                    let (access_token, expires_at) = self.refresh()?;
+                    let (access_token, expires_at, refresh_token) = self.refresh()?;
                     self.access_token = Some(access_token);
                     self.expires_at = Some(expires_at);
+                    self.refresh_token = Some(refresh_token);
                 }
                 return Ok(self.access_token.clone().unwrap()); // return access token. Can assume that the access token is set because already returned error if not
             },
@@ -877,19 +883,69 @@ impl Spotify {
     }
 
     /// Refreshes the access token and returns the new access token and the time it expires
-    fn refresh(&self) -> Result<(String, DateTime<Utc>), SpotifyError> {
+    fn refresh(&self) -> Result<(String, DateTime<Utc>, String), SpotifyError> {
         if self.refresh_token.is_none() || self.client_id.is_none() { // if client id or refresh token is not set, return error
             return Err(SpotifyError::NotAuthenticated);
         }
-        let (access_token, expires_in) =
+        let (access_token, expires_in, refresh_token) =
             match refresh_access_token(&self.refresh_token.as_ref().unwrap(), &self.client_id.as_ref().unwrap()) { // can unwrap because they are set
-                Ok((access_token, expires_in)) => (access_token, expires_in),
+                Ok((access_token, expires_in, refresh_token)) => (access_token, expires_in, refresh_token),
                 Err(e) => panic!("{}", e), // on error panic
             };
 
         let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
 
         // return access token and time when access token expires
-        Ok((access_token, expires_at))
+        Ok((access_token, expires_at, refresh_token))
+    }
+
+    /// Saves necessary authorization information to file for later use 
+    /// 
+    /// # Arguments 
+    /// * `file_name` - The name of the file to save the authorization information to
+    /// 
+    pub fn save_to_file(&self, file_name: &str) -> Result<(), SpotifyError> {
+        if self.client_id.is_none() || self.scope.is_none() || self.access_token.is_none() || self.refresh_token.is_none() || self.expires_at.is_none() { // if client_id, scope, access token, refresh token, or expires at is not set, return error
+            return Err(SpotifyError::NotAuthenticated);
+        }
+
+        let data = format!("{}\n{}\n{}", self.client_id.as_ref().unwrap(), self.scope.as_ref().unwrap(), self.refresh_token.as_ref().unwrap()); // format data to be saved to file
+
+        match fs::write(file_name, data) { // write data to file
+            Ok(_) => Ok(()),
+            Err(e) => Err(SpotifyError::FileError(e.to_string())),
+        }
+    }
+
+    /// Creates a new autheticated object from file 
+    /// 
+    /// # Arguments
+    /// * `file_name` - The name of the file to load the authorization information from
+    /// 
+    /// # Panics
+    /// Panics if the file cannot be found or if it doesn't contain the necessary information
+    /// 
+    pub fn new_from_file(file_name: &str) -> Result<Spotify, SpotifyError> {
+        let data = match fs::read_to_string(file_name) {
+            Ok(data) => data,
+            Err(_) => return Err(SpotifyError::NoFile), // assume no file 
+        };
+        let mut lines = data.lines(); // get lines from data
+
+        let client_id = lines.next().unwrap().to_string(); // get client id
+        let scope = lines.next().unwrap().to_string(); // get scope
+        let refresh_token = lines.next().unwrap().to_string(); // get refresh token
+
+        let (access_token, expires_in, new_refresh_token) = refresh_access_token(&refresh_token, &client_id).unwrap(); // refresh access token. Panics if request is bad
+        let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
+
+        // return Spotify object
+        Ok(Spotify {
+            client_id: Some(client_id),
+            scope: Some(scope),
+            access_token: Some(access_token),
+            refresh_token: Some(new_refresh_token),
+            expires_at: Some(expires_at),
+        })
     }
 }
