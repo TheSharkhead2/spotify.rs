@@ -6,7 +6,7 @@ use spotifyrs::Spotify;
 // This is really only a testing file to develop functions and make sure they return expected outputs. Hard to test properly
 #[test]
 fn general_testing() {
-    // let mut spotify = Spotify::new(); // create spotify object
+    // let spotify = Spotify::new(); // create spotify object
     // spotify.authenticate(
     //     String::from("8888"),
     //     String::from("user-modify-playback-state"),

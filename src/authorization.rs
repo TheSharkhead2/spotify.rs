@@ -7,11 +7,23 @@ use random_string;
 use reqwest;
 use sha2::{Digest, Sha256};
 use std::{
-    fs,
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
 };
 use urlencoding::encode;
+
+// html to show when authorization is successful
+const AUTHORIZATION_SUCCESSFUL_HTML: &str = r###"<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Success</title>
+  </head>
+  <body>
+    <h1>Success!</h1>
+    <p>Thank you for authenticating with Spotify! You can close this page now.</p>
+  </body>
+</html>"###;
 
 /// Generates the code verifier and code challenge for PKCE
 ///
@@ -154,7 +166,7 @@ fn handle_connection(
                 let authorization_code = String::from(query[0].1); // get authorization code
 
                 let status_line = "HTTP/1.1 200 OK"; // status line for success response
-                let contents = fs::read_to_string("src/authorization_successful.html").unwrap(); // read html file to display to user
+                let contents = AUTHORIZATION_SUCCESSFUL_HTML.to_string(); // read html file to display to user
                 let content_length = contents.len();
 
                 // create response
