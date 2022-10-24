@@ -23,7 +23,7 @@ impl Spotify {
     /// On various parsing errors. Shouldn't happen? Probably.
     ///
     pub fn spotify_request(
-        &mut self,
+        &self,
         url_extension: &str,
         request_method: RequestMethod,
     ) -> Result<JsonValue, SpotifyError> {

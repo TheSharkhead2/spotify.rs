@@ -8,7 +8,7 @@ impl Spotify {
     ///
     /// Requires scope: user-read-private user-read-email
     ///
-    pub fn get_current_users_profile(&mut self) -> Result<User, SpotifyError> {
+    pub fn get_current_users_profile(&self) -> Result<User, SpotifyError> {
         let url_extension = "me";
 
         self.check_scope("user-read-private user-read-email")?;
@@ -28,7 +28,7 @@ impl Spotify {
     /// * `offset` - The index of the first artist to return. Default: 0 (i.e., the first artist). Use with limit to get the next set of artists.
     ///
     pub fn get_users_top_artists(
-        &mut self,
+        &self,
         time_range: Option<TimeRange>,
         limit: Option<i32>,
         offset: Option<i32>,
@@ -75,7 +75,7 @@ impl Spotify {
     /// * `offset` - The index of the first track to return. Default: 0 (i.e., the first track). Use with limit to get the next set of tracks.
     ///
     pub fn get_users_top_tracks(
-        &mut self,
+        &self,
         time_range: Option<TimeRange>,
         limit: Option<i32>,
         offset: Option<i32>,
@@ -119,7 +119,7 @@ impl Spotify {
     /// # Arguments
     /// * `user_id` - The user's Spotify user ID.
     ///
-    pub fn get_users_profile(&mut self, user_id: &str) -> Result<User, SpotifyError> {
+    pub fn get_users_profile(&self, user_id: &str) -> Result<User, SpotifyError> {
         let url_extension = format!("users/{}", user_id);
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
@@ -136,7 +136,7 @@ impl Spotify {
     /// * `public` - If true the playlist will be included in user's public playlists, if false it will remain private. Default: true.
     ///
     pub fn follow_playlist(
-        &mut self,
+        &self,
         playlist_id: &str,
         public: Option<bool>,
     ) -> Result<(), SpotifyError> {
@@ -163,7 +163,7 @@ impl Spotify {
     /// # Arguments
     /// * `playlist_id` - The Spotify ID of the playlist.
     ///
-    pub fn unfollow_playlist(&mut self, playlist_id: &str) -> Result<(), SpotifyError> {
+    pub fn unfollow_playlist(&self, playlist_id: &str) -> Result<(), SpotifyError> {
         let url_extension = format!("playlists/{}/followers", playlist_id);
 
         self.check_scope("playlist-modify-private playlist-modify-public")?;
@@ -183,7 +183,7 @@ impl Spotify {
     /// * `limit` - The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
     ///
     pub fn get_followed_artists(
-        &mut self,
+        &self,
         limit: Option<i32>,
     ) -> Result<SpotifyCollection<Artist>, SpotifyError> {
         let mut url_extension = String::from("me/following?type=artist");
@@ -207,7 +207,7 @@ impl Spotify {
     /// # Arguments
     /// * `artist_ids` - A vector of the artist Spotify IDs to follow.
     ///
-    pub fn follow_artists(&mut self, artist_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub fn follow_artists(&self, artist_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let url_extension = format!("me/following?type=artist&ids={}", artist_ids.join(","));
 
         self.check_scope("user-follow-modify")?;
@@ -236,7 +236,7 @@ impl Spotify {
     /// # Arguments
     /// * `user_ids` - A vector of the user Spotify IDs to follow.
     ///
-    pub fn follow_users(&mut self, user_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub fn follow_users(&self, user_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let url_extension = format!("me/following?type=user&ids={}", user_ids.join(","));
 
         self.check_scope("user-follow-modify")?;
@@ -265,7 +265,7 @@ impl Spotify {
     /// # Arguments
     /// * `artist_ids` - A vector of the artist Spotify IDs to unfollow.
     ///
-    pub fn unfollow_artists(&mut self, artist_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub fn unfollow_artists(&self, artist_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let url_extension = format!("me/following?type=artist&ids={}", artist_ids.join(","));
 
         self.check_scope("user-follow-modify")?;
@@ -294,7 +294,7 @@ impl Spotify {
     /// # Arguments
     /// * `user_ids` - A vector of the user Spotify IDs to unfollow.
     ///
-    pub fn unfollow_users(&mut self, user_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub fn unfollow_users(&self, user_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let url_extension = format!("me/following?type=user&ids={}", user_ids.join(","));
 
         self.check_scope("user-follow-modify")?;
@@ -327,7 +327,7 @@ impl Spotify {
     /// Panics if API returned value is not formatted as expected. Shouldn't happen.
     ///
     pub fn check_user_follows_artists(
-        &mut self,
+        &self,
         artist_ids: Vec<&str>,
     ) -> Result<Vec<bool>, SpotifyError> {
         let url_extension = format!(
@@ -359,7 +359,7 @@ impl Spotify {
     /// Panics if API returned value is not formatted as expected. Shouldn't happen.
     ///
     pub fn check_user_follows_users(
-        &mut self,
+        &self,
         user_ids: Vec<&str>,
     ) -> Result<Vec<bool>, SpotifyError> {
         let url_extension = format!("me/following/contains?type=user&ids={}", user_ids.join(","));
@@ -386,7 +386,7 @@ impl Spotify {
     /// * `user_ids` - A vector of the user Spotify IDs to check. Maximum 5 ids.
     ///
     pub fn check_users_follow_playlist(
-        &mut self,
+        &self,
         playlist_id: &str,
         user_ids: Vec<&str>,
     ) -> Result<Vec<bool>, SpotifyError> {

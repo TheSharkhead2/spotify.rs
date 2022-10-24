@@ -12,7 +12,7 @@ fn general_testing() {
     //     String::from("user-modify-playback-state"),
     // ).unwrap();
 
-    let mut spotify = Spotify::new_from_file(".saved_credentials").unwrap();
+    let spotify = Spotify::new_from_file(".saved_credentials").unwrap();
 
     println!("{:?}", spotify.get_album("1xJ7jIK1tT0aVoJw1fPE6r", None));
     // println!("{:?}", spotify.get_albums(vec!["1xJ7jIK1tT0aVoJw1fPE6r", "1xJ7jIK1tT0aVoJw1fPE6r"], None));

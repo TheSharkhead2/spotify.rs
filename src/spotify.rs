@@ -3,6 +3,7 @@ use dotenv;
 use json::JsonValue;
 use std::fmt::{self, Debug};
 use std::fs;
+use std::cell::RefCell;
 
 use crate::authorization::{
     generate_verifier, get_access_token, get_authorization_code, refresh_access_token,
@@ -773,11 +774,11 @@ impl fmt::Debug for SpotifyError {
 
 /// An authenticated instance of the Spotify API client. Can be used to make requests in the given scope.
 pub struct Spotify {
-    client_id: Option<String>,
-    scope: Option<String>,
-    access_token: Option<String>,
-    refresh_token: Option<String>,
-    expires_at: Option<DateTime<Utc>>,
+    client_id: RefCell<Option<String>>,
+    scope: RefCell<Option<String>>,
+    access_token: RefCell<Option<String>>,
+    refresh_token: RefCell<Option<String>>,
+    expires_at: RefCell<Option<DateTime<Utc>>>,
 }
 
 impl Spotify {
@@ -785,11 +786,11 @@ impl Spotify {
     /// 
     pub fn new() -> Spotify {
         Spotify { 
-            client_id: None, 
-            scope: None, 
-            access_token: None, 
-            refresh_token: None, 
-            expires_at: None 
+            client_id: RefCell::new(None), 
+            scope: RefCell::new(None), 
+            access_token: RefCell::new(None), 
+            refresh_token: RefCell::new(None), 
+            expires_at: RefCell::new(None) 
         }
     }
 
@@ -826,11 +827,11 @@ impl Spotify {
         let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
 
         // update all of the Spotify object's fields
-        self.client_id = Some(client_id);
-        self.scope = Some(scope);
-        self.access_token = Some(access_token);
-        self.refresh_token = Some(refresh_token);
-        self.expires_at = Some(expires_at);
+        self.client_id.replace(Some(client_id));
+        self.scope.replace(Some(scope));
+        self.access_token.replace(Some(access_token));
+        self.refresh_token.replace(Some(refresh_token));
+        self.expires_at.replace(Some(expires_at));
 
         Ok(())
     }
@@ -841,7 +842,8 @@ impl Spotify {
     /// * `scope` - A string slice that holds required scope
     ///
     pub fn check_scope(&self, scope: &str) -> Result<(), SpotifyError> {
-        let scopes: Vec<&str> = match &self.scope {
+        let current_scope = &*self.scope.borrow(); // get current scope
+        let scopes: Vec<&str> = match current_scope {
             Some(scope) => scope.split_whitespace().collect(), // collect scopes into vector
             None => Vec::new(), // if scope isn't set, then assume no scope
         };
@@ -861,21 +863,21 @@ impl Spotify {
     }
 
     /// Returns the access token. If the token is expired, it will be refreshed.
-    pub fn access_token(&mut self) -> Result<String, SpotifyError> {
-        if self.access_token.is_none() { // don't proceed if access toekn is not set
+    pub fn access_token(&self) -> Result<String, SpotifyError> {
+        if self.access_token.borrow().is_none() { // don't proceed if access toekn is not set
             return Err(SpotifyError::NotAuthenticated);
         };
 
-        match self.expires_at {
+        match *self.expires_at.borrow() {
             Some(expires_at) => {
                 // if access token is expired, refresh it
                 if Utc::now() > expires_at {
                     let (access_token, expires_at, refresh_token) = self.refresh()?;
-                    self.access_token = Some(access_token);
-                    self.expires_at = Some(expires_at);
-                    self.refresh_token = Some(refresh_token);
+                    self.access_token.replace(Some(access_token));
+                    self.expires_at.replace(Some(expires_at));
+                    self.refresh_token.replace(Some(refresh_token));
                 }
-                return Ok(self.access_token.clone().unwrap()); // return access token. Can assume that the access token is set because already returned error if not
+                return Ok((*self.access_token.clone().borrow().as_ref().unwrap()).to_string()); // return access token. Can assume that the access token is set because already returned error if not
             },
             None => return Err(SpotifyError::NotAuthenticated),
         };
@@ -884,11 +886,11 @@ impl Spotify {
 
     /// Refreshes the access token and returns the new access token and the time it expires
     fn refresh(&self) -> Result<(String, DateTime<Utc>, String), SpotifyError> {
-        if self.refresh_token.is_none() || self.client_id.is_none() { // if client id or refresh token is not set, return error
+        if self.refresh_token.borrow().is_none() || self.client_id.borrow().is_none() { // if client id or refresh token is not set, return error
             return Err(SpotifyError::NotAuthenticated);
         }
         let (access_token, expires_in, refresh_token) =
-            match refresh_access_token(&self.refresh_token.as_ref().unwrap(), &self.client_id.as_ref().unwrap()) { // can unwrap because they are set
+            match refresh_access_token(&self.refresh_token.borrow().as_ref().unwrap(), &self.client_id.borrow().as_ref().unwrap()) { // can unwrap because they are set
                 Ok((access_token, expires_in, refresh_token)) => (access_token, expires_in, refresh_token),
                 Err(e) => panic!("{}", e), // on error panic
             };
@@ -905,11 +907,11 @@ impl Spotify {
     /// * `file_name` - The name of the file to save the authorization information to
     /// 
     pub fn save_to_file(&self, file_name: &str) -> Result<(), SpotifyError> {
-        if self.client_id.is_none() || self.scope.is_none() || self.access_token.is_none() || self.refresh_token.is_none() || self.expires_at.is_none() { // if client_id, scope, access token, refresh token, or expires at is not set, return error
+        if self.client_id.borrow().is_none() || self.scope.borrow().is_none() || self.access_token.borrow().is_none() || self.refresh_token.borrow().is_none() || self.expires_at.borrow().is_none() { // if client_id, scope, access token, refresh token, or expires at is not set, return error
             return Err(SpotifyError::NotAuthenticated);
         }
 
-        let data = format!("{}\n{}\n{}", self.client_id.as_ref().unwrap(), self.scope.as_ref().unwrap(), self.refresh_token.as_ref().unwrap()); // format data to be saved to file
+        let data = format!("{}\n{}\n{}", self.client_id.borrow().as_ref().unwrap(), self.scope.borrow().as_ref().unwrap(), self.refresh_token.borrow().as_ref().unwrap()); // format data to be saved to file
 
         match fs::write(file_name, data) { // write data to file
             Ok(_) => Ok(()),
@@ -941,11 +943,11 @@ impl Spotify {
 
         // return Spotify object
         Ok(Spotify {
-            client_id: Some(client_id),
-            scope: Some(scope),
-            access_token: Some(access_token),
-            refresh_token: Some(new_refresh_token),
-            expires_at: Some(expires_at),
+            client_id: RefCell::new(Some(client_id)),
+            scope: RefCell::new(Some(scope)),
+            access_token: RefCell::new(Some(access_token)),
+            refresh_token: RefCell::new(Some(new_refresh_token)),
+            expires_at: RefCell::new(Some(expires_at)),
         })
     }
 }

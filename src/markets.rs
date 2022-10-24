@@ -6,7 +6,7 @@ impl Spotify {
     ///
     /// Requires scope: none
     ///
-    pub fn get_available_markets(&mut self) -> Result<Vec<String>, SpotifyError> {
+    pub fn get_available_markets(&self) -> Result<Vec<String>, SpotifyError> {
         let url_extension = String::from("markets");
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?;

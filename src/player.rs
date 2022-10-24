@@ -16,7 +16,7 @@ impl Spotify {
     /// # Arguments
     /// * `market` - An ISO 3166-1 alpha-2 country code.
     ///
-    pub fn get_playback_state(&mut self, market: Option<&str>) -> Result<Playback, SpotifyError> {
+    pub fn get_playback_state(&self, market: Option<&str>) -> Result<Playback, SpotifyError> {
         let mut url_extension = String::from("me/player?additional_types=track"); // create url extension (Note: only supporting tracks, not episodes)
 
         self.check_scope("user-read-playback-state")?; // check scope
@@ -38,7 +38,7 @@ impl Spotify {
     /// * `device_id` - The device id to transfer playback to
     /// * `play` - Whether or not to start playback on the new device
     ///
-    pub fn transfer_playback(&mut self, device_id: &str, play: bool) -> Result<(), SpotifyError> {
+    pub fn transfer_playback(&self, device_id: &str, play: bool) -> Result<(), SpotifyError> {
         let url_extension = String::from("me/player"); // create url extension
 
         self.check_scope("user-modify-playback-state")?; // check scope
@@ -59,7 +59,7 @@ impl Spotify {
     ///
     /// Requires scope: user-read-playback-state
     ///
-    pub fn get_available_devices(&mut self) -> Result<Vec<Device>, SpotifyError> {
+    pub fn get_available_devices(&self) -> Result<Vec<Device>, SpotifyError> {
         let url_extension = String::from("me/player/devices"); // create url extension
 
         self.check_scope("user-read-playback-state")?;
@@ -85,7 +85,7 @@ impl Spotify {
     /// * `market` - An ISO 3166-1 alpha-2 country code which the returned track should be in the market of
     ///
     pub fn get_currently_playing_track(
-        &mut self,
+        &self,
         market: Option<&str>,
     ) -> Result<Playback, SpotifyError> {
         let mut url_extension = String::from("me/player/currently-playing?additional_types=track"); // create url extension. Only supporting tracks right now
@@ -115,7 +115,7 @@ impl Spotify {
     /// * `position_ms` - Where in the song to begin playback
     ///
     pub fn start_resume_playback(
-        &mut self,
+        &self,
         device_id: Option<&str>,
         context: Option<SpotifyContext>,
         track_ids: Option<Vec<&str>>,
@@ -187,7 +187,7 @@ impl Spotify {
     /// # Arguments
     /// * `device_id` - The id of the device to pause playback on
     ///
-    pub fn pause_playback(&mut self, device_id: Option<&str>) -> Result<(), SpotifyError> {
+    pub fn pause_playback(&self, device_id: Option<&str>) -> Result<(), SpotifyError> {
         let mut url_extension = String::from("me/player/pause"); // create url extension
 
         self.check_scope("user-modify-playback-state")?; // check scope
@@ -208,7 +208,7 @@ impl Spotify {
     /// # Arguments
     /// * `device_id` - The id of the device to skip on
     ///
-    pub fn skip_next(&mut self, device_id: Option<&str>) -> Result<(), SpotifyError> {
+    pub fn skip_next(&self, device_id: Option<&str>) -> Result<(), SpotifyError> {
         let mut url_extension = String::from("me/player/next"); // create url extension
 
         self.check_scope("user-modify-playback-state")?; // check scope
@@ -229,7 +229,7 @@ impl Spotify {
     /// # Arguments
     /// * `device_id` - The id of the device to skip on
     ///
-    pub fn skip_previous(&mut self, device_id: Option<&str>) -> Result<(), SpotifyError> {
+    pub fn skip_previous(&self, device_id: Option<&str>) -> Result<(), SpotifyError> {
         let mut url_extension = String::from("me/player/previous"); // create url extension
 
         self.check_scope("user-modify-playback-state")?; // check scope
@@ -252,7 +252,7 @@ impl Spotify {
     /// * `device_id` - The id of the device to seek on
     ///
     pub fn seek_position(
-        &mut self,
+        &self,
         position: i32,
         device_id: Option<&str>,
     ) -> Result<(), SpotifyError> {
@@ -278,7 +278,7 @@ impl Spotify {
     /// * `device_id` - The id of the device to set repeat mode on
     ///
     pub fn set_repeat_mode(
-        &mut self,
+        &self,
         state: RepeatState,
         device_id: Option<&str>,
     ) -> Result<(), SpotifyError> {
@@ -304,7 +304,7 @@ impl Spotify {
     /// * `device_id` - The id of the device to set volume on
     ///
     pub fn set_playback_volume(
-        &mut self,
+        &self,
         volume: i32,
         device_id: Option<&str>,
     ) -> Result<(), SpotifyError> {
@@ -330,7 +330,7 @@ impl Spotify {
     /// * `device_id` - The id of the device to set shuffle on
     ///
     pub fn toggle_shuffle(
-        &mut self,
+        &self,
         state: bool,
         device_id: Option<&str>,
     ) -> Result<(), SpotifyError> {
@@ -357,7 +357,7 @@ impl Spotify {
     /// * `limit` - The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50
     ///
     pub fn get_recently_played_tracks(
-        &mut self,
+        &self,
         after: Option<NaiveDateTime>,
         before: Option<NaiveDateTime>,
         limit: Option<i32>,
@@ -397,7 +397,7 @@ impl Spotify {
     ///
     /// Requires scope: user-read-currently-playing user-read-playback-state
     ///
-    pub fn get_users_queue(&mut self) -> Result<(Track, Vec<Track>), SpotifyError> {
+    pub fn get_users_queue(&self) -> Result<(Track, Vec<Track>), SpotifyError> {
         let url_extension = String::from("me/player/queue"); // create url extension
 
         self.check_scope("user-read-currently-playing user-read-playback-state")?; // check scope
@@ -425,7 +425,7 @@ impl Spotify {
     /// * `device_id` - The id of the device to add the track to
     ///
     pub fn add_track_to_queue(
-        &mut self,
+        &self,
         track_id: &str,
         device_id: Option<&str>,
     ) -> Result<(), SpotifyError> {
