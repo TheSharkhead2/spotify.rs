@@ -801,7 +801,7 @@ impl Spotify {
     /// * `localhost_port` - The localhost port fort the redirect uri. Note: currently there is only support for localhost redirect uris.
     /// * `scope` - The scope of the Spotify API. See <https://developer.spotify.com/documentation/general/guides/authorization/scopes/> for more information.
     ///
-    pub fn authenticate(&mut self, localhost_port: String, scope: String) -> Result<(), SpotifyError> {
+    pub fn authenticate(&self, localhost_port: String, scope: String) -> Result<(), SpotifyError> {
         let client_id = dotenv::var("CLIENT_ID").unwrap(); // grab client_id from .env
 
         let (code_verifier, code_challenge) = generate_verifier(); // generate code verifier and code challenge
