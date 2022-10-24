@@ -3,7 +3,7 @@ use dotenv;
 use json::JsonValue;
 use std::fmt::{self, Debug};
 use std::fs;
-use std::cell::RefCell;
+use std::sync::RwLock;
 
 use crate::authorization::{
     generate_verifier, get_access_token, get_authorization_code, refresh_access_token,
@@ -774,11 +774,11 @@ impl fmt::Debug for SpotifyError {
 
 /// An authenticated instance of the Spotify API client. Can be used to make requests in the given scope.
 pub struct Spotify {
-    client_id: RefCell<Option<String>>,
-    scope: RefCell<Option<String>>,
-    access_token: RefCell<Option<String>>,
-    refresh_token: RefCell<Option<String>>,
-    expires_at: RefCell<Option<DateTime<Utc>>>,
+    client_id: RwLock<Option<String>>,
+    scope: RwLock<Option<String>>,
+    access_token: RwLock<Option<String>>,
+    refresh_token: RwLock<Option<String>>,
+    expires_at: RwLock<Option<DateTime<Utc>>>,
 }
 
 impl Spotify {
@@ -786,11 +786,11 @@ impl Spotify {
     /// 
     pub fn new() -> Spotify {
         Spotify { 
-            client_id: RefCell::new(None), 
-            scope: RefCell::new(None), 
-            access_token: RefCell::new(None), 
-            refresh_token: RefCell::new(None), 
-            expires_at: RefCell::new(None) 
+            client_id: RwLock::new(None), 
+            scope: RwLock::new(None), 
+            access_token: RwLock::new(None), 
+            refresh_token: RwLock::new(None), 
+            expires_at: RwLock::new(None) 
         }
     }
 
@@ -827,11 +827,16 @@ impl Spotify {
         let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
 
         // update all of the Spotify object's fields
-        self.client_id.replace(Some(client_id));
-        self.scope.replace(Some(scope));
-        self.access_token.replace(Some(access_token));
-        self.refresh_token.replace(Some(refresh_token));
-        self.expires_at.replace(Some(expires_at));
+        let mut self_client_id = self.client_id.write().unwrap();
+        *self_client_id = Some(client_id);
+        let mut self_scope = self.scope.write().unwrap();
+        *self_scope = Some(scope);
+        let mut self_access_token = self.access_token.write().unwrap();
+        *self_access_token = Some(access_token);
+        let mut self_refresh_token = self.refresh_token.write().unwrap();
+        *self_refresh_token = Some(refresh_token);
+        let mut self_expires_at = self.expires_at.write().unwrap();
+        *self_expires_at = Some(expires_at);
 
         Ok(())
     }
@@ -842,7 +847,7 @@ impl Spotify {
     /// * `scope` - A string slice that holds required scope
     ///
     pub fn check_scope(&self, scope: &str) -> Result<(), SpotifyError> {
-        let current_scope = &*self.scope.borrow(); // get current scope
+        let current_scope = &*self.scope.read().unwrap(); // get current scope
         let scopes: Vec<&str> = match current_scope {
             Some(scope) => scope.split_whitespace().collect(), // collect scopes into vector
             None => Vec::new(), // if scope isn't set, then assume no scope
@@ -864,20 +869,23 @@ impl Spotify {
 
     /// Returns the access token. If the token is expired, it will be refreshed.
     pub fn access_token(&self) -> Result<String, SpotifyError> {
-        if self.access_token.borrow().is_none() { // don't proceed if access toekn is not set
+        if self.access_token.read().unwrap().is_none() { // don't proceed if access toekn is not set
             return Err(SpotifyError::NotAuthenticated);
         };
 
-        match *self.expires_at.borrow() {
+        match *self.expires_at.read().unwrap() {
             Some(expires_at) => {
                 // if access token is expired, refresh it
                 if Utc::now() > expires_at {
                     let (access_token, expires_at, refresh_token) = self.refresh()?;
-                    self.access_token.replace(Some(access_token));
-                    self.expires_at.replace(Some(expires_at));
-                    self.refresh_token.replace(Some(refresh_token));
+                    let mut self_access_token = self.access_token.write().unwrap();
+                    *self_access_token = Some(access_token);
+                    let mut self_expires_at = self.expires_at.write().unwrap();
+                    *self_expires_at = Some(expires_at);
+                    let mut self_refresh_token = self.refresh_token.write().unwrap(); 
+                    *self_refresh_token = Some(refresh_token);
                 }
-                return Ok((*self.access_token.clone().borrow().as_ref().unwrap()).to_string()); // return access token. Can assume that the access token is set because already returned error if not
+                return Ok((*self.access_token.read().unwrap()).as_ref().unwrap().to_string()); // return access token. Can assume that the access token is set because already returned error if not
             },
             None => return Err(SpotifyError::NotAuthenticated),
         };
@@ -886,11 +894,11 @@ impl Spotify {
 
     /// Refreshes the access token and returns the new access token and the time it expires
     fn refresh(&self) -> Result<(String, DateTime<Utc>, String), SpotifyError> {
-        if self.refresh_token.borrow().is_none() || self.client_id.borrow().is_none() { // if client id or refresh token is not set, return error
+        if self.refresh_token.read().unwrap().is_none() || self.client_id.read().unwrap().is_none() { // if client id or refresh token is not set, return error
             return Err(SpotifyError::NotAuthenticated);
         }
         let (access_token, expires_in, refresh_token) =
-            match refresh_access_token(&self.refresh_token.borrow().as_ref().unwrap(), &self.client_id.borrow().as_ref().unwrap()) { // can unwrap because they are set
+            match refresh_access_token(&self.refresh_token.read().unwrap().as_ref().unwrap(), &self.client_id.read().unwrap().as_ref().unwrap()) { // can unwrap because they are set
                 Ok((access_token, expires_in, refresh_token)) => (access_token, expires_in, refresh_token),
                 Err(e) => panic!("{}", e), // on error panic
             };
@@ -907,11 +915,11 @@ impl Spotify {
     /// * `file_name` - The name of the file to save the authorization information to
     /// 
     pub fn save_to_file(&self, file_name: &str) -> Result<(), SpotifyError> {
-        if self.client_id.borrow().is_none() || self.scope.borrow().is_none() || self.access_token.borrow().is_none() || self.refresh_token.borrow().is_none() || self.expires_at.borrow().is_none() { // if client_id, scope, access token, refresh token, or expires at is not set, return error
+        if self.client_id.read().unwrap().is_none() || self.scope.read().unwrap().is_none() || self.access_token.read().unwrap().is_none() || self.refresh_token.read().unwrap().is_none() || self.expires_at.read().unwrap().is_none() { // if client_id, scope, access token, refresh token, or expires at is not set, return error
             return Err(SpotifyError::NotAuthenticated);
         }
 
-        let data = format!("{}\n{}\n{}", self.client_id.borrow().as_ref().unwrap(), self.scope.borrow().as_ref().unwrap(), self.refresh_token.borrow().as_ref().unwrap()); // format data to be saved to file
+        let data = format!("{}\n{}\n{}", self.client_id.read().unwrap().as_ref().unwrap(), self.scope.read().unwrap().as_ref().unwrap(), self.refresh_token.read().unwrap().as_ref().unwrap()); // format data to be saved to file
 
         match fs::write(file_name, data) { // write data to file
             Ok(_) => Ok(()),
@@ -943,11 +951,11 @@ impl Spotify {
 
         // return Spotify object
         Ok(Spotify {
-            client_id: RefCell::new(Some(client_id)),
-            scope: RefCell::new(Some(scope)),
-            access_token: RefCell::new(Some(access_token)),
-            refresh_token: RefCell::new(Some(new_refresh_token)),
-            expires_at: RefCell::new(Some(expires_at)),
+            client_id: RwLock::new(Some(client_id)),
+            scope: RwLock::new(Some(scope)),
+            access_token: RwLock::new(Some(access_token)),
+            refresh_token: RwLock::new(Some(new_refresh_token)),
+            expires_at: RwLock::new(Some(expires_at)),
         })
     }
 }
