@@ -13,7 +13,7 @@
 //! ```ignore
 //! use spotifyrs::Spotify;
 //!
-//! let mut spotify = Spotify::new(); // create blank object
+//! let spotify = Spotify::new(); // create blank object
 //! spotify.authenticate(String::from("8080"), String::from("user-read-private user-read-email")).unwrap(); // authenticate it
 //! ```
 //! This will open a browser window and prompt the user to authorize your application. Once they do, they will be redirected to an html page confirming the authorization. You can then use the `Spotify` object to make requests to the API.
