@@ -933,7 +933,7 @@ impl Spotify {
     /// * `file_name` - The name of the file to load the authorization information from
     /// 
     /// # Panics
-    /// Panics if the file cannot be found or if it doesn't contain the necessary information
+    /// Panics if the file doesn't contain the necessary information
     /// 
     pub fn new_from_file(file_name: &str) -> Result<Spotify, SpotifyError> {
         let data = match fs::read_to_string(file_name) {
@@ -957,5 +957,43 @@ impl Spotify {
             refresh_token: RwLock::new(Some(new_refresh_token)),
             expires_at: RwLock::new(Some(expires_at)),
         })
+    }
+
+    /// Authorizes a blank Spotify object from a file
+    /// 
+    /// # Arguments
+    /// * `file_name` - The name of the file to load the authorization information from
+    /// 
+    /// # Panics
+    /// Panics if the file doesn't contain the necessary information
+    ///
+    pub fn authenticate_from_file(&self, file_name: &str) -> Result<(), SpotifyError> {
+        let data = match fs::read_to_string(file_name) {
+            Ok(data) => data,
+            Err(_) => return Err(SpotifyError::NoFile), // assume no file 
+        };
+
+        let mut lines = data.lines(); // get lines from data
+
+        let client_id = lines.next().unwrap().to_string(); // get client id
+        let scope = lines.next().unwrap().to_string(); // get scope
+        let refresh_token = lines.next().unwrap().to_string(); // get refresh token
+
+        let (access_token, expires_in, new_refresh_token) = refresh_access_token(&refresh_token, &client_id).unwrap(); // refresh access token. Panics if request is bad
+        let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
+        
+        // set client id, scope, access token, refresh token, and expires at
+        let mut self_client_id = self.client_id.write().unwrap();
+        *self_client_id = Some(client_id);
+        let mut self_scope = self.scope.write().unwrap();
+        *self_scope = Some(scope);
+        let mut self_access_token = self.access_token.write().unwrap();
+        *self_access_token = Some(access_token);
+        let mut self_refresh_token = self.refresh_token.write().unwrap();
+        *self_refresh_token = Some(new_refresh_token);
+        let mut self_expires_at = self.expires_at.write().unwrap();
+        *self_expires_at = Some(expires_at);
+
+        Ok(())
     }
 }
