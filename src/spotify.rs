@@ -996,4 +996,13 @@ impl Spotify {
 
         Ok(())
     }
+
+    /// Returns true if the API is authenticated 
+    /// 
+    pub fn is_authenticated(&self) -> bool {
+        match self.access_token.read() {
+            Ok(access_token) => access_token.is_some(),
+            Err(_) => false,
+        }
+    }
 }
