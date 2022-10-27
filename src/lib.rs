@@ -56,5 +56,5 @@ pub use spotify::{
     ExternalTrackIds, FeatureTrack, Playback, PlaybackActions, Playlist, PlaylistTrack,
     ReleaseDatePrecision, RepeatState, RestrictionReason, Section, Segment, Spotify,
     SpotifyCollection, SpotifyContext, SpotifyError, SpotifyImage, SpotifyObject, Tatum, TimeRange,
-    Track, User,
+    Track, User, PlayedTrack
 }; // re-export relevant structs and enums
