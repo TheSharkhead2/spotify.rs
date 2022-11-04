@@ -747,6 +747,8 @@ pub enum SpotifyError {
     NotAuthenticated,
     FileError(String),
     NoFile,
+    GeneralError(String),
+    Unauthorized(String),
     // Unknown,
 }
 
@@ -767,6 +769,8 @@ impl fmt::Debug for SpotifyError {
             SpotifyError::NotAuthenticated => write!(f, "Not authenticated"),
             SpotifyError::FileError(e) => write!(f, "File error: {}", e),
             SpotifyError::NoFile => write!(f, "No file present"),
+            SpotifyError::GeneralError(e) => write!(f, "General error: {}", e),
+            SpotifyError::Unauthorized(e) => write!(f, "Unauthorized: {}", e),
             // SpotifyError::Unknown => write!(f, "Unknown error"),
         }
     }
@@ -900,7 +904,7 @@ impl Spotify {
         let (access_token, expires_in, refresh_token) =
             match refresh_access_token(&self.refresh_token.read().unwrap().as_ref().unwrap(), &self.client_id.read().unwrap().as_ref().unwrap()) { // can unwrap because they are set
                 Ok((access_token, expires_in, refresh_token)) => (access_token, expires_in, refresh_token),
-                Err(e) => panic!("{}", e), // on error panic
+                Err(e) => panic!("{:?}", e), // on error panic
             };
 
         let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires

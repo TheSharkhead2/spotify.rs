@@ -11,6 +11,7 @@ use std::{
     net::{TcpListener, TcpStream},
 };
 use urlencoding::encode;
+use crate::spotify::SpotifyError;
 
 // html to show when authorization is successful
 const AUTHORIZATION_SUCCESSFUL_HTML: &str = r###"<!DOCTYPE html>
@@ -259,7 +260,7 @@ pub fn get_access_token(
 pub fn refresh_access_token(
     refresh_token: &str,
     client_id: &str,
-) -> Result<(String, i64, String), Box<dyn std::error::Error>> {
+) -> Result<(String, i64, String), SpotifyError> {
     let request_uri = "https://accounts.spotify.com/api/token?"; // token request uri
 
     let client = reqwest::blocking::Client::new();
@@ -276,7 +277,7 @@ pub fn refresh_access_token(
         .post(String::from(request_uri) + &query_string)
         .header("Content-Type", "application/x-www-form-urlencoded") // set Content-Type header
         .header("Content-Length", "0") // set Content-Length header
-        .send()?; // send request
+        .send().unwrap(); // send request
 
     if response.status().is_success() {
         // check if response is successful
@@ -292,6 +293,14 @@ pub fn refresh_access_token(
 
         return Ok((access_token, expires_in, new_refresh_token)); // return access token and expires in and new refresh token
     } else {
-        return Err(format!("Error: {}", response.status()).into()); // return error if response is not successful
+        let response_code = response.status().as_u16(); // get response code
+
+        let response_body = json::parse(&response.text().unwrap()).unwrap(); // get response as json 
+
+        match response_code {
+            400 => return Err(SpotifyError::BadRequest(format!("Error {}: {}", response_code, response_body["error_description"]))),
+            401 => return Err(SpotifyError::Unauthorized(format!("Error {}: {}", response_code, response_body["error_description"]))),
+            _ => return Err(SpotifyError::GeneralError(format!("Error: {}", response_code))),
+        }
     }
 }
