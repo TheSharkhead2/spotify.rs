@@ -950,7 +950,7 @@ impl Spotify {
         let scope = lines.next().unwrap().to_string(); // get scope
         let refresh_token = lines.next().unwrap().to_string(); // get refresh token
 
-        let (access_token, expires_in, new_refresh_token) = refresh_access_token(&refresh_token, &client_id).unwrap(); // refresh access token. Panics if request is bad
+        let (access_token, expires_in, new_refresh_token) = refresh_access_token(&refresh_token, &client_id)?; // refresh access token. Panics if request is bad
         let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
 
         // return Spotify object
@@ -983,7 +983,7 @@ impl Spotify {
         let scope = lines.next().unwrap().to_string(); // get scope
         let refresh_token = lines.next().unwrap().to_string(); // get refresh token
 
-        let (access_token, expires_in, new_refresh_token) = refresh_access_token(&refresh_token, &client_id).unwrap(); // refresh access token. Panics if request is bad
+        let (access_token, expires_in, new_refresh_token) = refresh_access_token(&refresh_token, &client_id)?; // refresh access token. Panics if request is bad
         let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
         
         // set client id, scope, access token, refresh token, and expires at
