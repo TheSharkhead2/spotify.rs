@@ -6,7 +6,7 @@ impl Spotify {
     ///
     /// Requires scope: none
     ///
-    pub fn get_available_genre_seeds(&mut self) -> Result<Vec<String>, SpotifyError> {
+    pub fn get_available_genre_seeds(&self) -> Result<Vec<String>, SpotifyError> {
         let url_extension = String::from("recommendations/available-genre-seeds");
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?;

@@ -16,7 +16,7 @@ impl Spotify {
     /// # Arguments
     /// * `track_id` - The Spotify ID of the track.
     ///
-    pub fn get_track(&mut self, track_id: &str) -> Result<Track, SpotifyError> {
+    pub fn get_track(&self, track_id: &str) -> Result<Track, SpotifyError> {
         let url_extension = format!("tracks/{}", track_id);
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
@@ -33,7 +33,7 @@ impl Spotify {
     /// * `market` - An ISO 3166-1 alpha-2 country code.
     ///
     pub fn get_several_tracks(
-        &mut self,
+        &self,
         track_ids: Vec<&str>,
         market: Option<&str>,
     ) -> Result<Vec<Track>, SpotifyError> {
@@ -63,7 +63,7 @@ impl Spotify {
     /// * `offset` - The index of the first track to return. Default: 0 (i.e., the first track). Use with limit to get the next set of tracks.
     ///
     pub fn get_user_saved_tracks(
-        &mut self,
+        &self,
         limit: Option<u32>,
         market: Option<&str>,
         offset: Option<u32>,
@@ -104,7 +104,7 @@ impl Spotify {
     /// # Arguments
     /// * `track_ids` - A vector of Spotify track ids
     ///
-    pub fn save_tracks(&mut self, track_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub fn save_tracks(&self, track_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let url_extension = format!("me/tracks?ids={}", track_ids.join(",")); // base url
 
         self.check_scope("user-library-modify")?; // check scope
@@ -133,7 +133,7 @@ impl Spotify {
     /// # Arguments
     /// * `track_ids` - A vector of Spotify track IDs
     ///
-    pub fn remove_tracks(&mut self, track_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub fn remove_tracks(&self, track_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let url_extension = format!("me/tracks?ids={}", track_ids.join(",")); // base url
 
         self.check_scope("user-library-modify")?; // check scope
@@ -162,7 +162,7 @@ impl Spotify {
     /// # Arguments
     /// * `track_ids` - A vector of track ids to check
     ///
-    pub fn check_saved_tracks(&mut self, track_ids: Vec<&str>) -> Result<Vec<bool>, SpotifyError> {
+    pub fn check_saved_tracks(&self, track_ids: Vec<&str>) -> Result<Vec<bool>, SpotifyError> {
         let url_extension = format!("me/tracks/contains?ids={}", track_ids.join(",")); // base url
 
         self.check_scope("user-library-read")?; // check scope
@@ -189,7 +189,7 @@ impl Spotify {
     /// * `track_ids` - A vector of track ids
     ///
     pub fn get_tracks_audio_features(
-        &mut self,
+        &self,
         track_ids: Vec<&str>,
     ) -> Result<Vec<FeatureTrack>, SpotifyError> {
         let url_extension = format!("audio-features/?ids={}", track_ids.join(",")); // base url
@@ -213,7 +213,7 @@ impl Spotify {
     /// * `track_id` - Spotify ID of track
     ///
     pub fn get_track_audio_features(
-        &mut self,
+        &self,
         track_id: &str,
     ) -> Result<FeatureTrack, SpotifyError> {
         let url_extension = format!("audio-features/{}", track_id); // base url
@@ -231,7 +231,7 @@ impl Spotify {
     /// * `track_id` - Spotify ID of track
     ///
     pub fn get_track_audio_analysis(
-        &mut self,
+        &self,
         track_id: &str,
     ) -> Result<AnalysisTrack, SpotifyError> {
         let url_extension = format!("audio-analysis/{}", track_id); // base url
@@ -296,7 +296,7 @@ impl Spotify {
     ///     * `target_valence` - target valence value for track, between 0 and 1
     ///
     pub fn get_recommendations(
-        &mut self,
+        &self,
         seed_artists: Option<Vec<&str>>,
         seed_genres: Option<Vec<&str>>,
         seed_tracks: Option<Vec<&str>>,

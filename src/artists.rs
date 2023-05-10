@@ -9,7 +9,7 @@ impl Spotify {
     /// # Arguments
     /// * `artist_id` - The Spotify ID of the artist.
     ///  
-    pub fn get_artist(&mut self, artist_id: &str) -> Result<Artist, SpotifyError> {
+    pub fn get_artist(&self, artist_id: &str) -> Result<Artist, SpotifyError> {
         let url_extension = format!("artists/{}", artist_id);
 
         let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
@@ -25,7 +25,7 @@ impl Spotify {
     /// * `artist_ids` - A vector of the Spotify IDs for the artists. Maximum: 50 IDs.
     ///
     pub fn get_several_artists(
-        &mut self,
+        &self,
         artist_ids: Vec<&str>,
     ) -> Result<Vec<Artist>, SpotifyError> {
         let url_extension = format!("artists/?ids={}", artist_ids.join(",")); // base url with artist ids added
@@ -51,7 +51,7 @@ impl Spotify {
     /// * `offset` - The index of the first item to return. Default: 0 (the first object). Use with limit to get the next set of items.
     ///
     pub fn get_artist_albums(
-        &mut self,
+        &self,
         artist_id: &str,
         include_groups: Option<Vec<&str>>,
         limit: Option<u32>,
@@ -99,7 +99,7 @@ impl Spotify {
     /// * `market` - An ISO 3166-1 alpha-2 country code.
     ///
     pub fn get_artist_top_tracks(
-        &mut self,
+        &self,
         artist_id: &str,
         market: &str,
     ) -> Result<Vec<Artist>, SpotifyError> {
@@ -122,7 +122,7 @@ impl Spotify {
     /// * `artist_id` - The Spotify ID of the artist.
     ///
     pub fn get_artist_related_artists(
-        &mut self,
+        &self,
         artist_id: &str,
     ) -> Result<Vec<Artist>, SpotifyError> {
         let url_extension = format!("artists/{}/related-artists", artist_id); // base url

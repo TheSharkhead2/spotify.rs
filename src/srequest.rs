@@ -16,18 +16,18 @@ impl Spotify {
     /// General request to the spotify API. Returns JSON response
     ///
     /// # Arguments
-    /// * `url_extension` - part of url past: https://api.spotify.com/v1/ . Specific to each type of request
+    /// * `url_extension` - part of url past: `https://api.spotify.com/v1/`. Specific to each type of request
     /// * `request_method` - type of request (GET, POST, PUT, DELETE)
     ///
     /// # Panics
     /// On various parsing errors. Shouldn't happen? Probably.
     ///
     pub fn spotify_request(
-        &mut self,
+        &self,
         url_extension: &str,
         request_method: RequestMethod,
     ) -> Result<JsonValue, SpotifyError> {
-        let access_token = self.access_token(); // get access token
+        let access_token = self.access_token()?; // get access token
 
         let client = reqwest::blocking::Client::new(); // create client
 

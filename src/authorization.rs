@@ -1,3 +1,4 @@
+use crate::spotify::SpotifyError;
 use base64;
 use getrandom;
 use json;
@@ -7,11 +8,23 @@ use random_string;
 use reqwest;
 use sha2::{Digest, Sha256};
 use std::{
-    fs,
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
 };
 use urlencoding::encode;
+
+// html to show when authorization is successful
+const AUTHORIZATION_SUCCESSFUL_HTML: &str = r###"<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Success</title>
+  </head>
+  <body>
+    <h1>Success!</h1>
+    <p>Thank you for authenticating with Spotify! You can close this page now.</p>
+  </body>
+</html>"###;
 
 /// Generates the code verifier and code challenge for PKCE
 ///
@@ -35,6 +48,41 @@ pub fn generate_verifier() -> (String, String) {
     (code_verifier, code_challenge)
 }
 
+/// Creates and returns url to request the Spotify API for authorization code. Doesn't also grab it from a localhost port. Will return: (auth_url, state) where `state` is the state variable used
+/// in the url for extra security
+///
+pub fn requesturl_authorization_code(
+    client_id: &str,
+    redirect_uri: &str,
+    scope: &str,
+    code_challenge: &str,
+) -> (String, String) {
+    let authorization_code_endpoint = String::from("https://accounts.spotify.com/authorize?"); // authorization code endpoint
+    let character_set = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"; // character set for random string
+
+    let state = random_string::generate(16, character_set); // generate random string for state variable
+
+    let encoded_redirect_uri = encode(redirect_uri).into_owned(); // encode redirect uri for url
+
+    // define parameters for authorization code request
+    let parameters = vec![
+        ("response_type", "code"),
+        ("client_id", client_id),
+        ("redirect_uri", &encoded_redirect_uri),
+        ("scope", scope),
+        ("show_dialog", "true"),
+        ("state", &state),
+        ("code_challenge", code_challenge),
+        ("code_challenge_method", "S256"),
+    ];
+
+    let query_parameters = stringify(parameters); // stringify parameters
+
+    let auth_url = authorization_code_endpoint + &query_parameters; // create authorization url
+
+    (auth_url, state)
+}
+
 /// Full code flow for getting authorization code from Spotify to authenticate API use.
 ///
 /// # Arguments
@@ -54,28 +102,9 @@ pub fn get_authorization_code(
     scope: &str,
     code_challenge: &str,
 ) -> Result<String, Box<dyn std::error::Error>> {
-    let authorization_code_endpoint = "https://accounts.spotify.com/authorize?".to_owned(); // authorization code endpoint
-    let character_set = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"; // character set for random string
-
-    let state = random_string::generate(16, character_set); // generate random string for state variable
-
-    let encoded_redirect_uri = encode(&redirect_uri).into_owned(); // encode redirect uri for url
-
-    // define parameters for authorization code request
-    let parameters = vec![
-        ("response_type", "code"),
-        ("client_id", client_id),
-        ("redirect_uri", &encoded_redirect_uri),
-        ("scope", scope),
-        ("show_dialog", "true"),
-        ("state", &state),
-        ("code_challenge", code_challenge),
-        ("code_challenge_method", "S256"),
-    ];
-
-    let query_parameters = stringify(parameters); // stringify parameters
-
-    let auth_url = authorization_code_endpoint + &query_parameters; // create authorization url
+    // get request url for authorization code
+    let (auth_url, state) =
+        requesturl_authorization_code(client_id, redirect_uri, scope, code_challenge);
 
     // open authorization url in browser for user to authorize application
     match open::that(auth_url) {
@@ -154,7 +183,7 @@ fn handle_connection(
                 let authorization_code = String::from(query[0].1); // get authorization code
 
                 let status_line = "HTTP/1.1 200 OK"; // status line for success response
-                let contents = fs::read_to_string("src/authorization_successful.html").unwrap(); // read html file to display to user
+                let contents = AUTHORIZATION_SUCCESSFUL_HTML.to_string(); // read html file to display to user
                 let content_length = contents.len();
 
                 // create response
@@ -247,7 +276,7 @@ pub fn get_access_token(
 pub fn refresh_access_token(
     refresh_token: &str,
     client_id: &str,
-) -> Result<(String, i64), Box<dyn std::error::Error>> {
+) -> Result<(String, i64, String), SpotifyError> {
     let request_uri = "https://accounts.spotify.com/api/token?"; // token request uri
 
     let client = reqwest::blocking::Client::new();
@@ -264,7 +293,8 @@ pub fn refresh_access_token(
         .post(String::from(request_uri) + &query_string)
         .header("Content-Type", "application/x-www-form-urlencoded") // set Content-Type header
         .header("Content-Length", "0") // set Content-Length header
-        .send()?; // send request
+        .send()
+        .unwrap(); // send request
 
     if response.status().is_success() {
         // check if response is successful
@@ -273,9 +303,37 @@ pub fn refresh_access_token(
         let access_token = response_body["access_token"].to_string(); // get access token from response
         let expires_in_str = response_body["expires_in"].to_string(); // get expires in from response
         let expires_in: i64 = expires_in_str.parse().unwrap(); // parse expires in to i64
+        let new_refresh_token = match response_body["refresh_token"] {
+            // get refresh token from response
+            json::JsonValue::Null => refresh_token.to_string(),
+            _ => response_body["refresh_token"].to_string(),
+        };
 
-        return Ok((access_token, expires_in)); // return access token and expires in
+        return Ok((access_token, expires_in, new_refresh_token)); // return access token and expires in and new refresh token
     } else {
-        return Err(format!("Error: {}", response.status()).into()); // return error if response is not successful
+        let response_code = response.status().as_u16(); // get response code
+
+        let response_body = json::parse(&response.text().unwrap()).unwrap(); // get response as json
+
+        match response_code {
+            400 => {
+                return Err(SpotifyError::BadRequest(format!(
+                    "Error {}: {}",
+                    response_code, response_body["error_description"]
+                )))
+            }
+            401 => {
+                return Err(SpotifyError::Unauthorized(format!(
+                    "Error {}: {}",
+                    response_code, response_body["error_description"]
+                )))
+            }
+            _ => {
+                return Err(SpotifyError::GeneralError(format!(
+                    "Error: {}",
+                    response_code
+                )))
+            }
+        }
     }
 }

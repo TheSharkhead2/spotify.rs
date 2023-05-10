@@ -16,7 +16,7 @@ impl Spotify {
     /// * `market` - An ISO 3166-1 alpha-2 country code.
     ///
     pub fn get_album(
-        &mut self,
+        &self,
         album_id: &str,
         market: Option<&str>,
     ) -> Result<Album, SpotifyError> {
@@ -41,7 +41,7 @@ impl Spotify {
     /// * `market` - An ISO 3166-1 alpha-2 country code.
     ///
     pub fn get_albums(
-        &mut self,
+        &self,
         album_ids: Vec<&str>,
         market: Option<&str>,
     ) -> Result<Vec<Album>, SpotifyError> {
@@ -72,7 +72,7 @@ impl Spotify {
     /// * `offset` - The index of the first track to return. Default: 0 (the first object). Use with limit to get the next set of tracks.
     ///
     pub fn get_album_tracks(
-        &mut self,
+        &self,
         album_id: &str,
         market: Option<&str>,
         limit: Option<u32>,
@@ -114,7 +114,7 @@ impl Spotify {
     /// * `offset` - The index of the first album to return. Default: 0 (the first object). Use with limit to get the next set of albums.
     ///
     pub fn get_saved_albums(
-        &mut self,
+        &self,
         limit: Option<u32>,
         market: Option<&str>,
         offset: Option<u32>,
@@ -155,7 +155,7 @@ impl Spotify {
     /// # Arguments
     /// * `album_ids` - A vector of Spotify IDs for the albums.
     ///
-    pub fn save_albums(&mut self, album_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub fn save_albums(&self, album_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let album_ids_string = album_ids.join(","); // join album ids into string seperated by commas
 
         let url_extension = format!("me/albums?ids={}", album_ids_string); // base url with album ids to add
@@ -186,7 +186,7 @@ impl Spotify {
     /// # Arguments
     /// * `album_ids` - A vector of Spotify IDs for the albums.
     ///
-    pub fn remove_albums(&mut self, album_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub fn remove_albums(&self, album_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let album_ids_string = album_ids.join(","); // join album ids into string seperated by commas
 
         let url_extension = format!("me/albums?ids={}", album_ids_string); // base url with album ids to remove
@@ -217,7 +217,7 @@ impl Spotify {
     /// # Arguments
     /// * `album_ids` - A vector of Spotify IDs for the albums.
     ///
-    pub fn check_saved_albums(&mut self, album_ids: Vec<&str>) -> Result<Vec<bool>, SpotifyError> {
+    pub fn check_saved_albums(&self, album_ids: Vec<&str>) -> Result<Vec<bool>, SpotifyError> {
         let album_ids_string = album_ids.join(","); // join album ids into string seperated by commas
 
         let url_extension = format!("me/albums/contains?ids={}", album_ids_string); // base url with album ids to check
@@ -247,7 +247,7 @@ impl Spotify {
     /// * `offset` - The index of the first album to return. Default: 0 (the first object). Use with limit to get the next set of albums.
     ///
     pub fn get_new_releases(
-        &mut self,
+        &self,
         country: Option<&str>,
         limit: Option<u32>,
         offset: Option<u32>,

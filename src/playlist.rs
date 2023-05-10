@@ -17,7 +17,7 @@ impl Spotify {
     /// * `market` - An ISO 3166-1 alpha-2 country code.
     ///
     pub fn get_playlist(
-        &mut self,
+        &self,
         playlist_id: &str,
         market: Option<&str>,
     ) -> Result<Playlist, SpotifyError> {
@@ -45,7 +45,7 @@ impl Spotify {
     /// * `description` - Value for playlist description as displayed in Spotify Clients and in the Web API.
     ///
     pub fn change_playlist_details(
-        &mut self,
+        &self,
         playlist_id: &str,
         name: Option<&str>,
         public: Option<bool>,
@@ -102,7 +102,7 @@ impl Spotify {
     /// * `offset` - The index of the first item to return. Default: 0 (the first object). Use with limit to get the next set of items.
     ///
     pub fn get_playlist_tracks(
-        &mut self,
+        &self,
         playlist_id: &str,
         market: Option<&str>,
         limit: Option<i32>,
@@ -141,7 +141,7 @@ impl Spotify {
     /// * `position` - The position to insert the tracks, a zero-based index. For example, to insert the tracks in the first position: position=0; to insert the tracks in the third position: position=2. If omitted, the tracks will be appended to the playlist.
     ///
     pub fn add_tracks_to_playlist(
-        &mut self,
+        &self,
         playlist_id: &str,
         track_ids: Vec<&str>,
         position: Option<i32>,
@@ -193,7 +193,7 @@ impl Spotify {
     /// * `track_ids` - A list of Spotify track URIs to add, can be a maximum of 100.
     ///
     pub fn replace_playlist_tracks(
-        &mut self,
+        &self,
         playlist_id: &str,
         track_ids: Vec<&str>,
     ) -> Result<String, SpotifyError> {
@@ -236,7 +236,7 @@ impl Spotify {
     /// * `snapshot_id` - The playlist's snapshot ID against which you want to make the changes.
     ///
     pub fn reorder_playlist_tracks(
-        &mut self,
+        &self,
         playlist_id: &str,
         range_start: i32,
         insert_before: i32,
@@ -297,7 +297,7 @@ impl Spotify {
     /// * `snapshot_id` - The playlist's snapshot ID against which you want to make the changes.
     ///
     pub fn remove_playlist_tracks(
-        &mut self,
+        &self,
         playlist_id: &str,
         track_ids: Vec<&str>,
         snapshot_id: Option<&str>,
@@ -357,7 +357,7 @@ impl Spotify {
     /// * `offset` - The index of the first playlist to return. Default: 0 (the first object). Use with limit to get the next set of playlists.
     ///
     pub fn get_current_users_playlists(
-        &mut self,
+        &self,
         limit: Option<i32>,
         offset: Option<i32>,
     ) -> Result<SpotifyCollection<Playlist>, SpotifyError> {
@@ -395,7 +395,7 @@ impl Spotify {
     /// * `offset` - The index of the first playlist to return. Default: 0 (the first object). Use with limit to get the next set of playlists.
     ///
     pub fn get_users_playlists(
-        &mut self,
+        &self,
         user_id: &str,
         limit: Option<i32>,
         offset: Option<i32>,
@@ -436,7 +436,7 @@ impl Spotify {
     /// * `description` - Value for playlist description as displayed in Spotify Clients and in the Web API.
     ///
     pub fn create_playlist(
-        &mut self,
+        &self,
         user_id: &str,
         name: &str,
         public: Option<bool>,
@@ -486,7 +486,7 @@ impl Spotify {
     /// * `timestamp` - A timestamp for which the playlists would be relevant. Defaults to current time if not provided
     ///
     pub fn get_featured_playlists(
-        &mut self,
+        &self,
         country: Option<&str>,
         locale: Option<&str>,
         limit: Option<i32>,
@@ -549,7 +549,7 @@ impl Spotify {
     /// * `offset` - The index of the first item to return. Default: 0 (the first object). Use with limit to get the next set of items.
     ///
     pub fn get_categorys_playlists(
-        &mut self,
+        &self,
         category_id: &str,
         country: Option<&str>,
         limit: Option<i32>,
@@ -590,7 +590,7 @@ impl Spotify {
     /// * `playlist_id` - The Spotify ID for the playlist.
     ///
     pub fn get_playlist_cover_image(
-        &mut self,
+        &self,
         playlist_id: &str,
     ) -> Result<Vec<SpotifyImage>, SpotifyError> {
         let url_extension = format!("playlists/{}/images", playlist_id); // base url
