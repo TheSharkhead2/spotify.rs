@@ -1,4 +1,5 @@
 use spotifyrs::Spotify;
+use spotifyrs::{generate_verifier, requesturl_authorization_code};
 // use spotifyrs::TimeRange;
 // use spotifyrs::SpotifyContext;
 // use spotifyrs::RepeatState;
@@ -7,12 +8,42 @@ use spotifyrs::Spotify;
 #[test]
 fn general_testing() {
     // let spotify = Spotify::new(); // create spotify object
-    // spotify.authenticate(
-    //     String::from("8888"),
-    //     String::from("user-modify-playback-state"),
-    // ).unwrap();
+    // spotify
+    //     .authenticate(
+    //         String::from("8888"),
+    //         String::from("user-modify-playback-state"),
+    //     )
+    //     .unwrap();
 
-    let spotify = Spotify::new_from_file(".saved_credentials").unwrap();
+    // let spotify = Spotify::new_from_file(".saved_credentials").unwrap();
+
+    // testing of less restrictive method
+    let scope = String::from("user-modify-playback-state");
+    let redirect_uri = "http://localhost:8888/callback";
+    let client_id = dotenv::var("CLIENT_ID").unwrap(); // grab client_id from .env
+
+    // let (code_verifier, code_challenge) = generate_verifier();
+    // let (auth_url, state) = requesturl_authorization_code(
+    //     &client_id[..],
+    //     redirect_uri,
+    //     &scope[..],
+    //     &code_challenge[..],
+    // );
+
+    // println!("{:?}", auth_url);
+    // println!("{:?}", state);
+    // println!("{:?}", code_verifier);
+
+    let auth_code = "AQAeygDzZBkskQm59Q5I76D0Z_tzv5bZi3JUaK0YZXWbvYmPRYLHZhXYANJJcwDBdYgp0SqdVpFURe2Pi_QfhIHz-jC1-saocX6vjW4nddDcpdDEz9383r9JnaJjXztf8BjVMqc65rorolkokUx64XhNwc_2dfPkQjLNz-H8XDPb08b_wvDV8jzOTBJa4ZF1zXixFTIS6M80qo4ncCBik0p1ahUQNHxn86HPCni5_S3j94L1c62OJ3l7JEwFeRFTd2LFeOzmb75smxcv8d6OCqg";
+    let code_verifier = "N6ewVkOx2mZ8DEFxa3qvf60azRyLMe80rv1dZxaIl_8";
+
+    let spotify = Spotify::new_from_auth_code(
+        auth_code,
+        &client_id[..],
+        scope,
+        code_verifier,
+        redirect_uri,
+    );
 
     println!("{:?}", spotify.get_album("1xJ7jIK1tT0aVoJw1fPE6r", None));
     // println!("{:?}", spotify.get_albums(vec!["1xJ7jIK1tT0aVoJw1fPE6r", "1xJ7jIK1tT0aVoJw1fPE6r"], None));
@@ -84,6 +115,5 @@ fn general_testing() {
     // println!("{:?}", spotify.get_users_queue());
     // println!("{:?}", spotify.add_track_to_queue("212AgAhFl3RJZGAK0LrMpX", None));
 
-    println!("{:?}", spotify.save_to_file(".saved_credentials"));
-
+    // println!("{:?}", spotify.save_to_file(".saved_credentials"));
 }

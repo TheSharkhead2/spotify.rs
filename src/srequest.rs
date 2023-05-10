@@ -16,7 +16,7 @@ impl Spotify {
     /// General request to the spotify API. Returns JSON response
     ///
     /// # Arguments
-    /// * `url_extension` - part of url past: https://api.spotify.com/v1/ . Specific to each type of request
+    /// * `url_extension` - part of url past: `https://api.spotify.com/v1/`. Specific to each type of request
     /// * `request_method` - type of request (GET, POST, PUT, DELETE)
     ///
     /// # Panics

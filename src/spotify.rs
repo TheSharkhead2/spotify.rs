@@ -785,16 +785,46 @@ pub struct Spotify {
     expires_at: RwLock<Option<DateTime<Utc>>>,
 }
 
+impl Default for Spotify {
+    /// default
+    fn default() -> Self {
+        Spotify::new()
+    }
+}
+
 impl Spotify {
-    /// Creates a blank Spotify object 
-    /// 
+    /// Creates a blank Spotify object
+    ///
     pub fn new() -> Spotify {
-        Spotify { 
-            client_id: RwLock::new(None), 
-            scope: RwLock::new(None), 
-            access_token: RwLock::new(None), 
-            refresh_token: RwLock::new(None), 
-            expires_at: RwLock::new(None) 
+        Spotify {
+            client_id: RwLock::new(None),
+            scope: RwLock::new(None),
+            access_token: RwLock::new(None),
+            refresh_token: RwLock::new(None),
+            expires_at: RwLock::new(None),
+        }
+    }
+
+    /// Creates spotify object from usual information and auth code. Essentially from less information
+    ///
+    pub fn new_from_auth_code(
+        authorization_code: &str,
+        client_id: &str,
+        scope: String,
+        code_verifier: &str,
+        redirect_uri: &str,
+    ) -> Spotify {
+        let (access_token, refresh_token, expires_in) =
+            get_access_token(authorization_code, client_id, code_verifier, redirect_uri).unwrap();
+
+        let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
+
+        Spotify {
+            client_id: RwLock::new(Some(String::from(client_id))),
+            scope: RwLock::new(Some(scope)),
+            access_token: RwLock::new(Some(access_token)),
+            refresh_token: RwLock::new(Some(refresh_token)),
+            expires_at: RwLock::new(Some(expires_at)),
         }
     }
 
@@ -873,7 +903,8 @@ impl Spotify {
 
     /// Returns the access token. If the token is expired, it will be refreshed.
     pub fn access_token(&self) -> Result<String, SpotifyError> {
-        if self.access_token.read().unwrap().is_none() { // don't proceed if access toekn is not set
+        if self.access_token.read().unwrap().is_none() {
+            // don't proceed if access toekn is not set
             return Err(SpotifyError::NotAuthenticated);
         };
 
@@ -886,26 +917,35 @@ impl Spotify {
                     *self_access_token = Some(access_token);
                     let mut self_expires_at = self.expires_at.write().unwrap();
                     *self_expires_at = Some(expires_at);
-                    let mut self_refresh_token = self.refresh_token.write().unwrap(); 
+                    let mut self_refresh_token = self.refresh_token.write().unwrap();
                     *self_refresh_token = Some(refresh_token);
                 }
-                return Ok((*self.access_token.read().unwrap()).as_ref().unwrap().to_string()); // return access token. Can assume that the access token is set because already returned error if not
-            },
+                return Ok((*self.access_token.read().unwrap())
+                    .as_ref()
+                    .unwrap()
+                    .to_string()); // return access token. Can assume that the access token is set because already returned error if not
+            }
             None => return Err(SpotifyError::NotAuthenticated),
         };
-        
     }
 
     /// Refreshes the access token and returns the new access token and the time it expires
     fn refresh(&self) -> Result<(String, DateTime<Utc>, String), SpotifyError> {
-        if self.refresh_token.read().unwrap().is_none() || self.client_id.read().unwrap().is_none() { // if client id or refresh token is not set, return error
+        if self.refresh_token.read().unwrap().is_none() || self.client_id.read().unwrap().is_none()
+        {
+            // if client id or refresh token is not set, return error
             return Err(SpotifyError::NotAuthenticated);
         }
-        let (access_token, expires_in, refresh_token) =
-            match refresh_access_token(&self.refresh_token.read().unwrap().as_ref().unwrap(), &self.client_id.read().unwrap().as_ref().unwrap()) { // can unwrap because they are set
-                Ok((access_token, expires_in, refresh_token)) => (access_token, expires_in, refresh_token),
-                Err(e) => panic!("{:?}", e), // on error panic
-            };
+        let (access_token, expires_in, refresh_token) = match refresh_access_token(
+            &self.refresh_token.read().unwrap().as_ref().unwrap(),
+            &self.client_id.read().unwrap().as_ref().unwrap(),
+        ) {
+            // can unwrap because they are set
+            Ok((access_token, expires_in, refresh_token)) => {
+                (access_token, expires_in, refresh_token)
+            }
+            Err(e) => panic!("{:?}", e), // on error panic
+        };
 
         let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
 
@@ -913,36 +953,48 @@ impl Spotify {
         Ok((access_token, expires_at, refresh_token))
     }
 
-    /// Saves necessary authorization information to file for later use 
-    /// 
-    /// # Arguments 
+    /// Saves necessary authorization information to file for later use
+    ///
+    /// # Arguments
     /// * `file_name` - The name of the file to save the authorization information to
-    /// 
+    ///
     pub fn save_to_file(&self, file_name: &str) -> Result<(), SpotifyError> {
-        if self.client_id.read().unwrap().is_none() || self.scope.read().unwrap().is_none() || self.access_token.read().unwrap().is_none() || self.refresh_token.read().unwrap().is_none() || self.expires_at.read().unwrap().is_none() { // if client_id, scope, access token, refresh token, or expires at is not set, return error
+        if self.client_id.read().unwrap().is_none()
+            || self.scope.read().unwrap().is_none()
+            || self.access_token.read().unwrap().is_none()
+            || self.refresh_token.read().unwrap().is_none()
+            || self.expires_at.read().unwrap().is_none()
+        {
+            // if client_id, scope, access token, refresh token, or expires at is not set, return error
             return Err(SpotifyError::NotAuthenticated);
         }
 
-        let data = format!("{}\n{}\n{}", self.client_id.read().unwrap().as_ref().unwrap(), self.scope.read().unwrap().as_ref().unwrap(), self.refresh_token.read().unwrap().as_ref().unwrap()); // format data to be saved to file
+        let data = format!(
+            "{}\n{}\n{}",
+            self.client_id.read().unwrap().as_ref().unwrap(),
+            self.scope.read().unwrap().as_ref().unwrap(),
+            self.refresh_token.read().unwrap().as_ref().unwrap()
+        ); // format data to be saved to file
 
-        match fs::write(file_name, data) { // write data to file
+        match fs::write(file_name, data) {
+            // write data to file
             Ok(_) => Ok(()),
             Err(e) => Err(SpotifyError::FileError(e.to_string())),
         }
     }
 
-    /// Creates a new autheticated object from file 
-    /// 
+    /// Creates a new autheticated object from file
+    ///
     /// # Arguments
     /// * `file_name` - The name of the file to load the authorization information from
-    /// 
+    ///
     /// # Panics
     /// Panics if the file doesn't contain the necessary information
-    /// 
+    ///
     pub fn new_from_file(file_name: &str) -> Result<Spotify, SpotifyError> {
         let data = match fs::read_to_string(file_name) {
             Ok(data) => data,
-            Err(_) => return Err(SpotifyError::NoFile), // assume no file 
+            Err(_) => return Err(SpotifyError::NoFile), // assume no file
         };
         let mut lines = data.lines(); // get lines from data
 
@@ -950,7 +1002,8 @@ impl Spotify {
         let scope = lines.next().unwrap().to_string(); // get scope
         let refresh_token = lines.next().unwrap().to_string(); // get refresh token
 
-        let (access_token, expires_in, new_refresh_token) = refresh_access_token(&refresh_token, &client_id)?; // refresh access token. Panics if request is bad
+        let (access_token, expires_in, new_refresh_token) =
+            refresh_access_token(&refresh_token, &client_id)?; // refresh access token. Panics if request is bad
         let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
 
         // return Spotify object
@@ -964,17 +1017,17 @@ impl Spotify {
     }
 
     /// Authorizes a blank Spotify object from a file
-    /// 
+    ///
     /// # Arguments
     /// * `file_name` - The name of the file to load the authorization information from
-    /// 
+    ///
     /// # Panics
     /// Panics if the file doesn't contain the necessary information
     ///
     pub fn authenticate_from_file(&self, file_name: &str) -> Result<(), SpotifyError> {
         let data = match fs::read_to_string(file_name) {
             Ok(data) => data,
-            Err(_) => return Err(SpotifyError::NoFile), // assume no file 
+            Err(_) => return Err(SpotifyError::NoFile), // assume no file
         };
 
         let mut lines = data.lines(); // get lines from data
@@ -983,9 +1036,10 @@ impl Spotify {
         let scope = lines.next().unwrap().to_string(); // get scope
         let refresh_token = lines.next().unwrap().to_string(); // get refresh token
 
-        let (access_token, expires_in, new_refresh_token) = refresh_access_token(&refresh_token, &client_id)?; // refresh access token. Panics if request is bad
+        let (access_token, expires_in, new_refresh_token) =
+            refresh_access_token(&refresh_token, &client_id)?; // refresh access token. Panics if request is bad
         let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
-        
+
         // set client id, scope, access token, refresh token, and expires at
         let mut self_client_id = self.client_id.write().unwrap();
         *self_client_id = Some(client_id);
@@ -1001,8 +1055,8 @@ impl Spotify {
         Ok(())
     }
 
-    /// Returns true if the API is authenticated 
-    /// 
+    /// Returns true if the API is authenticated
+    ///
     pub fn is_authenticated(&self) -> bool {
         match self.access_token.read() {
             Ok(access_token) => access_token.is_some(),
