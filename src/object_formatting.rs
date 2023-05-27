@@ -1280,7 +1280,7 @@ impl Playback {
     ///
     pub fn new(raw_object: &JsonValue) -> Playback {
         let timestamp = match raw_object["timestamp"].as_i64() {
-            Some(timestamp) => Some(NaiveDateTime::from_timestamp(timestamp / 1000, 0)), // parse timestamp into NaiveDateTime (timestamp is in ms)
+            Some(timestamp) => NaiveDateTime::from_timestamp_opt(timestamp / 1000, 0), // parse timestamp into NaiveDateTime (timestamp is in ms)
             None => None, // default to None
         };
 

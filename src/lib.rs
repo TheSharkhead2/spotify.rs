@@ -93,6 +93,8 @@ pub use spotify::{
     Track, User,
 }; // re-export relevant structs and enums
 
+pub use authorization::requesturl_authorization_code; // export for authorization code flow
+
 // export if manual authentication feature is active
-#[cfg(feature = "manual_auth")]
-pub use authorization::{generate_verifier, requesturl_authorization_code};
+#[cfg(feature = "local_auth")]
+mod local_authentication;
