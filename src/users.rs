@@ -8,14 +8,16 @@ impl Spotify {
     ///
     /// Requires scope: user-read-private user-read-email
     ///
-    pub fn get_current_users_profile(&self) -> Result<User, SpotifyError> {
+    pub async fn get_current_users_profile(&self) -> Result<User, SpotifyError> {
         let url_extension = "me";
 
         self.check_scope("user-read-private user-read-email")?;
 
-        let response = self.spotify_request(url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(url_extension, RequestMethod::Get)
+            .await?; // make request
 
-        return Ok(User::new(&response));
+        Ok(User::new(&response))
     }
 
     /// Gets the user's top artists. A derivative of: <https://developer.spotify.com/documentation/web-api/reference/#/operations/get-users-top-artists-and-tracks>
@@ -27,7 +29,7 @@ impl Spotify {
     /// * `limit` - The number of artists to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first artist to return. Default: 0 (i.e., the first artist). Use with limit to get the next set of artists.
     ///
-    pub fn get_users_top_artists(
+    pub async fn get_users_top_artists(
         &self,
         time_range: Option<TimeRange>,
         limit: Option<i32>,
@@ -60,7 +62,9 @@ impl Spotify {
             url_extension.push_str(&format!("offset={}&", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(SpotifyCollection::<Artist>::new(&response));
     }
@@ -74,7 +78,7 @@ impl Spotify {
     /// * `limit` - The number of tracks to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first track to return. Default: 0 (i.e., the first track). Use with limit to get the next set of tracks.
     ///
-    pub fn get_users_top_tracks(
+    pub async fn get_users_top_tracks(
         &self,
         time_range: Option<TimeRange>,
         limit: Option<i32>,
@@ -107,7 +111,9 @@ impl Spotify {
             url_extension.push_str(&format!("offset={}&", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(SpotifyCollection::<Track>::new(&response));
     }
@@ -119,10 +125,12 @@ impl Spotify {
     /// # Arguments
     /// * `user_id` - The user's Spotify user ID.
     ///
-    pub fn get_users_profile(&self, user_id: &str) -> Result<User, SpotifyError> {
+    pub async fn get_users_profile(&self, user_id: &str) -> Result<User, SpotifyError> {
         let url_extension = format!("users/{}", user_id);
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(User::new(&response));
     }
@@ -135,7 +143,7 @@ impl Spotify {
     /// * `playlist_id` - The Spotify ID of the playlist.
     /// * `public` - If true the playlist will be included in user's public playlists, if false it will remain private. Default: true.
     ///
-    pub fn follow_playlist(
+    pub async fn follow_playlist(
         &self,
         playlist_id: &str,
         public: Option<bool>,
@@ -151,7 +159,8 @@ impl Spotify {
             body.insert("public".to_string(), Value::Bool(public));
         }
 
-        self.spotify_request(&url_extension, RequestMethod::Put(body))?;
+        self.spotify_request(&url_extension, RequestMethod::Put(body))
+            .await?;
 
         return Ok(());
     }
@@ -163,14 +172,15 @@ impl Spotify {
     /// # Arguments
     /// * `playlist_id` - The Spotify ID of the playlist.
     ///
-    pub fn unfollow_playlist(&self, playlist_id: &str) -> Result<(), SpotifyError> {
+    pub async fn unfollow_playlist(&self, playlist_id: &str) -> Result<(), SpotifyError> {
         let url_extension = format!("playlists/{}/followers", playlist_id);
 
         self.check_scope("playlist-modify-private playlist-modify-public")?;
 
         let body: HashMap<String, Value> = HashMap::new(); // Create empty body (not necessary)
 
-        self.spotify_request(&url_extension, RequestMethod::Delete(body))?; // make request
+        self.spotify_request(&url_extension, RequestMethod::Delete(body))
+            .await?; // make request
 
         return Ok(());
     }
@@ -182,7 +192,7 @@ impl Spotify {
     /// # Arguments
     /// * `limit` - The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
     ///
-    pub fn get_followed_artists(
+    pub async fn get_followed_artists(
         &self,
         limit: Option<i32>,
     ) -> Result<SpotifyCollection<Artist>, SpotifyError> {
@@ -195,7 +205,9 @@ impl Spotify {
             url_extension.push_str(&format!("&limit={}", limit));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(SpotifyCollection::<Artist>::new(&response["artists"]));
     }
@@ -207,7 +219,7 @@ impl Spotify {
     /// # Arguments
     /// * `artist_ids` - A vector of the artist Spotify IDs to follow.
     ///
-    pub fn follow_artists(&self, artist_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub async fn follow_artists(&self, artist_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let url_extension = format!("me/following?type=artist&ids={}", artist_ids.join(","));
 
         self.check_scope("user-follow-modify")?;
@@ -224,7 +236,8 @@ impl Spotify {
             ),
         );
 
-        self.spotify_request(&url_extension, RequestMethod::Put(body))?;
+        self.spotify_request(&url_extension, RequestMethod::Put(body))
+            .await?;
 
         return Ok(());
     }
@@ -236,7 +249,7 @@ impl Spotify {
     /// # Arguments
     /// * `user_ids` - A vector of the user Spotify IDs to follow.
     ///
-    pub fn follow_users(&self, user_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub async fn follow_users(&self, user_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let url_extension = format!("me/following?type=user&ids={}", user_ids.join(","));
 
         self.check_scope("user-follow-modify")?;
@@ -253,7 +266,8 @@ impl Spotify {
             ),
         );
 
-        self.spotify_request(&url_extension, RequestMethod::Put(body))?;
+        self.spotify_request(&url_extension, RequestMethod::Put(body))
+            .await?;
 
         return Ok(());
     }
@@ -265,7 +279,7 @@ impl Spotify {
     /// # Arguments
     /// * `artist_ids` - A vector of the artist Spotify IDs to unfollow.
     ///
-    pub fn unfollow_artists(&self, artist_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub async fn unfollow_artists(&self, artist_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let url_extension = format!("me/following?type=artist&ids={}", artist_ids.join(","));
 
         self.check_scope("user-follow-modify")?;
@@ -282,7 +296,8 @@ impl Spotify {
             ),
         );
 
-        self.spotify_request(&url_extension, RequestMethod::Delete(body))?;
+        self.spotify_request(&url_extension, RequestMethod::Delete(body))
+            .await?;
 
         return Ok(());
     }
@@ -294,7 +309,7 @@ impl Spotify {
     /// # Arguments
     /// * `user_ids` - A vector of the user Spotify IDs to unfollow.
     ///
-    pub fn unfollow_users(&self, user_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub async fn unfollow_users(&self, user_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let url_extension = format!("me/following?type=user&ids={}", user_ids.join(","));
 
         self.check_scope("user-follow-modify")?;
@@ -311,7 +326,8 @@ impl Spotify {
             ),
         );
 
-        self.spotify_request(&url_extension, RequestMethod::Delete(body))?;
+        self.spotify_request(&url_extension, RequestMethod::Delete(body))
+            .await?;
 
         return Ok(());
     }
@@ -326,7 +342,7 @@ impl Spotify {
     /// # Panics
     /// Panics if API returned value is not formatted as expected. Shouldn't happen.
     ///
-    pub fn check_user_follows_artists(
+    pub async fn check_user_follows_artists(
         &self,
         artist_ids: Vec<&str>,
     ) -> Result<Vec<bool>, SpotifyError> {
@@ -337,7 +353,9 @@ impl Spotify {
 
         self.check_scope("user-follow-read")?;
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         let mut follows: Vec<bool> = Vec::new();
 
@@ -358,7 +376,7 @@ impl Spotify {
     /// # Panics
     /// Panics if API returned value is not formatted as expected. Shouldn't happen.
     ///
-    pub fn check_user_follows_users(
+    pub async fn check_user_follows_users(
         &self,
         user_ids: Vec<&str>,
     ) -> Result<Vec<bool>, SpotifyError> {
@@ -366,7 +384,9 @@ impl Spotify {
 
         self.check_scope("user-follow-read")?;
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         let mut follows: Vec<bool> = Vec::new();
 
@@ -385,7 +405,7 @@ impl Spotify {
     /// * `playlist_id` - The Spotify ID of the playlist.
     /// * `user_ids` - A vector of the user Spotify IDs to check. Maximum 5 ids.
     ///
-    pub fn check_users_follow_playlist(
+    pub async fn check_users_follow_playlist(
         &self,
         playlist_id: &str,
         user_ids: Vec<&str>,
@@ -396,7 +416,9 @@ impl Spotify {
             user_ids.join(",")
         );
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         let mut follows: Vec<bool> = Vec::new();
 

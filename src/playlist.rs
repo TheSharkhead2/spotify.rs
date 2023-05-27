@@ -16,7 +16,7 @@ impl Spotify {
     /// * `playlist_id` - The Spotify ID of the playlist.
     /// * `market` - An ISO 3166-1 alpha-2 country code.
     ///
-    pub fn get_playlist(
+    pub async fn get_playlist(
         &self,
         playlist_id: &str,
         market: Option<&str>,
@@ -28,7 +28,9 @@ impl Spotify {
             url_extension.push_str(&format!("&market={}", market));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(Playlist::new(&response)); // format and return result
     }
@@ -44,7 +46,7 @@ impl Spotify {
     /// * `collaborative` - If true the playlist will become collaborative and other users will be able to modify the playlist in their Spotify client. Note: You can only set collaborative to true on non-public playlists.
     /// * `description` - Value for playlist description as displayed in Spotify Clients and in the Web API.
     ///
-    pub fn change_playlist_details(
+    pub async fn change_playlist_details(
         &self,
         playlist_id: &str,
         name: Option<&str>,
@@ -85,7 +87,8 @@ impl Spotify {
             );
         }
 
-        self.spotify_request(&url_extension, RequestMethod::Put(body))?; // make request
+        self.spotify_request(&url_extension, RequestMethod::Put(body))
+            .await?; // make request
 
         Ok(())
     }
@@ -101,7 +104,7 @@ impl Spotify {
     /// * `limit` - The maximum number of items to return. Default: 100. Minimum: 0. Maximum: 100.
     /// * `offset` - The index of the first item to return. Default: 0 (the first object). Use with limit to get the next set of items.
     ///
-    pub fn get_playlist_tracks(
+    pub async fn get_playlist_tracks(
         &self,
         playlist_id: &str,
         market: Option<&str>,
@@ -125,7 +128,9 @@ impl Spotify {
             url_extension.push_str(&format!("&offset={}", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(SpotifyCollection::<PlaylistTrack>::new(&response)); // format and return result
     }
@@ -140,7 +145,7 @@ impl Spotify {
     /// * `track_ids` - A list of Spotify track URIs to add, can be a maximum of 100.
     /// * `position` - The position to insert the tracks, a zero-based index. For example, to insert the tracks in the first position: position=0; to insert the tracks in the third position: position=2. If omitted, the tracks will be appended to the playlist.
     ///
-    pub fn add_tracks_to_playlist(
+    pub async fn add_tracks_to_playlist(
         &self,
         playlist_id: &str,
         track_ids: Vec<&str>,
@@ -177,7 +182,8 @@ impl Spotify {
             );
         }
 
-        self.spotify_request(&url_extension, RequestMethod::Post(body))?; // make request
+        self.spotify_request(&url_extension, RequestMethod::Post(body))
+            .await?; // make request
 
         Ok(())
     }
@@ -192,7 +198,7 @@ impl Spotify {
     /// * `playlist_id` - The Spotify ID of the playlist.
     /// * `track_ids` - A list of Spotify track URIs to add, can be a maximum of 100.
     ///
-    pub fn replace_playlist_tracks(
+    pub async fn replace_playlist_tracks(
         &self,
         playlist_id: &str,
         track_ids: Vec<&str>,
@@ -212,7 +218,9 @@ impl Spotify {
 
         body.insert(String::from("uris"), track_uris); // add track uris to body
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Put(body))?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Put(body))
+            .await?; // make request
 
         return match response["snapshot_id"].as_str() {
             // return snapshot id
@@ -235,7 +243,7 @@ impl Spotify {
     /// * `range_length` - The amount of tracks to be reordered. Defaults to 1 if not set.
     /// * `snapshot_id` - The playlist's snapshot ID against which you want to make the changes.
     ///
-    pub fn reorder_playlist_tracks(
+    pub async fn reorder_playlist_tracks(
         &self,
         playlist_id: &str,
         range_start: i32,
@@ -274,7 +282,9 @@ impl Spotify {
             );
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Put(body))?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Put(body))
+            .await?; // make request
 
         return match response["snapshot_id"].as_str() {
             // return snapshot id
@@ -296,7 +306,7 @@ impl Spotify {
     /// * `track_ids` - A list of Spotify track URIs to remove, can be a maximum of 100.
     /// * `snapshot_id` - The playlist's snapshot ID against which you want to make the changes.
     ///
-    pub fn remove_playlist_tracks(
+    pub async fn remove_playlist_tracks(
         &self,
         playlist_id: &str,
         track_ids: Vec<&str>,
@@ -337,7 +347,9 @@ impl Spotify {
             );
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Delete(body))?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Delete(body))
+            .await?; // make request
 
         return match response["snapshot_id"].as_str() {
             // return snapshot id
@@ -356,7 +368,7 @@ impl Spotify {
     /// * `limit` - The maximum number of playlists to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first playlist to return. Default: 0 (the first object). Use with limit to get the next set of playlists.
     ///
-    pub fn get_current_users_playlists(
+    pub async fn get_current_users_playlists(
         &self,
         limit: Option<i32>,
         offset: Option<i32>,
@@ -380,7 +392,9 @@ impl Spotify {
             url_extension.push_str(&format!("offset={}&", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(SpotifyCollection::<Playlist>::new(&response)); // return playlists
     }
@@ -394,7 +408,7 @@ impl Spotify {
     /// * `limit` - The maximum number of playlists to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first playlist to return. Default: 0 (the first object). Use with limit to get the next set of playlists.
     ///
-    pub fn get_users_playlists(
+    pub async fn get_users_playlists(
         &self,
         user_id: &str,
         limit: Option<i32>,
@@ -419,7 +433,9 @@ impl Spotify {
             url_extension.push_str(&format!("offset={}&", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(SpotifyCollection::<Playlist>::new(&response)); // return playlists
     }
@@ -435,7 +451,7 @@ impl Spotify {
     /// * `collaborative` - Defaults to false. If true the playlist will be collaborative. Note that to create a collaborative playlist you must also set public to false.
     /// * `description` - Value for playlist description as displayed in Spotify Clients and in the Web API.
     ///
-    pub fn create_playlist(
+    pub async fn create_playlist(
         &self,
         user_id: &str,
         name: &str,
@@ -469,7 +485,9 @@ impl Spotify {
             );
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Post(body))?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Post(body))
+            .await?; // make request
 
         return Ok(Playlist::new(&response)); // return playlist
     }
@@ -485,7 +503,7 @@ impl Spotify {
     /// * `offset` - The index of the first item to return. Default: 0 (the first object). Use with limit to get the next set of items.
     /// * `timestamp` - A timestamp for which the playlists would be relevant. Defaults to current time if not provided
     ///
-    pub fn get_featured_playlists(
+    pub async fn get_featured_playlists(
         &self,
         country: Option<&str>,
         locale: Option<&str>,
@@ -533,7 +551,9 @@ impl Spotify {
             ));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(SpotifyCollection::<Playlist>::new(&response["playlists"])); // return playlists (or albums?)
     }
@@ -548,7 +568,7 @@ impl Spotify {
     /// * `limit` - The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first item to return. Default: 0 (the first object). Use with limit to get the next set of items.
     ///
-    pub fn get_categorys_playlists(
+    pub async fn get_categorys_playlists(
         &self,
         category_id: &str,
         country: Option<&str>,
@@ -577,7 +597,9 @@ impl Spotify {
             url_extension.push_str(&format!("offset={}&", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(SpotifyCollection::<Playlist>::new(&response["playlists"])); // return playlists
     }
@@ -589,13 +611,15 @@ impl Spotify {
     /// # Arguments
     /// * `playlist_id` - The Spotify ID for the playlist.
     ///
-    pub fn get_playlist_cover_image(
+    pub async fn get_playlist_cover_image(
         &self,
         playlist_id: &str,
     ) -> Result<Vec<SpotifyImage>, SpotifyError> {
         let url_extension = format!("playlists/{}/images", playlist_id); // base url
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         let mut images: Vec<SpotifyImage> = Vec::new(); // create vector to store images
 

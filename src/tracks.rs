@@ -16,10 +16,12 @@ impl Spotify {
     /// # Arguments
     /// * `track_id` - The Spotify ID of the track.
     ///
-    pub fn get_track(&self, track_id: &str) -> Result<Track, SpotifyError> {
+    pub async fn get_track(&self, track_id: &str) -> Result<Track, SpotifyError> {
         let url_extension = format!("tracks/{}", track_id);
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(Track::new(&response)); // format and return result
     }
@@ -32,7 +34,7 @@ impl Spotify {
     /// * `track_ids` - A vector of Spotify track ids.
     /// * `market` - An ISO 3166-1 alpha-2 country code.
     ///
-    pub fn get_several_tracks(
+    pub async fn get_several_tracks(
         &self,
         track_ids: Vec<&str>,
         market: Option<&str>,
@@ -44,7 +46,9 @@ impl Spotify {
             url_extension.push_str(&format!("?market={}", market));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
         let mut tracks = Vec::new(); // create vector to store tracks
         for track in response["tracks"].members() {
             tracks.push(Track::new(&track)); // format track and push to vector
@@ -62,7 +66,7 @@ impl Spotify {
     /// * `market` - An ISO 3166-1 alpha-2 country code.
     /// * `offset` - The index of the first track to return. Default: 0 (i.e., the first track). Use with limit to get the next set of tracks.
     ///
-    pub fn get_user_saved_tracks(
+    pub async fn get_user_saved_tracks(
         &self,
         limit: Option<u32>,
         market: Option<&str>,
@@ -92,7 +96,9 @@ impl Spotify {
             url_extension.push_str(&format!("&offset={}", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(SpotifyCollection::<DatedTrack>::new(&response)); // format and return result
     }
@@ -104,7 +110,7 @@ impl Spotify {
     /// # Arguments
     /// * `track_ids` - A vector of Spotify track ids
     ///
-    pub fn save_tracks(&self, track_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub async fn save_tracks(&self, track_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let url_extension = format!("me/tracks?ids={}", track_ids.join(",")); // base url
 
         self.check_scope("user-library-modify")?; // check scope
@@ -121,7 +127,8 @@ impl Spotify {
             ),
         );
 
-        self.spotify_request(&url_extension, RequestMethod::Put(body))?; // make request
+        self.spotify_request(&url_extension, RequestMethod::Put(body))
+            .await?; // make request
 
         return Ok(()); // return nothing
     }
@@ -133,7 +140,7 @@ impl Spotify {
     /// # Arguments
     /// * `track_ids` - A vector of Spotify track IDs
     ///
-    pub fn remove_tracks(&self, track_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub async fn remove_tracks(&self, track_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let url_extension = format!("me/tracks?ids={}", track_ids.join(",")); // base url
 
         self.check_scope("user-library-modify")?; // check scope
@@ -150,7 +157,8 @@ impl Spotify {
             ),
         );
 
-        self.spotify_request(&url_extension, RequestMethod::Delete(body))?; // make request (abitrarily choose string as type parameter, not used here)
+        self.spotify_request(&url_extension, RequestMethod::Delete(body))
+            .await?; // make request (abitrarily choose string as type parameter, not used here)
 
         return Ok(()); // return nothing
     }
@@ -162,12 +170,17 @@ impl Spotify {
     /// # Arguments
     /// * `track_ids` - A vector of track ids to check
     ///
-    pub fn check_saved_tracks(&self, track_ids: Vec<&str>) -> Result<Vec<bool>, SpotifyError> {
+    pub async fn check_saved_tracks(
+        &self,
+        track_ids: Vec<&str>,
+    ) -> Result<Vec<bool>, SpotifyError> {
         let url_extension = format!("me/tracks/contains?ids={}", track_ids.join(",")); // base url
 
         self.check_scope("user-library-read")?; // check scope
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         let mut saved_tracks = Vec::new(); // create vector to store saved albums
 
@@ -188,13 +201,15 @@ impl Spotify {
     /// # Arguments
     /// * `track_ids` - A vector of track ids
     ///
-    pub fn get_tracks_audio_features(
+    pub async fn get_tracks_audio_features(
         &self,
         track_ids: Vec<&str>,
     ) -> Result<Vec<FeatureTrack>, SpotifyError> {
         let url_extension = format!("audio-features/?ids={}", track_ids.join(",")); // base url
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         let mut feature_tracks = Vec::new(); // create vector to store tracks
 
@@ -212,13 +227,15 @@ impl Spotify {
     /// # Arguments
     /// * `track_id` - Spotify ID of track
     ///
-    pub fn get_track_audio_features(
+    pub async fn get_track_audio_features(
         &self,
         track_id: &str,
     ) -> Result<FeatureTrack, SpotifyError> {
         let url_extension = format!("audio-features/{}", track_id); // base url
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(FeatureTrack::new(&response)); // format and return track
     }
@@ -230,13 +247,15 @@ impl Spotify {
     /// # Arguments
     /// * `track_id` - Spotify ID of track
     ///
-    pub fn get_track_audio_analysis(
+    pub async fn get_track_audio_analysis(
         &self,
         track_id: &str,
     ) -> Result<AnalysisTrack, SpotifyError> {
         let url_extension = format!("audio-analysis/{}", track_id); // base url
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(AnalysisTrack::new(&response)?); // format and return track
     }
@@ -295,7 +314,7 @@ impl Spotify {
     ///     * `max_valence` - maximum valence value for track, between 0 and 1
     ///     * `target_valence` - target valence value for track, between 0 and 1
     ///
-    pub fn get_recommendations(
+    pub async fn get_recommendations(
         &self,
         seed_artists: Option<Vec<&str>>,
         seed_genres: Option<Vec<&str>>,
@@ -347,7 +366,9 @@ impl Spotify {
             url_extension.push_str(&stringify(optional_parameters)); // stringify and add optional parameters
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         let mut tracks = Vec::new(); // create vector to hold tracks
         for track in response["tracks"].members() {

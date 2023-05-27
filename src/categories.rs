@@ -12,7 +12,7 @@ impl Spotify {
     /// * `limit` - The maximum number of categories to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first category to return. Default: 0 (the first object). Use with limit to get the next set of categories.
     ///
-    pub fn get_several_browse_categories(
+    pub async fn get_several_browse_categories(
         &mut self,
         country: Option<&str>,
         locale: Option<&str>,
@@ -42,7 +42,9 @@ impl Spotify {
             url_extension.push_str(&format!("offset={}&", offset)); // add offset to url
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // send request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // send request
 
         Ok(SpotifyCollection::<Category>::new(&response["categories"])) // return collection
     }
@@ -56,7 +58,7 @@ impl Spotify {
     /// * `country` - An ISO 3166-1 alpha-2 country code.
     /// * `locale` - The desired language, consisting of an ISO 639 language code and an ISO 3166-1 alpha-2 country code, joined by an underscore.
     ///
-    pub fn get_single_browse_category(
+    pub async fn get_single_browse_category(
         &mut self,
         category_id: &str,
         country: Option<&str>,
@@ -77,7 +79,9 @@ impl Spotify {
             url_extension.push_str(&format!("locale={}&", locale)); // add locale to url
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // send request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // send request
 
         Ok(Category::new(&response)) // return category
     }

@@ -9,10 +9,12 @@ impl Spotify {
     /// # Arguments
     /// * `artist_id` - The Spotify ID of the artist.
     ///  
-    pub fn get_artist(&self, artist_id: &str) -> Result<Artist, SpotifyError> {
+    pub async fn get_artist(&self, artist_id: &str) -> Result<Artist, SpotifyError> {
         let url_extension = format!("artists/{}", artist_id);
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(Artist::new(&response)); // format and return result
     }
@@ -24,13 +26,15 @@ impl Spotify {
     /// # Arguments
     /// * `artist_ids` - A vector of the Spotify IDs for the artists. Maximum: 50 IDs.
     ///
-    pub fn get_several_artists(
+    pub async fn get_several_artists(
         &self,
         artist_ids: Vec<&str>,
     ) -> Result<Vec<Artist>, SpotifyError> {
         let url_extension = format!("artists/?ids={}", artist_ids.join(",")); // base url with artist ids added
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         let mut artists = Vec::new(); // create vector to store artists
         for artist in response["artists"].members() {
@@ -50,7 +54,7 @@ impl Spotify {
     /// * `limit` - The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first item to return. Default: 0 (the first object). Use with limit to get the next set of items.
     ///
-    pub fn get_artist_albums(
+    pub async fn get_artist_albums(
         &self,
         artist_id: &str,
         include_groups: Option<Vec<&str>>,
@@ -85,7 +89,9 @@ impl Spotify {
             url_extension.push_str(&format!("&offset={}", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(SpotifyCollection::<Album>::new(&response)); // format and return result
     }
@@ -98,14 +104,16 @@ impl Spotify {
     /// * `artist_id` - The Spotify ID of the artist.
     /// * `market` - An ISO 3166-1 alpha-2 country code.
     ///
-    pub fn get_artist_top_tracks(
+    pub async fn get_artist_top_tracks(
         &self,
         artist_id: &str,
         market: &str,
     ) -> Result<Vec<Artist>, SpotifyError> {
         let url_extension = format!("artists/{}/top-tracks?market={}", artist_id, market); // base url
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         let mut artists = Vec::new(); // create vector to store artists
         for artist in response["tracks"].members() {
@@ -121,13 +129,15 @@ impl Spotify {
     /// # Arguments
     /// * `artist_id` - The Spotify ID of the artist.
     ///
-    pub fn get_artist_related_artists(
+    pub async fn get_artist_related_artists(
         &self,
         artist_id: &str,
     ) -> Result<Vec<Artist>, SpotifyError> {
         let url_extension = format!("artists/{}/related-artists", artist_id); // base url
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         let mut artists = Vec::new(); // create vector to store artists
         for artist in response["artists"].members() {

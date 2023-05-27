@@ -16,7 +16,7 @@ impl Spotify {
     /// # Arguments
     /// * `market` - An ISO 3166-1 alpha-2 country code.
     ///
-    pub fn get_playback_state(&self, market: Option<&str>) -> Result<Playback, SpotifyError> {
+    pub async fn get_playback_state(&self, market: Option<&str>) -> Result<Playback, SpotifyError> {
         let mut url_extension = String::from("me/player?additional_types=track"); // create url extension (Note: only supporting tracks, not episodes)
 
         self.check_scope("user-read-playback-state")?; // check scope
@@ -25,7 +25,9 @@ impl Spotify {
             // if market is Some then add it to url extension
             url_extension.push_str(&format!("&market={}", market));
         }
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // send request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // send request
 
         return Ok(Playback::new(&response)); // return playback
     }
@@ -38,7 +40,7 @@ impl Spotify {
     /// * `device_id` - The device id to transfer playback to
     /// * `play` - Whether or not to start playback on the new device
     ///
-    pub fn transfer_playback(&self, device_id: &str, play: bool) -> Result<(), SpotifyError> {
+    pub async fn transfer_playback(&self, device_id: &str, play: bool) -> Result<(), SpotifyError> {
         let url_extension = String::from("me/player"); // create url extension
 
         self.check_scope("user-modify-playback-state")?; // check scope
@@ -50,7 +52,8 @@ impl Spotify {
         ); // insert device id
         body.insert("play".to_string(), Value::Bool(play)); // insert play
 
-        self.spotify_request(&url_extension, RequestMethod::Put(body))?; // send request
+        self.spotify_request(&url_extension, RequestMethod::Put(body))
+            .await?; // send request
 
         return Ok(());
     }
@@ -59,12 +62,14 @@ impl Spotify {
     ///
     /// Requires scope: user-read-playback-state
     ///
-    pub fn get_available_devices(&self) -> Result<Vec<Device>, SpotifyError> {
+    pub async fn get_available_devices(&self) -> Result<Vec<Device>, SpotifyError> {
         let url_extension = String::from("me/player/devices"); // create url extension
 
         self.check_scope("user-read-playback-state")?;
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // send request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // send request
 
         let mut devices: Vec<Device> = Vec::new(); // empty vector to store devices
 
@@ -84,7 +89,7 @@ impl Spotify {
     /// # Arguments
     /// * `market` - An ISO 3166-1 alpha-2 country code which the returned track should be in the market of
     ///
-    pub fn get_currently_playing_track(
+    pub async fn get_currently_playing_track(
         &self,
         market: Option<&str>,
     ) -> Result<Playback, SpotifyError> {
@@ -97,7 +102,9 @@ impl Spotify {
             url_extension.push_str(&format!("&market={}", market));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // send request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // send request
 
         return Ok(Playback::new(&response)); // return playback
     }
@@ -114,7 +121,7 @@ impl Spotify {
     /// * `offset_track` - Indicates which track in context to begin playback on. This is a track id. Note: this will be ignored if offset_position is set.
     /// * `position_ms` - Where in the song to begin playback
     ///
-    pub fn start_resume_playback(
+    pub async fn start_resume_playback(
         &self,
         device_id: Option<&str>,
         context: Option<SpotifyContext>,
@@ -175,7 +182,8 @@ impl Spotify {
             ); // if position_ms is supplied, then add it to body
         }
 
-        self.spotify_request(&url_extension, RequestMethod::Put(body))?; // send request
+        self.spotify_request(&url_extension, RequestMethod::Put(body))
+            .await?; // send request
 
         return Ok(());
     }
@@ -187,7 +195,7 @@ impl Spotify {
     /// # Arguments
     /// * `device_id` - The id of the device to pause playback on
     ///
-    pub fn pause_playback(&self, device_id: Option<&str>) -> Result<(), SpotifyError> {
+    pub async fn pause_playback(&self, device_id: Option<&str>) -> Result<(), SpotifyError> {
         let mut url_extension = String::from("me/player/pause"); // create url extension
 
         self.check_scope("user-modify-playback-state")?; // check scope
@@ -196,7 +204,8 @@ impl Spotify {
             url_extension.push_str(&format!("?device_id={}", device_id)); // if device_id is supplied, then add it to url extension
         }
 
-        self.spotify_request(&url_extension, RequestMethod::Put(HashMap::new()))?; // send request
+        self.spotify_request(&url_extension, RequestMethod::Put(HashMap::new()))
+            .await?; // send request
 
         return Ok(());
     }
@@ -208,7 +217,7 @@ impl Spotify {
     /// # Arguments
     /// * `device_id` - The id of the device to skip on
     ///
-    pub fn skip_next(&self, device_id: Option<&str>) -> Result<(), SpotifyError> {
+    pub async fn skip_next(&self, device_id: Option<&str>) -> Result<(), SpotifyError> {
         let mut url_extension = String::from("me/player/next"); // create url extension
 
         self.check_scope("user-modify-playback-state")?; // check scope
@@ -217,7 +226,8 @@ impl Spotify {
             url_extension.push_str(&format!("?device_id={}", device_id)); // if device_id is supplied, then add it to url extension
         }
 
-        self.spotify_request(&url_extension, RequestMethod::Post(HashMap::new()))?; // send request
+        self.spotify_request(&url_extension, RequestMethod::Post(HashMap::new()))
+            .await?; // send request
 
         return Ok(());
     }
@@ -229,7 +239,7 @@ impl Spotify {
     /// # Arguments
     /// * `device_id` - The id of the device to skip on
     ///
-    pub fn skip_previous(&self, device_id: Option<&str>) -> Result<(), SpotifyError> {
+    pub async fn skip_previous(&self, device_id: Option<&str>) -> Result<(), SpotifyError> {
         let mut url_extension = String::from("me/player/previous"); // create url extension
 
         self.check_scope("user-modify-playback-state")?; // check scope
@@ -238,7 +248,8 @@ impl Spotify {
             url_extension.push_str(&format!("?device_id={}", device_id)); // if device_id is supplied, then add it to url extension
         }
 
-        self.spotify_request(&url_extension, RequestMethod::Post(HashMap::new()))?; // send request
+        self.spotify_request(&url_extension, RequestMethod::Post(HashMap::new()))
+            .await?; // send request
 
         return Ok(());
     }
@@ -251,7 +262,7 @@ impl Spotify {
     /// * `position` - The position in milliseconds to seek to
     /// * `device_id` - The id of the device to seek on
     ///
-    pub fn seek_position(
+    pub async fn seek_position(
         &self,
         position: i32,
         device_id: Option<&str>,
@@ -264,7 +275,8 @@ impl Spotify {
             url_extension.push_str(&format!("&device_id={}", device_id)); // if device_id is supplied, then add it to url extension
         }
 
-        self.spotify_request(&url_extension, RequestMethod::Put(HashMap::new()))?; // send request
+        self.spotify_request(&url_extension, RequestMethod::Put(HashMap::new()))
+            .await?; // send request
 
         return Ok(());
     }
@@ -277,7 +289,7 @@ impl Spotify {
     /// * `state` - The repeat state to set. Valid values are: track, context, off
     /// * `device_id` - The id of the device to set repeat mode on
     ///
-    pub fn set_repeat_mode(
+    pub async fn set_repeat_mode(
         &self,
         state: RepeatState,
         device_id: Option<&str>,
@@ -290,7 +302,8 @@ impl Spotify {
             url_extension.push_str(&format!("&device_id={}", device_id)); // if device_id is supplied, then add it to url extension
         }
 
-        self.spotify_request(&url_extension, RequestMethod::Put(HashMap::new()))?; // send request
+        self.spotify_request(&url_extension, RequestMethod::Put(HashMap::new()))
+            .await?; // send request
 
         return Ok(());
     }
@@ -303,7 +316,7 @@ impl Spotify {
     /// * `volume` - The volume to set. Must be a value from 0 to 100 inclusive
     /// * `device_id` - The id of the device to set volume on
     ///
-    pub fn set_playback_volume(
+    pub async fn set_playback_volume(
         &self,
         volume: i32,
         device_id: Option<&str>,
@@ -316,7 +329,8 @@ impl Spotify {
             url_extension.push_str(&format!("&device_id={}", device_id)); // if device_id is supplied, then add it to url extension
         }
 
-        self.spotify_request(&url_extension, RequestMethod::Put(HashMap::new()))?; // send request
+        self.spotify_request(&url_extension, RequestMethod::Put(HashMap::new()))
+            .await?; // send request
 
         return Ok(());
     }
@@ -329,7 +343,7 @@ impl Spotify {
     /// * `state` - The shuffle state to set. Valid values are: true, false
     /// * `device_id` - The id of the device to set shuffle on
     ///
-    pub fn toggle_shuffle(
+    pub async fn toggle_shuffle(
         &self,
         state: bool,
         device_id: Option<&str>,
@@ -342,7 +356,8 @@ impl Spotify {
             url_extension.push_str(&format!("&device_id={}", device_id)); // if device_id is supplied, then add it to url extension
         }
 
-        self.spotify_request(&url_extension, RequestMethod::Put(HashMap::new()))?; // send request
+        self.spotify_request(&url_extension, RequestMethod::Put(HashMap::new()))
+            .await?; // send request
 
         return Ok(());
     }
@@ -356,7 +371,7 @@ impl Spotify {
     /// * `before` - Returns all items *before* this time stamp. Will be ignored if after is specified
     /// * `limit` - The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50
     ///
-    pub fn get_recently_played_tracks(
+    pub async fn get_recently_played_tracks(
         &self,
         after: Option<NaiveDateTime>,
         before: Option<NaiveDateTime>,
@@ -387,7 +402,9 @@ impl Spotify {
             url_extension.push_str(&format!("&limit={}", limit)); // if limit is supplied, then add it to url extension
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // send request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // send request
 
         return Ok(SpotifyCollection::<PlayedTrack>::new(&response)); // return response
     }
@@ -397,12 +414,14 @@ impl Spotify {
     ///
     /// Requires scope: user-read-currently-playing user-read-playback-state
     ///
-    pub fn get_users_queue(&self) -> Result<(Track, Vec<Track>), SpotifyError> {
+    pub async fn get_users_queue(&self) -> Result<(Track, Vec<Track>), SpotifyError> {
         let url_extension = String::from("me/player/queue"); // create url extension
 
         self.check_scope("user-read-currently-playing user-read-playback-state")?; // check scope
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // send request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // send request
 
         let track = Track::new(&response["currently_playing"]); // get and format currently playing field
 
@@ -424,7 +443,7 @@ impl Spotify {
     /// * `track_id` - The id of the track to add to the queue
     /// * `device_id` - The id of the device to add the track to
     ///
-    pub fn add_track_to_queue(
+    pub async fn add_track_to_queue(
         &self,
         track_id: &str,
         device_id: Option<&str>,
@@ -437,7 +456,8 @@ impl Spotify {
             url_extension.push_str(&format!("&device_id={}", device_id)); // if device_id is supplied, then add it to url extension
         };
 
-        self.spotify_request(&url_extension, RequestMethod::Post(HashMap::new()))?; // send request
+        self.spotify_request(&url_extension, RequestMethod::Post(HashMap::new()))
+            .await?; // send request
 
         return Ok(()); // return response
     }

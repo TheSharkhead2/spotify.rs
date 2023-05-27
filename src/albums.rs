@@ -15,7 +15,7 @@ impl Spotify {
     /// * `album_id` - The Spotify ID of the album.
     /// * `market` - An ISO 3166-1 alpha-2 country code.
     ///
-    pub fn get_album(
+    pub async fn get_album(
         &self,
         album_id: &str,
         market: Option<&str>,
@@ -27,7 +27,9 @@ impl Spotify {
             url_extension.push_str(&format!("?market={}", market));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(Album::new(&response)); // format and return result
     }
@@ -40,7 +42,7 @@ impl Spotify {
     /// * `album_ids` - A vector of Spotify IDs for the albums.
     /// * `market` - An ISO 3166-1 alpha-2 country code.
     ///
-    pub fn get_albums(
+    pub async fn get_albums(
         &self,
         album_ids: Vec<&str>,
         market: Option<&str>,
@@ -52,7 +54,9 @@ impl Spotify {
             url_extension.push_str(&format!("&market={}", market));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         let mut albums = Vec::new(); // create vector to store albums
         for album in response["albums"].members() {
@@ -71,7 +75,7 @@ impl Spotify {
     /// * `limit` - The maximum number of tracks to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first track to return. Default: 0 (the first object). Use with limit to get the next set of tracks.
     ///
-    pub fn get_album_tracks(
+    pub async fn get_album_tracks(
         &self,
         album_id: &str,
         market: Option<&str>,
@@ -100,7 +104,9 @@ impl Spotify {
             url_extension.push_str(&format!("&offset={}", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(SpotifyCollection::<Track>::new(&response)); // format and return result
     }
@@ -113,7 +119,7 @@ impl Spotify {
     /// * `limit` - The maximum number of albums to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first album to return. Default: 0 (the first object). Use with limit to get the next set of albums.
     ///
-    pub fn get_saved_albums(
+    pub async fn get_saved_albums(
         &self,
         limit: Option<u32>,
         market: Option<&str>,
@@ -143,7 +149,9 @@ impl Spotify {
             url_extension.push_str(&format!("&offset={}", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(SpotifyCollection::<DatedAlbum>::new(&response)); // format and return result
     }
@@ -155,7 +163,7 @@ impl Spotify {
     /// # Arguments
     /// * `album_ids` - A vector of Spotify IDs for the albums.
     ///
-    pub fn save_albums(&self, album_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub async fn save_albums(&self, album_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let album_ids_string = album_ids.join(","); // join album ids into string seperated by commas
 
         let url_extension = format!("me/albums?ids={}", album_ids_string); // base url with album ids to add
@@ -174,7 +182,8 @@ impl Spotify {
             ),
         );
 
-        self.spotify_request(&url_extension, RequestMethod::Put(body))?; // make request
+        self.spotify_request(&url_extension, RequestMethod::Put(body))
+            .await?; // make request
 
         return Ok(()); // return nothing
     }
@@ -186,7 +195,7 @@ impl Spotify {
     /// # Arguments
     /// * `album_ids` - A vector of Spotify IDs for the albums.
     ///
-    pub fn remove_albums(&self, album_ids: Vec<&str>) -> Result<(), SpotifyError> {
+    pub async fn remove_albums(&self, album_ids: Vec<&str>) -> Result<(), SpotifyError> {
         let album_ids_string = album_ids.join(","); // join album ids into string seperated by commas
 
         let url_extension = format!("me/albums?ids={}", album_ids_string); // base url with album ids to remove
@@ -205,7 +214,8 @@ impl Spotify {
             ),
         );
 
-        self.spotify_request(&url_extension, RequestMethod::Delete(body))?; // make request
+        self.spotify_request(&url_extension, RequestMethod::Delete(body))
+            .await?; // make request
 
         return Ok(()); // return nothing
     }
@@ -217,14 +227,19 @@ impl Spotify {
     /// # Arguments
     /// * `album_ids` - A vector of Spotify IDs for the albums.
     ///
-    pub fn check_saved_albums(&self, album_ids: Vec<&str>) -> Result<Vec<bool>, SpotifyError> {
+    pub async fn check_saved_albums(
+        &self,
+        album_ids: Vec<&str>,
+    ) -> Result<Vec<bool>, SpotifyError> {
         let album_ids_string = album_ids.join(","); // join album ids into string seperated by commas
 
         let url_extension = format!("me/albums/contains?ids={}", album_ids_string); // base url with album ids to check
 
         self.check_scope("user-library-read")?; // check scope
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         let mut saved_albums = Vec::new(); // create vector to store saved albums
 
@@ -246,7 +261,7 @@ impl Spotify {
     /// * `limit` - The maximum number of albums to return. Default: 20. Minimum: 1. Maximum: 50.
     /// * `offset` - The index of the first album to return. Default: 0 (the first object). Use with limit to get the next set of albums.
     ///
-    pub fn get_new_releases(
+    pub async fn get_new_releases(
         &self,
         country: Option<&str>,
         limit: Option<u32>,
@@ -274,7 +289,9 @@ impl Spotify {
             url_extension.push_str(&format!("&offset={}", offset));
         }
 
-        let response = self.spotify_request(&url_extension, RequestMethod::Get)?; // make request
+        let response = self
+            .spotify_request(&url_extension, RequestMethod::Get)
+            .await?; // make request
 
         return Ok(SpotifyCollection::<Album>::new(&response["albums"])); // format and return result
     }
