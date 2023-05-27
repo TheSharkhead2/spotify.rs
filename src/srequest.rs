@@ -1,6 +1,5 @@
 use crate::spotify::{Spotify, SpotifyError};
 use json::{self, JsonValue, Null};
-use reqwest;
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -13,6 +12,82 @@ pub enum RequestMethod {
 }
 
 impl Spotify {
+    /// New Spotify request codeflow using the surf request package.
+    pub async fn spotify_request(
+        &self,
+        url_extension: &str,
+        request_method: RequestMethod,
+    ) -> Result<JsonValue, SpotifyError> {
+        let access_token = self.access_token()?; // get access token
+
+        // create request url
+        let request_url = format!("https://api.spotify.com/v1/{}", url_extension);
+
+        let request = match request_method {
+            RequestMethod::Get => {
+                surf::get(request_url).header("Authorization", format!("Bearer {}", access_token))
+            }
+            RequestMethod::Post(body) => {
+                match surf::post(request_url)
+                    .header("Authorization", format!("Bearer {}", access_token))
+                    .header("Content-Type", "application/json")
+                    .body_json(&body)
+                {
+                    Ok(req) => req,
+                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+                }
+            }
+            RequestMethod::Put(body) => {
+                match surf::put(request_url)
+                    .header("Authorization", format!("Bearer {}", access_token))
+                    .header("Content-Type", "application/json")
+                    .body_json(&body)
+                {
+                    Ok(req) => req,
+                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+                }
+            }
+            RequestMethod::Delete(body) => {
+                match surf::delete(request_url)
+                    .header("Authorization", format!("Bearer {}", access_token))
+                    .header("Content-Type", "application/json")
+                    .body_json(&body)
+                {
+                    Ok(req) => req,
+                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+                }
+            }
+        }
+        .await;
+
+        match request {
+            Ok(mut res) => {
+                let request_body = match res.body_string().await {
+                    Ok(body) => body,
+                    Err(e) => {
+                        return Err(SpotifyError::RequestError(format!(
+                            "JSON parsing error: {}",
+                            e
+                        )))
+                    }
+                };
+
+                let response = match json::parse(&request_body) {
+                    Ok(res) => res,
+                    Err(e) => {
+                        return Err(SpotifyError::RequestError(format!(
+                            "JSON parsing error: {}",
+                            e
+                        )))
+                    }
+                };
+
+                Ok(response)
+            }
+            Err(e) => Err(SpotifyError::RequestError(e.to_string())),
+        }
+    }
+
     /// General request to the spotify API. Returns JSON response
     ///
     /// # Arguments
@@ -22,7 +97,7 @@ impl Spotify {
     /// # Panics
     /// On various parsing errors. Shouldn't happen? Probably.
     ///
-    pub fn spotify_request(
+    pub fn spotify_request_legacy(
         &self,
         url_extension: &str,
         request_method: RequestMethod,
