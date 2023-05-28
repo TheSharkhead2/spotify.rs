@@ -13,11 +13,11 @@ fn general_testing() {
     let redirect_uri = "http://localhost:8888/callback";
     let client_id = dotenv::var("CLIENT_ID").unwrap(); // grab client_id from .env
 
-    let spotify = Spotify::new(); // create spotify object
-    tokio_test::block_on(spotify.authenticate(String::from("8888"), scope)).unwrap();
+    // let spotify = Spotify::new(); // create spotify object
+    // tokio_test::block_on(spotify.authenticate(String::from("8888"), scope)).unwrap();
 
     // file saving
-    // let spotify = Spotify::new_from_file(".saved_credentials").unwrap();
+    let spotify = tokio_test::block_on(Spotify::new_from_file(".saved_credentials")).unwrap();
 
     // testing of less restrictive method
     // let (auth_url, state, code_verifier) =

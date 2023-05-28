@@ -853,7 +853,7 @@ impl Spotify {
     }
 
     /// Returns the access token. If the token is expired, it will be refreshed.
-    pub fn access_token(&self) -> Result<String, SpotifyError> {
+    pub async fn access_token(&self) -> Result<String, SpotifyError> {
         if self.access_token.read().unwrap().is_none() {
             // don't proceed if access toekn is not set
             return Err(SpotifyError::NotAuthenticated);
@@ -863,7 +863,7 @@ impl Spotify {
             Some(expires_at) => {
                 // if access token is expired, refresh it
                 if Utc::now() > expires_at {
-                    let (access_token, expires_at, refresh_token) = self.refresh()?;
+                    let (access_token, expires_at, refresh_token) = self.refresh().await?;
                     let mut self_access_token = self.access_token.write().unwrap();
                     *self_access_token = Some(access_token);
                     let mut self_expires_at = self.expires_at.write().unwrap();
@@ -881,7 +881,7 @@ impl Spotify {
     }
 
     /// Refreshes the access token and returns the new access token and the time it expires
-    fn refresh(&self) -> Result<(String, DateTime<Utc>, String), SpotifyError> {
+    async fn refresh(&self) -> Result<(String, DateTime<Utc>, String), SpotifyError> {
         if self.refresh_token.read().unwrap().is_none() || self.client_id.read().unwrap().is_none()
         {
             // if client id or refresh token is not set, return error
@@ -890,9 +890,11 @@ impl Spotify {
         let (access_token, expires_in, refresh_token) = match refresh_access_token(
             self.refresh_token.read().unwrap().as_ref().unwrap(),
             self.client_id.read().unwrap().as_ref().unwrap(),
-        ) {
+        )
+        .await
+        {
             // can unwrap because they are set
-            Ok((access_token, expires_in, refresh_token)) => {
+            Ok((access_token, refresh_token, expires_in)) => {
                 (access_token, expires_in, refresh_token)
             }
             Err(e) => panic!("{:?}", e), // on error panic

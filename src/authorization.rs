@@ -145,19 +145,17 @@ pub async fn get_access_token(
     }
 }
 
-/// Requests new refresh token from Spotify API. Returns new refresh token and time until it expires
+/// Requests new refresh token from Spotify API. Returns (access_token, refresh_token, expires_in)
 ///
 /// # Arguments
 /// * `refresh_token` - The refresh token used to request a new refresh token
 /// * `client_id` - The client id of the application
 ///
-pub fn refresh_access_token(
+pub async fn refresh_access_token(
     refresh_token: &str,
     client_id: &str,
-) -> Result<(String, i64, String), SpotifyError> {
+) -> Result<(String, String, i64), SpotifyError> {
     let request_uri = "https://accounts.spotify.com/api/token?"; // token request uri
-
-    let client = reqwest::blocking::Client::new();
 
     let query_parameters = vec![
         ("grant_type", "refresh_token"),
@@ -167,51 +165,80 @@ pub fn refresh_access_token(
 
     let query_string = stringify(query_parameters); // stringify query parameters
 
-    let response = client
-        .post(String::from(request_uri) + &query_string)
-        .header("Content-Type", "application/x-www-form-urlencoded") // set Content-Type header
-        .header("Content-Length", "0") // set Content-Length header
-        .send()
-        .unwrap(); // send request
+    let request_headers = HashMap::from([
+        (
+            String::from("Content-Type"),
+            String::from("application/x-www-form-urlencoded"),
+        ),
+        (String::from("Content-Length"), String::from("0")),
+    ]);
 
-    if response.status().is_success() {
-        // check if response is successful
-        let response_body = json::parse(&response.text().unwrap()).unwrap(); // get response as json
+    let response = general_request(
+        String::from(request_uri) + &query_string,
+        RequestMethodHeaders::Post(request_headers, HashMap::new()),
+    )
+    .await?;
 
-        let access_token = response_body["access_token"].to_string(); // get access token from response
-        let expires_in_str = response_body["expires_in"].to_string(); // get expires in from response
-        let expires_in: i64 = expires_in_str.parse().unwrap(); // parse expires in to i64
-        let new_refresh_token = match response_body["refresh_token"] {
-            // get refresh token from response
-            json::JsonValue::Null => refresh_token.to_string(),
-            _ => response_body["refresh_token"].to_string(),
-        };
+    match response {
+        Ok(mut res) => {
+            if res.status() == 200 {
+                let response_data: AccessTokenResponseJson = match res.body_json().await {
+                    Ok(data) => data,
+                    Err(e) => return Err(SpotifyError::AuthenticationError(e.to_string())),
+                };
 
-        return Ok((access_token, expires_in, new_refresh_token)); // return access token and expires in and new refresh token
-    } else {
-        let response_code = response.status().as_u16(); // get response code
-
-        let response_body = json::parse(&response.text().unwrap()).unwrap(); // get response as json
-
-        match response_code {
-            400 => {
-                return Err(SpotifyError::BadRequest(format!(
-                    "Error {}: {}",
-                    response_code, response_body["error_description"]
-                )))
-            }
-            401 => {
-                return Err(SpotifyError::Unauthorized(format!(
-                    "Error {}: {}",
-                    response_code, response_body["error_description"]
-                )))
-            }
-            _ => {
-                return Err(SpotifyError::GeneralError(format!(
-                    "Error: {}",
-                    response_code
+                Ok((
+                    response_data.access_token,
+                    response_data.refresh_token,
+                    response_data.expires_in,
+                ))
+            } else {
+                Err(SpotifyError::AuthenticationError(format!(
+                    "Status code: {}",
+                    res.status()
                 )))
             }
         }
+        Err(e) => Err(SpotifyError::AuthenticationError(e.to_string())),
     }
+    // if response.status().is_success() {
+    //     // check if response is successful
+    //     let response_body = json::parse(&response.text().unwrap()).unwrap(); // get response as json
+
+    //     let access_token = response_body["access_token"].to_string(); // get access token from response
+    //     let expires_in_str = response_body["expires_in"].to_string(); // get expires in from response
+    //     let expires_in: i64 = expires_in_str.parse().unwrap(); // parse expires in to i64
+    //     let new_refresh_token = match response_body["refresh_token"] {
+    //         // get refresh token from response
+    //         json::JsonValue::Null => refresh_token.to_string(),
+    //         _ => response_body["refresh_token"].to_string(),
+    //     };
+
+    //     return Ok((access_token, expires_in, new_refresh_token)); // return access token and expires in and new refresh token
+    // } else {
+    //     let response_code = response.status().as_u16(); // get response code
+
+    //     let response_body = json::parse(&response.text().unwrap()).unwrap(); // get response as json
+
+    //     match response_code {
+    //         400 => {
+    //             return Err(SpotifyError::BadRequest(format!(
+    //                 "Error {}: {}",
+    //                 response_code, response_body["error_description"]
+    //             )))
+    //         }
+    //         401 => {
+    //             return Err(SpotifyError::Unauthorized(format!(
+    //                 "Error {}: {}",
+    //                 response_code, response_body["error_description"]
+    //             )))
+    //         }
+    //         _ => {
+    //             return Err(SpotifyError::GeneralError(format!(
+    //                 "Error: {}",
+    //                 response_code
+    //             )))
+    //         }
+    //     }
+    // }
 }

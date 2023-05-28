@@ -223,7 +223,7 @@ impl Spotify {
     /// # Panics
     /// Panics if the file doesn't contain the necessary information
     ///
-    pub fn new_from_file(file_name: &str) -> Result<Spotify, SpotifyError> {
+    pub async fn new_from_file(file_name: &str) -> Result<Spotify, SpotifyError> {
         let data = match fs::read_to_string(file_name) {
             Ok(data) => data,
             Err(_) => return Err(SpotifyError::NoFile), // assume no file
@@ -234,8 +234,8 @@ impl Spotify {
         let scope = lines.next().unwrap().to_string(); // get scope
         let refresh_token = lines.next().unwrap().to_string(); // get refresh token
 
-        let (access_token, expires_in, new_refresh_token) =
-            refresh_access_token(&refresh_token, &client_id)?; // refresh access token. Panics if request is bad
+        let (access_token, new_refresh_token, expires_in) =
+            refresh_access_token(&refresh_token, &client_id).await?; // refresh access token. Panics if request is bad
         let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
 
         // return Spotify object
@@ -256,7 +256,7 @@ impl Spotify {
     /// # Panics
     /// Panics if the file doesn't contain the necessary information
     ///
-    pub fn authenticate_from_file(&self, file_name: &str) -> Result<(), SpotifyError> {
+    pub async fn authenticate_from_file(&self, file_name: &str) -> Result<(), SpotifyError> {
         let data = match fs::read_to_string(file_name) {
             Ok(data) => data,
             Err(_) => return Err(SpotifyError::NoFile), // assume no file
@@ -268,8 +268,8 @@ impl Spotify {
         let scope = lines.next().unwrap().to_string(); // get scope
         let refresh_token = lines.next().unwrap().to_string(); // get refresh token
 
-        let (access_token, expires_in, new_refresh_token) =
-            refresh_access_token(&refresh_token, &client_id)?; // refresh access token. Panics if request is bad
+        let (access_token, new_refresh_token, expires_in) =
+            refresh_access_token(&refresh_token, &client_id).await?; // refresh access token. Panics if request is bad
         let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
 
         // set client id, scope, access token, refresh token, and expires at
