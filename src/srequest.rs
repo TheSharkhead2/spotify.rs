@@ -11,12 +11,44 @@ pub enum RequestMethod {
     Delete(HashMap<String, Value>),
 }
 
+/// Enum to store types of requests relevant to Spotify API with header support
+pub enum RequestMethodHeaders {
+    Get(HashMap<String, String>),
+    Post(HashMap<String, String>, HashMap<String, Value>),
+    Put(HashMap<String, String>, HashMap<String, Value>),
+    Delete(HashMap<String, String>, HashMap<String, Value>),
+}
+
 impl Spotify {
-    /// New Spotify request codeflow using the surf request package.
     pub async fn spotify_request(
         &self,
         url_extension: &str,
         request_method: RequestMethod,
+    ) -> Result<JsonValue, SpotifyError> {
+        match request_method {
+            RequestMethod::Get => self
+                .spotify_request_headers(url_extension, RequestMethodHeaders::Get(HashMap::new())),
+            RequestMethod::Post(body) => self.spotify_request_headers(
+                url_extension,
+                RequestMethodHeaders::Post(HashMap::new(), body),
+            ),
+            RequestMethod::Put(body) => self.spotify_request_headers(
+                url_extension,
+                RequestMethodHeaders::Put(HashMap::new(), body),
+            ),
+            RequestMethod::Delete(body) => self.spotify_request_headers(
+                url_extension,
+                RequestMethodHeaders::Delete(HashMap::new(), body),
+            ),
+        }
+        .await
+    }
+
+    /// New Spotify request codeflow using the surf request package.
+    pub async fn spotify_request_headers(
+        &self,
+        url_extension: &str,
+        request_method: RequestMethodHeaders,
     ) -> Result<JsonValue, SpotifyError> {
         let access_token = self.access_token()?; // get access token
 
@@ -24,35 +56,56 @@ impl Spotify {
         let request_url = format!("https://api.spotify.com/v1/{}", url_extension);
 
         let request = match request_method {
-            RequestMethod::Get => {
-                surf::get(request_url).header("Authorization", format!("Bearer {}", access_token))
+            RequestMethodHeaders::Get(headers) => {
+                let mut base = surf::get(request_url)
+                    .header("Authorization", format!("Bearer {}", access_token));
+                for header in headers {
+                    base = base.header(&header.0[..], header.1); // add all headers to request
+                }
+
+                base // return base
             }
-            RequestMethod::Post(body) => {
-                match surf::post(request_url)
+            RequestMethodHeaders::Post(headers, body) => {
+                let mut base = surf::post(request_url)
                     .header("Authorization", format!("Bearer {}", access_token))
-                    .header("Content-Type", "application/json")
-                    .body_json(&body)
-                {
+                    .header("Content-Type", "application/json");
+
+                // add all headers
+                for header in headers {
+                    base = base.header(&header.0[..], header.1);
+                }
+
+                match base.body_json(&body) {
                     Ok(req) => req,
                     Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
                 }
             }
-            RequestMethod::Put(body) => {
-                match surf::put(request_url)
+            RequestMethodHeaders::Put(headers, body) => {
+                let mut base = surf::put(request_url)
                     .header("Authorization", format!("Bearer {}", access_token))
-                    .header("Content-Type", "application/json")
-                    .body_json(&body)
-                {
+                    .header("Content-Type", "application/json");
+
+                // add all headers
+                for header in headers {
+                    base = base.header(&header.0[..], header.1);
+                }
+
+                match base.body_json(&body) {
                     Ok(req) => req,
                     Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
                 }
             }
-            RequestMethod::Delete(body) => {
-                match surf::delete(request_url)
+            RequestMethodHeaders::Delete(headers, body) => {
+                let mut base = surf::delete(request_url)
                     .header("Authorization", format!("Bearer {}", access_token))
-                    .header("Content-Type", "application/json")
-                    .body_json(&body)
-                {
+                    .header("Content-Type", "application/json");
+
+                // add all headers
+                for header in headers {
+                    base = base.header(&header.0[..], header.1);
+                }
+
+                match base.body_json(&body) {
                     Ok(req) => req,
                     Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
                 }
