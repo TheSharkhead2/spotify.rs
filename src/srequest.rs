@@ -3,6 +3,63 @@ use json::{self, JsonValue, Null};
 use serde_json::Value;
 use std::collections::HashMap;
 
+pub(crate) async fn general_request(
+    request_url: String,
+    request_method: RequestMethodHeaders,
+) -> Result<Result<surf::Response, surf::Error>, SpotifyError> {
+    Ok(match request_method {
+        RequestMethodHeaders::Get(headers) => {
+            let mut base = surf::get(request_url);
+
+            for header in headers {
+                base = base.header(&header.0[..], header.1); // add all headers to request
+            }
+
+            base // return base
+        }
+        RequestMethodHeaders::Post(headers, body) => {
+            let mut base = surf::post(request_url);
+
+            // add all headers
+            for header in headers {
+                base = base.header(&header.0[..], header.1);
+            }
+
+            match base.body_json(&body) {
+                Ok(req) => req,
+                Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+            }
+        }
+        RequestMethodHeaders::Put(headers, body) => {
+            let mut base = surf::put(request_url);
+
+            // add all headers
+            for header in headers {
+                base = base.header(&header.0[..], header.1);
+            }
+
+            match base.body_json(&body) {
+                Ok(req) => req,
+                Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+            }
+        }
+        RequestMethodHeaders::Delete(headers, body) => {
+            let mut base = surf::delete(request_url);
+
+            // add all headers
+            for header in headers {
+                base = base.header(&header.0[..], header.1);
+            }
+
+            match base.body_json(&body) {
+                Ok(req) => req,
+                Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
+            }
+        }
+    }
+    .await)
+}
+
 /// Enum to store types of requests relevant to Spotify API
 pub enum RequestMethod {
     Get,
@@ -12,6 +69,7 @@ pub enum RequestMethod {
 }
 
 /// Enum to store types of requests relevant to Spotify API with header support
+#[derive(Clone)]
 pub enum RequestMethodHeaders {
     Get(HashMap<String, String>),
     Post(HashMap<String, String>, HashMap<String, Value>),
@@ -55,63 +113,45 @@ impl Spotify {
         // create request url
         let request_url = format!("https://api.spotify.com/v1/{}", url_extension);
 
+        // pull out headers
+        let mut request_headers = match request_method.clone() {
+            RequestMethodHeaders::Post(mut headers, _)
+            | RequestMethodHeaders::Put(mut headers, _)
+            | RequestMethodHeaders::Delete(mut headers, _) => {
+                // add content type header (consistent among these three)
+                headers.insert(
+                    String::from("Content-Type"),
+                    String::from("application/json"),
+                );
+                headers
+            }
+            _ => HashMap::new(),
+        };
+
+        request_headers.insert(
+            String::from("Authorization"),
+            format!("Bearer {}", access_token),
+        ); // add access token header
+
+        // send request
         let request = match request_method {
-            RequestMethodHeaders::Get(headers) => {
-                let mut base = surf::get(request_url)
-                    .header("Authorization", format!("Bearer {}", access_token));
-                for header in headers {
-                    base = base.header(&header.0[..], header.1); // add all headers to request
-                }
-
-                base // return base
+            RequestMethodHeaders::Get(_) => {
+                general_request(request_url, RequestMethodHeaders::Get(request_headers))
             }
-            RequestMethodHeaders::Post(headers, body) => {
-                let mut base = surf::post(request_url)
-                    .header("Authorization", format!("Bearer {}", access_token))
-                    .header("Content-Type", "application/json");
-
-                // add all headers
-                for header in headers {
-                    base = base.header(&header.0[..], header.1);
-                }
-
-                match base.body_json(&body) {
-                    Ok(req) => req,
-                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
-                }
-            }
-            RequestMethodHeaders::Put(headers, body) => {
-                let mut base = surf::put(request_url)
-                    .header("Authorization", format!("Bearer {}", access_token))
-                    .header("Content-Type", "application/json");
-
-                // add all headers
-                for header in headers {
-                    base = base.header(&header.0[..], header.1);
-                }
-
-                match base.body_json(&body) {
-                    Ok(req) => req,
-                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
-                }
-            }
-            RequestMethodHeaders::Delete(headers, body) => {
-                let mut base = surf::delete(request_url)
-                    .header("Authorization", format!("Bearer {}", access_token))
-                    .header("Content-Type", "application/json");
-
-                // add all headers
-                for header in headers {
-                    base = base.header(&header.0[..], header.1);
-                }
-
-                match base.body_json(&body) {
-                    Ok(req) => req,
-                    Err(e) => return Err(SpotifyError::RequestError(e.to_string())),
-                }
-            }
+            RequestMethodHeaders::Post(_, body) => general_request(
+                request_url,
+                RequestMethodHeaders::Post(request_headers, body),
+            ),
+            RequestMethodHeaders::Put(_, body) => general_request(
+                request_url,
+                RequestMethodHeaders::Put(request_headers, body),
+            ),
+            RequestMethodHeaders::Delete(_, body) => general_request(
+                request_url,
+                RequestMethodHeaders::Delete(request_headers, body),
+            ),
         }
-        .await;
+        .await?;
 
         match request {
             Ok(mut res) => {
