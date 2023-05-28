@@ -159,7 +159,11 @@ impl Spotify {
     /// * `localhost_port` - The localhost port fort the redirect uri. Note: currently there is only support for localhost redirect uris.
     /// * `scope` - The scope of the Spotify API. See <https://developer.spotify.com/documentation/general/guides/authorization/scopes/> for more information.
     ///
-    pub fn authenticate(&self, localhost_port: String, scope: String) -> Result<(), SpotifyError> {
+    pub async fn authenticate(
+        &self,
+        localhost_port: String,
+        scope: String,
+    ) -> Result<(), SpotifyError> {
         let client_id = dotenv::var("CLIENT_ID").unwrap(); // grab client_id from .env
 
         let redirect_uri = format!("http://localhost:{}/callback", &localhost_port); // redirect uri for authorization code endpoint
@@ -169,7 +173,9 @@ impl Spotify {
 
         let (access_token, refresh_token, expires_in) = match auth_code_result {
             Ok(auth_code) => {
-                get_access_token(&auth_code, &client_id, &code_verifier, &redirect_uri).unwrap()
+                get_access_token(&auth_code, &client_id, &code_verifier, &redirect_uri)
+                    .await
+                    .unwrap()
                 // get access token (be lazy with error handling and just panic if request is bad)
             }
             Err(e) => return Err(SpotifyError::AuthenticationError(e.to_string())),

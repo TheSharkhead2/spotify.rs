@@ -13,11 +13,11 @@ fn general_testing() {
     let redirect_uri = "http://localhost:8888/callback";
     let client_id = dotenv::var("CLIENT_ID").unwrap(); // grab client_id from .env
 
-    // let spotify = Spotify::new(); // create spotify object
-    // spotify.authenticate(String::from("8888"), scope).unwrap();
+    let spotify = Spotify::new(); // create spotify object
+    tokio_test::block_on(spotify.authenticate(String::from("8888"), scope)).unwrap();
 
     // file saving
-    let spotify = Spotify::new_from_file(".saved_credentials").unwrap();
+    // let spotify = Spotify::new_from_file(".saved_credentials").unwrap();
 
     // testing of less restrictive method
     // let (auth_url, state, code_verifier) =
@@ -27,16 +27,16 @@ fn general_testing() {
     // println!("{:?}", state);
     // println!("{:?}", code_verifier);
 
-    // let auth_code = "AQDILr2_fQLGv8qb98TZQrBu6aQYoMbgbgZoHmKHYD5xX1CdZ5Q3otcK_33h_R_4d4H_Gm5QkJQq7YmmiphnPH5ar8tuqChMG2rBO8fa06q2HrUfYEX7aeJloGYUUX4ewBQRlxMIDIYzNEEC0wG1ZVpe72S14_iHBV04hsP7EqiwAzAdC9D6HCqxST8_ZWEt5ypO17kv7dTdxJ5IMiM8DXb-w294gn1X37RBK2Un0RFOI83vJQRI8A11iFL0Rso4xnDHXTlcvJq2pqUrpQUg-CE";
-    // let code_verifier = "pnLF8pwDCZaio00AftBsj4ODSIy2qv26PfLuoK02nPw";
+    // let auth_code = "AQDF3LVUjJOmNxckhoj5O8oq9BgJOo0iqpV5GP_1wWWNWrzWP8oFK_yJpXPdvjoG3RcDRg5oWQrfvko3zJqIs93qwAGq1GShEWzn2YpOtQj5dMEyWmOEF7bGFCqKwE4oDro5yimZNakbKaUGd8PFDg_iuw2C5v-JHNQ3vq1vj8aZikZygYACVkHM1czs7dUXk_YczBU1nfi4bScFSIjhkvGBePR8YBGiQAJAjHHXN36HW20B_3lh0rtgd_OGNgEM2zYC4S1B73yBaOfHB3AST1g";
+    // let code_verifier = "3HuxuXebuDzzkzi8hf_sUhhS6Fyz-tfrSn-ePYy6Kzw";
 
-    // let spotify = Spotify::new_from_auth_code(
+    // let spotify = tokio_test::block_on(Spotify::new_from_auth_code(
     //     auth_code,
     //     &client_id[..],
     //     scope,
     //     code_verifier,
     //     redirect_uri,
-    // );
+    // ));
 
     println!(
         "{:?}",

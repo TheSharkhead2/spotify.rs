@@ -1,7 +1,20 @@
 use crate::spotify::SpotifyError;
+use crate::srequest::{general_request, RequestMethodHeaders};
 use querystring::stringify;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::collections::HashMap;
 use urlencoding::encode;
+
+/// Struct for JSON from access token request
+#[derive(Deserialize, Serialize, Debug)]
+struct AccessTokenResponseJson {
+    pub access_token: String,
+    pub token_type: String,
+    pub expires_in: i64,
+    pub refresh_token: String,
+    pub scope: String,
+}
 
 /// Generates the code verifier and code challenge for PKCE
 ///
@@ -74,17 +87,15 @@ pub fn requesturl_authorization_code(
 /// * On request error (to Spotify API)
 /// * On error parsing expires_in from response to int (shouldn't happen)
 ///
-pub fn get_access_token(
+pub async fn get_access_token(
     authorization_code: &str,
     client_id: &str,
     code_verifier: &str,
     redirect_uri: &str,
-) -> Result<(String, String, i64), Box<dyn std::error::Error>> {
+) -> Result<(String, String, i64), SpotifyError> {
     let request_uri = "https://accounts.spotify.com/api/token?"; // token request uri
 
-    let client = reqwest::blocking::Client::new();
-
-    let encoded_redirect_uri = encode(&redirect_uri).into_owned(); // encode redirect uri for url
+    let encoded_redirect_uri = encode(redirect_uri).into_owned(); // encode redirect uri for url
 
     let query_parameters = vec![
         ("grant_type", "authorization_code"),
@@ -96,24 +107,41 @@ pub fn get_access_token(
 
     let query_string = stringify(query_parameters); // stringify query parameters
 
-    let response = client
-        .post(String::from(request_uri) + &query_string)
-        .header("Content-Type", "application/x-www-form-urlencoded") // set Content-Type header
-        .header("Content-Length", "0") // set Content-Length header
-        .send()?; // send request
+    let request_headers = HashMap::from([
+        (
+            String::from("Content-Type"),
+            String::from("application/x-www-form-urlencoded"),
+        ),
+        (String::from("Content-Length"), String::from("0")),
+    ]);
 
-    if response.status().is_success() {
-        // check if response is successful
-        let response_body = json::parse(&response.text().unwrap()).unwrap(); // get response as json
+    let response = general_request(
+        String::from(request_uri) + &query_string,
+        RequestMethodHeaders::Post(request_headers, HashMap::new()),
+    )
+    .await?;
 
-        let access_token = response_body["access_token"].to_string(); // get access token from response
-        let refresh_token = response_body["refresh_token"].to_string(); // get refresh token from response
-        let expires_in_str = response_body["expires_in"].to_string(); // get expires in from response
-        let expires_in: i64 = expires_in_str.parse().unwrap(); // parse expires in to i64
+    match response {
+        Ok(mut res) => {
+            if res.status() == 200 {
+                let response_data: AccessTokenResponseJson = match res.body_json().await {
+                    Ok(data) => data,
+                    Err(e) => return Err(SpotifyError::AuthenticationError(e.to_string())),
+                };
 
-        return Ok((access_token, refresh_token, expires_in)); // return access token, refresh token, and expires in
-    } else {
-        return Err(format!("Error: {}", response.status()).into()); // return error if response is not successful
+                Ok((
+                    response_data.access_token,
+                    response_data.refresh_token,
+                    response_data.expires_in,
+                ))
+            } else {
+                Err(SpotifyError::AuthenticationError(format!(
+                    "Status code: {}",
+                    res.status()
+                )))
+            }
+        }
+        Err(e) => Err(SpotifyError::AuthenticationError(e.to_string())),
     }
 }
 

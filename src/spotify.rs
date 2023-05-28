@@ -803,7 +803,7 @@ impl Spotify {
 
     /// Creates spotify object from usual information and auth code. Essentially from less information
     ///
-    pub fn new_from_auth_code(
+    pub async fn new_from_auth_code(
         authorization_code: &str,
         client_id: &str,
         scope: String,
@@ -811,7 +811,9 @@ impl Spotify {
         redirect_uri: &str,
     ) -> Spotify {
         let (access_token, refresh_token, expires_in) =
-            get_access_token(authorization_code, client_id, code_verifier, redirect_uri).unwrap();
+            get_access_token(authorization_code, client_id, code_verifier, redirect_uri)
+                .await
+                .unwrap();
 
         let expires_at = Utc::now() + Duration::seconds(expires_in); // get time when access token expires
 
