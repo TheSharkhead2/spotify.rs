@@ -26,6 +26,6 @@ serde = "1.0"
 tokio-test = "0.4"
 
 [features]
-default = ["surf", "surf/default"]
+default = ["surf/default"]
 local_auth = ["dep:open"]
 wasm = ["surf/h1-client", "getrandom/js"]
