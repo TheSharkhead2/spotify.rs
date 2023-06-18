@@ -1,6 +1,6 @@
 [package]
 name = "spotifyrs"
-version = "0.3.0-beta.4"
+version = "0.3.0-beta.5"
 edition = "2021"
 description = "A Rust-built wrapper for the Spotify Web API that focuses on consistent and reliable developer interaction with the many objects in the API (artists, tracks, etc)"
 license = "MIT"
@@ -26,6 +26,6 @@ serde = "1.0"
 tokio-test = "0.4"
 
 [features]
-default = ["surf", "surf/default"]
-local_auth = ["dep:open"]
-wasm = ["surf/wasm-client", "getrandom/js"]
+default = ["surf"]
+local_auth = ["dep:open", "surf/default"]
+wasm = ["surf/h1-client", "getrandom/js"]
