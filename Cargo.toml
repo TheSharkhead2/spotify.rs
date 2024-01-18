@@ -8,24 +8,16 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-querystring = "1.1"
-dotenv = "0.15"
-getrandom = {version = "0.2"}
-base64 = "0.13"
-sha2 = "0.10"
-random-string = "1.0"
-open = {version = "3.0", optional = true}
-urlencoding = "2.1"
-json = "0.12"
+reqwest = "0.11"
 chrono = "0.4"
-serde_json = "^1.0"
-surf = {version = "2.3.2", default-features = false, optional = true}
-serde = "1.0"
+querystring = "1.1"
+random-string = "1.1"
+urlencoding = "2.1"
+getrandom = "0.2" # needs js featured enabled from user to use wasm32-unknown-unknown target
+base64 = "0.21"
+sha2 = "0.10"
 
-[dev-dependencies]
-tokio-test = "0.4"
+# [dev-dependencies]
+# tokio-test = "0.4"
 
-[features]
-default = ["surf", "surf/default"]
-local_auth = ["dep:open"]
-wasm = ["surf/h1-client", "getrandom/js"]
+
