@@ -1,10 +1,27 @@
 use crate::authentication::auth_objects::{PkceAuth, PkcePreAuth};
+use crate::authentication::AuthorizationJsonError;
+use crate::requests::SpotifyStatus;
+use crate::requests::{general_request, RequestMethod};
+use crate::Error;
 
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use querystring::stringify;
+use reqwest::header::{HeaderMap, CONTENT_LENGTH, CONTENT_TYPE};
+use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use urlencoding::encode;
+
+/// Struct representing JSON response for 200 OK status code response from requesting access token.
+/// Response detailed at: https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow
+#[derive(Deserialize)]
+struct PkceAccessTokenReponse {
+    access_token: String,
+    token_type: String,
+    scope: String,
+    expires_in: String,
+    refresh_token: String,
+}
 
 /// Generates the code verifier and code challenge for PKCE
 ///
@@ -77,10 +94,15 @@ pub fn pkce_authentication_url(
 /// Gets the access token required to access the API
 ///
 /// # Arguments
+/// * `request_client` - https client to perform request on
 /// * `auth_code` - authorization code returned to the redirect_uri from user granting API access
 /// * `pkce_pre_auth` - `PkcePreAuth` object returned by `pkce_authentication_url()`
 ///
-fn access_token(auth_code: &'static str, pkce_pre_auth: &PkcePreAuth) {
+async fn access_token(
+    request_client: reqwest::Client,
+    auth_code: &'static str,
+    pkce_pre_auth: &PkcePreAuth,
+) -> Result<PkceAccessTokenReponse, Error> {
     // pull out values needed for this function
     let (client_id, redirect_uri, code_verifier) = pkce_pre_auth.get_access_token_requirements();
 
@@ -98,13 +120,45 @@ fn access_token(auth_code: &'static str, pkce_pre_auth: &PkcePreAuth) {
 
     let query_string = stringify(query_parameters); // stringify query parameters
 
-    let request_headers = HashMap::from([
-        (
-            String::from("Content-Type"),
-            String::from("application/x-www-form-urlencoded"),
-        ),
-        (String::from("Content-Length"), String::from("0")),
-    ]);
+    // build request headers
+    let mut request_headers = HeaderMap::new();
+    request_headers.insert(
+        CONTENT_TYPE,
+        "application/x-www-form-urlencoded".parse().unwrap(),
+    );
+    request_headers.insert(CONTENT_LENGTH, "0".parse().unwrap());
+
+    // send request for access token
+    let response = general_request(
+        request_client,
+        String::from(request_uri) + &query_string,
+        RequestMethod::Post(request_headers, None),
+    )
+    .await;
+
+    // handle errors
+    match response {
+        Err(e) => Err(e.into()),
+        Ok(response) => {
+            // unpack status code
+            let status_code: Result<SpotifyStatus, Error> = response.status().try_into();
+
+            match status_code {
+                Ok(status_code) => {
+                    // look for expected 200 response
+                    match status_code {
+                        // had an okay response, return access token result
+                        SpotifyStatus::OK => Ok(response.json().await?),
+
+                        // something unexpected happened
+                        _ => {}
+                    }
+                }
+                // unrecognized status code so who knows what happened
+                Err(status_code) => Err(status_code),
+            }
+        }
+    }
 }
 
 /// Completes the PKCE authentication codeflow, granting access to the Spotify API.
