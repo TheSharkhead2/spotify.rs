@@ -10,6 +10,7 @@ pub enum Error {
     UnrecognizedStatusCode(u16),         // spotify returned an  unrecognized status code
     UnexpectedStatusCode(u16),           // response returned status code that doesn't make sense
     AuthenticationError(String, String), // Arbitrary authentication error
+    InvalidState,                        // State returned with access code doesn't match.
 }
 
 impl fmt::Display for Error {
@@ -39,6 +40,9 @@ impl fmt::Display for Error {
                     format!("Encountered an authentication error with Spotify API: {}. Specifically: {}", error, error_description)
                 )
             }
+            Error::InvalidState => {
+                write!(f, "State returned with authentication code is invalid. Please try authenticating again.")
+            }
         }
     }
 }
@@ -51,6 +55,7 @@ impl error::Error for Error {
             Error::UnrecognizedStatusCode(..) => None,
             Error::UnexpectedStatusCode(..) => None,
             Error::AuthenticationError(..) => None,
+            Error::InvalidState => None,
         }
     }
 }

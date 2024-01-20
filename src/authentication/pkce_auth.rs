@@ -56,8 +56,8 @@ fn generate_verifier() -> (String, String) {
 /// * `pkce_pre_auth` - Object storing data required for the next authentication step.
 ///
 pub fn pkce_authentication_url(
-    client_id: &'static str,
-    redirect_uri: &'static str,
+    client_id: String,
+    redirect_uri: &str,
     scope: String,
 ) -> (String, PkcePreAuth) {
     let authorization_code_endpoint = String::from("https://accounts.spotify.com/authorize?"); // authorization code endpoint
@@ -72,7 +72,7 @@ pub fn pkce_authentication_url(
     // define parameters for authorization code request
     let parameters = vec![
         ("response_type", "code"),
-        ("client_id", client_id),
+        ("client_id", &client_id[..]),
         ("redirect_uri", &encoded_redirect_uri),
         ("scope", &scope[..]),
         ("show_dialog", "true"),
@@ -87,7 +87,7 @@ pub fn pkce_authentication_url(
 
     (
         auth_url,
-        PkcePreAuth::new(client_id, redirect_uri, scope, state, code_verifier),
+        PkcePreAuth::new(client_id, redirect_uri.into(), scope, state, code_verifier),
     )
 }
 
@@ -100,7 +100,7 @@ pub fn pkce_authentication_url(
 ///
 async fn access_token(
     request_client: reqwest::Client,
-    auth_code: &'static str,
+    auth_code: String,
     pkce_pre_auth: &PkcePreAuth,
 ) -> Result<PkceAccessTokenReponse, Error> {
     // pull out values needed for this function
@@ -108,13 +108,13 @@ async fn access_token(
 
     let request_uri = "https://accounts.spotify.com/api/token?"; // token request uri
 
-    let encoded_redirect_uri = encode(redirect_uri).into_owned(); // encode redirect uri for url
+    let encoded_redirect_uri = encode(&redirect_uri[..]).into_owned(); // encode redirect uri for url
 
     let query_parameters = vec![
         ("grant_type", "authorization_code"),
-        ("code", auth_code),
+        ("code", &auth_code[..]),
         ("redirect_uri", &encoded_redirect_uri),
-        ("client_id", client_id),
+        ("client_id", &client_id[..]),
         ("code_verifier", code_verifier),
     ];
 
@@ -173,9 +173,15 @@ async fn access_token(
 /// Completes the PKCE authentication codeflow, granting access to the Spotify API.
 pub async fn new_pkce(
     request_client: reqwest::Client,
-    auth_code: &'static str,
+    auth_code: String,
+    state: String,
     pkce_pre_auth: PkcePreAuth,
 ) -> Result<SpotifyAuth, Error> {
+    // if states don't match, there was some kind of problem
+    if state != pkce_pre_auth.get_state() {
+        return Err(Error::InvalidState);
+    }
+
     match access_token(request_client, auth_code, &pkce_pre_auth).await {
         Ok(token) => {
             // get client id and scope
