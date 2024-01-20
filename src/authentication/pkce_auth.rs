@@ -1,15 +1,15 @@
-use crate::authentication::auth_objects::{PkceAuth, PkcePreAuth};
-use crate::authentication::AuthorizationJsonError;
+use crate::authentication::auth_errors::{process_auth_error, SpotifyAuthenticationError};
+use crate::authentication::auth_objects::{PkceAuth, PkcePreAuth, SpotifyAuth};
 use crate::requests::SpotifyStatus;
 use crate::requests::{general_request, RequestMethod};
 use crate::Error;
 
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+use chrono::{Duration, Utc};
 use querystring::stringify;
 use reqwest::header::{HeaderMap, CONTENT_LENGTH, CONTENT_TYPE};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
-use std::collections::HashMap;
 use urlencoding::encode;
 
 /// Struct representing JSON response for 200 OK status code response from requesting access token.
@@ -19,7 +19,7 @@ struct PkceAccessTokenReponse {
     access_token: String,
     token_type: String,
     scope: String,
-    expires_in: String,
+    expires_in: i64,
     refresh_token: String,
 }
 
@@ -151,7 +151,16 @@ async fn access_token(
                         SpotifyStatus::OK => Ok(response.json().await?),
 
                         // something unexpected happened
-                        _ => {}
+                        _ => {
+                            // on error, should give status code 400: https://datatracker.ietf.org/doc/html/rfc6749#section-5.2
+                            if let SpotifyStatus::BadRequest = status_code {
+                                // convert into `spotifyrs::Error` object
+                                Err(process_auth_error(response.json().await?))
+                            } else {
+                                // status code wasn't 400
+                                Err(Error::UnexpectedStatusCode(status_code.into()))
+                            }
+                        }
                     }
                 }
                 // unrecognized status code so who knows what happened
@@ -162,4 +171,27 @@ async fn access_token(
 }
 
 /// Completes the PKCE authentication codeflow, granting access to the Spotify API.
-pub fn new_pkce(auth_code: &'static str, pkce_pre_auth: PkcePreAuth) {}
+pub async fn new_pkce(
+    request_client: reqwest::Client,
+    auth_code: &'static str,
+    pkce_pre_auth: PkcePreAuth,
+) -> Result<SpotifyAuth, Error> {
+    match access_token(request_client, auth_code, &pkce_pre_auth).await {
+        Ok(token) => {
+            // get client id and scope
+            let (client_id, scope) = pkce_pre_auth.get_auth_requirements();
+
+            let expires_at = Utc::now() + Duration::seconds(token.expires_in); // get DateTime object for when token will expire
+
+            Ok(SpotifyAuth::PKCE(PkceAuth::new(
+                client_id,
+                scope,
+                token.access_token,
+                token.refresh_token,
+                expires_at,
+            )))
+        }
+        // just pass on error
+        Err(e) => Err(e),
+    }
+}

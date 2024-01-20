@@ -4,9 +4,27 @@ use chrono::{DateTime, Utc};
 pub struct PkceAuth {
     client_id: &'static str,
     scope: String,
-    access_token: &'static str,
-    refresh_token: &'static str,
+    access_token: String,
+    refresh_token: String,
     expires_at: DateTime<Utc>,
+}
+
+impl PkceAuth {
+    pub(super) fn new(
+        client_id: &'static str,
+        scope: String,
+        access_token: String,
+        refresh_token: String,
+        expires_at: DateTime<Utc>,
+    ) -> PkceAuth {
+        PkceAuth {
+            client_id,
+            scope,
+            access_token,
+            refresh_token,
+            expires_at,
+        }
+    }
 }
 
 /// Object holding information integral to the PKCE authentication. Used as an intermediate storage between authentication steps.
@@ -44,5 +62,10 @@ impl PkcePreAuth {
     /// Returns the values necessary for getting the access token (in `access_token()`). In particular, will return: `(client_id, redirect_uri, code_verifier)`
     pub(super) fn get_access_token_requirements(&self) -> (&'static str, &'static str, &str) {
         (self.client_id, self.redirect_uri, &self.code_verifier[..])
+    }
+
+    /// Returns client id and scope for what is required when authenticating with pkce
+    pub(super) fn get_auth_requirements(&self) -> (&'static str, String) {
+        (self.client_id, self.scope.clone())
     }
 }

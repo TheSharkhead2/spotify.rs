@@ -6,16 +6,17 @@ use std::fmt;
 /// Relevant errors to interacting with the Spotify API
 #[derive(Debug)]
 pub enum Error {
-    RequestError(reqwest::Error),      // general request error
-    UnrecognizedStatusCode(u16),       // spotify returned an  unrecognized status code
-    UnexpectedSuccessfulResponse(u16), // response returned a success, but with an unexpected status code
+    RequestError(reqwest::Error),        // general request error
+    UnrecognizedStatusCode(u16),         // spotify returned an  unrecognized status code
+    UnexpectedStatusCode(u16),           // response returned status code that doesn't make sense
+    AuthenticationError(String, String), // Arbitrary authentication error
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
+        match self {
             Error::RequestError(..) => {
-                write!(f, "encountered an error with an https request to the api")
+                write!(f, "Encountered an error with an https request to the api")
             }
             Error::UnrecognizedStatusCode(c) => {
                 write!(
@@ -24,14 +25,18 @@ impl fmt::Display for Error {
                     format!("Spotify returned unrecognized status code {}", c)
                 )
             }
-            Error::UnexpectedSuccessfulResponse(c) => {
+            Error::UnexpectedStatusCode(c) => {
                 write!(
                     f,
                     "{}",
-                    format!(
-                        "Spotify request was successful, but with unexpected status code {}",
-                        c
-                    )
+                    format!("Spotify request returned with unexpected status code {}", c)
+                )
+            }
+            Error::AuthenticationError(error, error_description) => {
+                write!(
+                    f,
+                    "{}",
+                    format!("Encountered an authentication error with Spotify API: {}. Specifically: {}", error, error_description)
                 )
             }
         }
@@ -44,7 +49,8 @@ impl error::Error for Error {
         match *self {
             Error::RequestError(ref e) => Some(e),
             Error::UnrecognizedStatusCode(..) => None,
-            Error::UnexpectedSuccessfulResponse(..) => None,
+            Error::UnexpectedStatusCode(..) => None,
+            Error::AuthenticationError(..) => None,
         }
     }
 }

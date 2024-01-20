@@ -48,9 +48,30 @@ impl TryFrom<StatusCode> for SpotifyStatus {
     }
 }
 
+/// Allow convertion into u16 (just the error code)
+impl Into<u16> for SpotifyStatus {
+    fn into(self) -> u16 {
+        match self {
+            SpotifyStatus::OK => 200,
+            SpotifyStatus::Created => 201,
+            SpotifyStatus::Accepted => 202,
+            SpotifyStatus::NoContent => 204,
+            SpotifyStatus::NotModified => 304,
+            SpotifyStatus::BadRequest => 400,
+            SpotifyStatus::Unauthorized => 401,
+            SpotifyStatus::Forbidden => 403,
+            SpotifyStatus::NotFound => 404,
+            SpotifyStatus::TooManyRequests => 429,
+            SpotifyStatus::InternalServerError => 500,
+            SpotifyStatus::BadGateway => 502,
+            SpotifyStatus::ServiceUnavailable => 503,
+        }
+    }
+}
+
 impl SpotifyStatus {
     /// returns whether this particular status should be considered an error
-    fn is_error(&self) -> bool {
+    pub(crate) fn is_error(&self) -> bool {
         match self {
             &SpotifyStatus::OK => false,
             &SpotifyStatus::Created => false,
