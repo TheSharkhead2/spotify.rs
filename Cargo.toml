@@ -19,9 +19,13 @@ sha2 = "0.10"
 serde_json = "1.0"
 serde = {version = "1.0", features = ["derive"]}
 dotenv = "0.15"
+tiny_http = {version = "0.12", optional = true}
+open = {version = "5.0", optional = true}
 
 [dev-dependencies]
 tokio-test = "0.4"
 tiny_http = "0.12"
 open = "5.0"
 
+[features]
+local_auth = ["dep:tiny_http", "dep:open"]

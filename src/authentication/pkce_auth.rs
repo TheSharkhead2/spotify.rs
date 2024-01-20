@@ -12,6 +12,14 @@ use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use urlencoding::encode;
 
+#[cfg(feature = "local_auth")]
+use {
+    open,
+    querystring::querify,
+    std::collections::HashMap,
+    tiny_http::{Response, Server},
+};
+
 /// Struct representing JSON response for 200 OK status code response from requesting access token.
 /// Response detailed at: https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow
 #[derive(Deserialize)]
@@ -200,4 +208,74 @@ pub async fn new_pkce(
         // just pass on error
         Err(e) => Err(e),
     }
+}
+
+/// Fully automated PKCE authentication locally. Will generate auth url, open in the browser, listen for result, and then return the authetnicated Spotify object.
+#[cfg(feature = "local_auth")]
+pub async fn local_pkce(
+    request_client: reqwest::Client,
+    client_id: String,
+    redirect_port: String,
+    scope: String,
+    timeout: u32,
+) -> Result<SpotifyAuth, Error> {
+    // format port into localhost url
+    let redirect_uri = format!("http://localhost:{}/callback", redirect_port);
+
+    // get auth url
+    let (auth_url, pkce_pre_auth) = pkce_authentication_url(client_id, &redirect_uri, scope);
+
+    // open auth url
+    let open_success = open::that(auth_url);
+
+    // error handling
+    if let Err(err) = open_success {
+        return Err(Error::BrowserFailure(err)); // failed to open browser
+    }
+
+    // localhost port
+    let listening_ip = format!("127.0.0.1:{}", redirect_port);
+
+    // open server
+    let server = Server::http(listening_ip).unwrap();
+
+    let mut code: Option<String> = None;
+    let mut state: Option<String> = None;
+
+    // wait for request with timeout
+    match server.recv_timeout(core::time::Duration::from_secs(timeout.into())) {
+        Ok(req) => {
+            // check to see if we got a request
+            if let Some(req) = req {
+                let query: HashMap<String, String> = querify(&req.url()[10..]) // take everything but the "/callback?" in url and parse the query
+                    .into_iter()
+                    .map(|(x, y)| (String::from(x), String::from(y))) // convert from &str to String
+                    .collect();
+
+                // looking for both a code and a state
+                if query.contains_key("code") && query.contains_key("state") {
+                    // send message to browser saying it is okay to close
+                    let response = Response::from_string("you can close the browser");
+                    req.respond(response).unwrap();
+
+                    // extract code and state
+                    code = Some(query.get("code").unwrap().clone()); // can unwrap because already know key exists
+                    state = Some(query.get("state").unwrap().clone());
+                } else {
+                    // didn't get both code and state, something is wrong
+                    return Err(Error::UnexpectedAuthCode);
+                }
+            } else {
+                // otherwise, timeout error
+                return Err(Error::HttpServerTimeout);
+            }
+        }
+        // io error
+        Err(err) => return Err(Error::HttpServerError(err)),
+    }
+
+    // get authentication object
+    let pkce = new_pkce(request_client, code.unwrap(), state.unwrap(), pkce_pre_auth).await?;
+
+    Ok(pkce)
 }
