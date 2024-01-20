@@ -11,6 +11,7 @@ use spotifyrs::authentication;
 
 // FOR TESTS WITH PRINTING: `cargo test -- --nocapture`
 
+// run with feature using: `cargo test --features local_auth`
 #[cfg(feature = "local_auth")]
 #[test]
 fn local_auth_test() {
