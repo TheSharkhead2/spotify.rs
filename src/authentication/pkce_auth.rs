@@ -1,5 +1,5 @@
 use crate::authentication::auth_errors::{process_auth_error, SpotifyAuthenticationError};
-use crate::authentication::auth_objects::{PkceAuth, PkcePreAuth, SpotifyAuth};
+use crate::authentication::auth_objects::{PkceAuth, PkcePreAuth, Scope, SpotifyAuth};
 use crate::requests::SpotifyStatus;
 use crate::requests::{general_request, RequestMethod};
 use crate::Error;
@@ -66,7 +66,7 @@ fn generate_verifier() -> (String, String) {
 pub fn pkce_authentication_url(
     client_id: String,
     redirect_uri: &str,
-    scope: String,
+    scope: Scope,
 ) -> (String, PkcePreAuth) {
     let authorization_code_endpoint = String::from("https://accounts.spotify.com/authorize?"); // authorization code endpoint
     let character_set = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"; // character set for random string
@@ -77,12 +77,15 @@ pub fn pkce_authentication_url(
 
     let encoded_redirect_uri = encode(redirect_uri).into_owned(); // encode redirect uri for url
 
+    // convert Scope struct to string understandable by Spotify API
+    let scope_string: String = scope.into();
+
     // define parameters for authorization code request
     let parameters = vec![
         ("response_type", "code"),
         ("client_id", &client_id[..]),
         ("redirect_uri", &encoded_redirect_uri),
-        ("scope", &scope[..]),
+        ("scope", &scope_string[..]),
         ("show_dialog", "true"),
         ("state", &state[..]),
         ("code_challenge", &code_challenge[..]),
@@ -216,7 +219,7 @@ pub async fn local_pkce(
     request_client: reqwest::Client,
     client_id: String,
     redirect_port: String,
-    scope: String,
+    scope: Scope,
     timeout: u32,
 ) -> Result<SpotifyAuth, Error> {
     // format port into localhost url
