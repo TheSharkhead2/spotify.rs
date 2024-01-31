@@ -2,30 +2,30 @@ use chrono::{DateTime, Utc};
 
 /// Enum representing all the possible scopes. Used for constructing a `Scope` struct.
 pub enum Scopes {
-    UGC_IMAGE_UPLOAD,
-    USER_READ_PLAYBACK_STATE,
-    USER_MODIFY_PLAYBACK_STATE,
-    USER_READ_CURRENTLY_PLAYING,
-    APP_REMOTE_CONTROL,
-    STREAMING,
-    PLAYLIST_READ_PRIVATE,
-    PLAYLIST_READ_COLLABORATIVE,
-    PLAYLIST_MODIFY_PRIVATE,
-    PLAYLIST_MODIFY_PUBLIC,
-    USER_FOLLOW_MODIFY,
-    USER_FOLLOW_READ,
-    USER_READ_PLAYBACK_POSITION,
-    USER_TOP_READ,
-    USER_READ_RECENTLY_PLAYED,
-    USER_LIBRARY_MODIFY,
-    USER_LIBRARY_READ,
-    USER_READ_EMAIL,
-    USER_READ_PRIVATE,
-    USER_SOA_LINK,
-    USER_SOA_UNLINK,
-    USER_MANAGE_ENTITLEMENTS,
-    USER_MANAGE_PARTNER,
-    USER_CREATE_PARTNER,
+    UgcImageUpload,
+    UserReadPlaybackState,
+    UserModifyPlaybackState,
+    UserReadCurrentlyPlaying,
+    AppRemoteControl,
+    Streaming,
+    PlaylistReadPrivate,
+    PlaylistReadCollaborative,
+    PlaylistModifyPrivate,
+    PlaylistModifyPublic,
+    UserFollowModify,
+    UserFollowRead,
+    UserReadPlaybackPosition,
+    UserTopRead,
+    UserReadRecentlyPlayed,
+    UserLibraryModify,
+    UserLibraryRead,
+    UserReadEmail,
+    UserReadPrivate,
+    UserSoaLink,
+    UserSoaUnlink,
+    UserManageEntitlements,
+    UserManagePartner,
+    UserCreatePartner,
 }
 
 /// Object for holding the scope of authentication
@@ -97,76 +97,76 @@ impl Scope {
         // add each one requested
         for scope in scopes {
             match scope {
-                Scopes::UGC_IMAGE_UPLOAD => {
+                Scopes::UgcImageUpload => {
                     return_scope.ugc_image_upload = true;
                 }
-                Scopes::USER_READ_PLAYBACK_STATE => {
+                Scopes::UserReadPlaybackState => {
                     return_scope.user_read_playback_state = true;
                 }
-                Scopes::USER_MODIFY_PLAYBACK_STATE => {
+                Scopes::UserModifyPlaybackState => {
                     return_scope.user_modify_playback_state = true;
                 }
-                Scopes::USER_READ_CURRENTLY_PLAYING => {
+                Scopes::UserReadCurrentlyPlaying => {
                     return_scope.user_read_currently_playing = true;
                 }
-                Scopes::APP_REMOTE_CONTROL => {
+                Scopes::AppRemoteControl => {
                     return_scope.app_remote_control = true;
                 }
-                Scopes::STREAMING => {
+                Scopes::Streaming => {
                     return_scope.streaming = true;
                 }
-                Scopes::PLAYLIST_READ_PRIVATE => {
+                Scopes::PlaylistReadPrivate => {
                     return_scope.playlist_read_private = true;
                 }
-                Scopes::PLAYLIST_READ_COLLABORATIVE => {
+                Scopes::PlaylistReadCollaborative => {
                     return_scope.playlist_read_collaborative = true;
                 }
-                Scopes::PLAYLIST_MODIFY_PRIVATE => {
+                Scopes::PlaylistModifyPrivate => {
                     return_scope.playlist_modify_private = true;
                 }
-                Scopes::PLAYLIST_MODIFY_PUBLIC => {
+                Scopes::PlaylistModifyPublic => {
                     return_scope.playlist_modify_public = true;
                 }
-                Scopes::USER_FOLLOW_MODIFY => {
+                Scopes::UserFollowModify => {
                     return_scope.user_follow_modify = true;
                 }
-                Scopes::USER_FOLLOW_READ => {
+                Scopes::UserFollowRead => {
                     return_scope.user_follow_read = true;
                 }
-                Scopes::USER_READ_PLAYBACK_POSITION => {
+                Scopes::UserReadPlaybackPosition => {
                     return_scope.user_read_playback_position = true;
                 }
-                Scopes::USER_TOP_READ => {
+                Scopes::UserTopRead => {
                     return_scope.user_top_read = true;
                 }
-                Scopes::USER_READ_RECENTLY_PLAYED => {
+                Scopes::UserReadRecentlyPlayed => {
                     return_scope.user_read_recently_played = true;
                 }
-                Scopes::USER_LIBRARY_MODIFY => {
+                Scopes::UserLibraryModify => {
                     return_scope.user_library_modify = true;
                 }
-                Scopes::USER_LIBRARY_READ => {
+                Scopes::UserLibraryRead => {
                     return_scope.user_library_read = true;
                 }
-                Scopes::USER_READ_EMAIL => {
+                Scopes::UserReadEmail => {
                     return_scope.user_read_email = true;
                 }
-                Scopes::USER_READ_PRIVATE => {
+                Scopes::UserReadPrivate => {
                     return_scope.user_read_private = true;
                 }
-                Scopes::USER_SOA_LINK => {
+                Scopes::UserSoaLink => {
                     return_scope.user_soa_link = true;
                 }
-                Scopes::USER_SOA_UNLINK => {
+                Scopes::UserSoaUnlink => {
                     return_scope.user_soa_unlink = true;
                 }
-                Scopes::USER_MANAGE_ENTITLEMENTS => {
+                Scopes::UserManageEntitlements => {
                     return_scope.user_manage_entitlements = true;
                 }
-                Scopes::USER_MANAGE_PARTNER => {
+                Scopes::UserManagePartner => {
                     return_scope.user_manage_partner = true;
                 }
-                Scopes::USER_CREATE_PARTNER => {
+                Scopes::UserCreatePartner => {
                     return_scope.user_create_partner = true;
                 }
             }

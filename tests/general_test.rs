@@ -15,7 +15,7 @@ use spotifyrs::authentication;
 #[cfg(feature = "local_auth")]
 #[test]
 fn local_auth_test() {
-    let scope = authentication::Scope::new(vec![authentication::Scopes::USER_READ_PRIVATE]);
+    let scope = authentication::Scope::new(vec![authentication::Scopes::UserReadPrivate]);
     let client_id = dotenv::var("CLIENT_ID").unwrap(); // grab client_id from .env
     let redirect_port = String::from("8888");
 
