@@ -1,5 +1,6 @@
 use crate::authentication::auth_errors::{process_auth_error, SpotifyAuthenticationError};
-use crate::authentication::auth_objects::{PkceAuth, PkcePreAuth, Scope, SpotifyAuth};
+use crate::authentication::auth_objects::{Scope, SpotifyAuth};
+use crate::authentication::{PkceAuth, PkcePreAuth};
 use crate::requests::SpotifyStatus;
 use crate::requests::{general_request, RequestMethod};
 use crate::Error;
@@ -12,6 +13,7 @@ use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use urlencoding::encode;
 
+// requirements for local authentication
 #[cfg(feature = "local_auth")]
 use {
     open,
@@ -23,12 +25,12 @@ use {
 /// Struct representing JSON response for 200 OK status code response from requesting access token.
 /// Response detailed at: https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow
 #[derive(Deserialize)]
-struct PkceAccessTokenReponse {
-    access_token: String,
+pub(super) struct PkceAccessTokenReponse {
+    pub access_token: String,
     token_type: String,
     scope: String,
-    expires_in: i64,
-    refresh_token: String,
+    pub expires_in: i64,
+    pub refresh_token: String,
 }
 
 /// Generates the code verifier and code challenge for PKCE
@@ -182,6 +184,16 @@ async fn access_token(
 }
 
 /// Completes the PKCE authentication codeflow, granting access to the Spotify API.
+///
+/// # Arguments
+/// * `request_client` - (reqwest) http client to perform requests on
+/// * `auth_code` - Authentication code returned by the Spotify API upon user granting API access
+/// * `state` - State value returned with authentication code above
+/// * `pkce_pre_auth` - pkce_pre_auth object returned by `pkce_authentication_url()`
+///
+/// # Returns
+/// * `spotify_auth` - Object representing authenticated Spotify API. Can be used to make requests.
+///
 pub async fn new_pkce(
     request_client: reqwest::Client,
     auth_code: String,
@@ -210,6 +222,65 @@ pub async fn new_pkce(
         }
         // just pass on error
         Err(e) => Err(e),
+    }
+}
+
+/// Uses refresh token to get new access token to API for the PCKE authentication.
+pub(super) async fn refresh_token(
+    request_client: reqwest::Client,
+    refresh_token: &str,
+    client_id: &str,
+) -> Result<PkceAccessTokenReponse, Error> {
+    let request_uri = String::from("https://accounts.spotify.com/api/token?"); // token request uri
+
+    // create query parameters
+    let query_parameters = vec![
+        ("grant_type", "refresh_token"),
+        ("refresh_token", refresh_token),
+        ("client_id", client_id),
+    ];
+    let query_string = stringify(query_parameters);
+
+    // create headers
+    let mut request_headers = HeaderMap::new();
+    request_headers.insert(
+        CONTENT_TYPE,
+        "application/x-www-form-urlencoded".parse().unwrap(),
+    );
+    request_headers.insert(CONTENT_LENGTH, "0".parse().unwrap());
+
+    let response = general_request(
+        request_client,
+        request_uri + &query_string,
+        RequestMethod::Post(request_headers, None),
+    )
+    .await;
+
+    match response {
+        Err(e) => Err(e.into()),
+        Ok(response) => {
+            let status_code: Result<SpotifyStatus, Error> = response.status().try_into();
+
+            match status_code {
+                Err(err) => Err(err),
+                Ok(status_code) => {
+                    // We expect 200 response
+                    match status_code {
+                        SpotifyStatus::OK => Ok(response.json().await?),
+
+                        // something went wrong
+                        _ => {
+                            if let SpotifyStatus::BadRequest = status_code {
+                                // convert to Error object and return
+                                Err(process_auth_error(response.json().await?))
+                            } else {
+                                Err(Error::UnexpectedStatusCode(status_code.into()))
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
