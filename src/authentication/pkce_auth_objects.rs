@@ -1,8 +1,4 @@
-use crate::authentication::{
-    auth_objects::RefreshAccess,
-    pkce_auth::{refresh_token, PkceAccessTokenReponse},
-    Scope,
-};
+use crate::authentication::{auth_objects::RefreshAccess, pkce_auth::refresh_token, Scope};
 use crate::Error;
 use chrono::{DateTime, Duration, Utc};
 
