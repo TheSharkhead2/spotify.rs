@@ -2,7 +2,7 @@ use crate::requests::RequestMethod;
 
 /// Makes a general request related to the Spotify API, returning Future that must be awaited.
 pub(crate) async fn general_request(
-    request_client: reqwest::Client,
+    request_client: &reqwest::Client,
     request_url: String,
     request_method: RequestMethod,
 ) -> Result<reqwest::Response, reqwest::Error> {

@@ -265,8 +265,10 @@ pub trait RefreshAccess
 where
     Self: Sized,
 {
-    /// Returns new authenticated object. For use when it has expired. Doesn't do anything if access is still valid.
-    async fn refresh(&self, request_client: reqwest::Client) -> Result<Self, Error>;
+    /// Returns new authenticated object. For use when it has expired.
+    /// Will refresh token anyways if it is still valid. Note that in this
+    /// case, the old object is now invalid.
+    async fn refresh(&self, request_client: &reqwest::Client) -> Result<Self, Error>;
 
     /// Returns true if access to the API has expired.
     fn is_expired(&self) -> bool;

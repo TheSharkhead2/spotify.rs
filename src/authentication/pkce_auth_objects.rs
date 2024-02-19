@@ -34,36 +34,27 @@ impl PkceAuth {
 }
 
 impl RefreshAccess for PkceAuth {
-    async fn refresh(&self, request_client: reqwest::Client) -> Result<Self, Error> {
-        // immediately return self if not expired. Don't need to do anything
-        if self.is_valid() {
-            Ok(*self)
-        } else {
-            let response =
-                refresh_token(request_client, &self.refresh_token[..], &self.client_id[..]).await?;
+    async fn refresh(&self, request_client: &reqwest::Client) -> Result<Self, Error> {
+        let response =
+            refresh_token(request_client, &self.refresh_token[..], &self.client_id[..]).await?;
 
-            let expires_at = Utc::now() + Duration::seconds(response.expires_in); // get DateTime object for when token will expire
+        let expires_at = Utc::now() + Duration::seconds(response.expires_in); // get DateTime object for when token will expire
 
-            Ok(PkceAuth::new(
-                self.client_id,
-                self.scope,
-                response.access_token,
-                response.refresh_token,
-                expires_at,
-            ))
-        }
+        Ok(PkceAuth::new(
+            self.client_id.clone(),
+            self.scope,
+            response.access_token,
+            response.refresh_token,
+            expires_at,
+        ))
     }
 
     fn is_expired(&self) -> bool {
-        if self.expires_at < Utc::now() {
-            return true;
-        } else {
-            return false;
-        }
+        self.expires_at < Utc::now()
     }
 
     fn is_valid(&self) -> bool {
-        return !self.is_expired();
+        !self.is_expired()
     }
 }
 

@@ -112,7 +112,7 @@ pub fn pkce_authentication_url(
 /// * `pkce_pre_auth` - `PkcePreAuth` object returned by `pkce_authentication_url()`
 ///
 async fn access_token(
-    request_client: reqwest::Client,
+    request_client: &reqwest::Client,
     auth_code: String,
     pkce_pre_auth: &PkcePreAuth,
 ) -> Result<PkceAccessTokenReponse, Error> {
@@ -195,7 +195,7 @@ async fn access_token(
 /// * `spotify_auth` - Object representing authenticated Spotify API. Can be used to make requests.
 ///
 pub async fn new_pkce(
-    request_client: reqwest::Client,
+    request_client: &reqwest::Client,
     auth_code: String,
     state: String,
     pkce_pre_auth: PkcePreAuth,
@@ -227,7 +227,7 @@ pub async fn new_pkce(
 
 /// Uses refresh token to get new access token to API for the PCKE authentication.
 pub(super) async fn refresh_token(
-    request_client: reqwest::Client,
+    request_client: &reqwest::Client,
     refresh_token: &str,
     client_id: &str,
 ) -> Result<PkceAccessTokenReponse, Error> {
@@ -287,7 +287,7 @@ pub(super) async fn refresh_token(
 /// Fully automated PKCE authentication locally. Will generate auth url, open in the browser, listen for result, and then return the authetnicated Spotify object.
 #[cfg(feature = "local_auth")]
 pub async fn local_pkce(
-    request_client: reqwest::Client,
+    request_client: &reqwest::Client,
     client_id: String,
     redirect_port: String,
     scope: Scope,

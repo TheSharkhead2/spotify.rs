@@ -8,6 +8,7 @@ use tiny_http::{Response, Server};
 use tokio_test;
 
 use spotifyrs::authentication;
+use spotifyrs::authentication::RefreshAccess;
 
 // FOR TESTS WITH PRINTING: `cargo test -- --nocapture`
 
@@ -20,14 +21,18 @@ fn local_auth_test() {
     let redirect_port = String::from("8888");
 
     let request_client = reqwest::Client::new();
-    tokio_test::block_on(authentication::local_pkce(
-        request_client,
+    let auth_object = tokio_test::block_on(authentication::local_pkce(
+        &request_client,
         client_id,
         redirect_port,
         scope,
         60,
     ))
     .unwrap();
+
+    if let spotifyrs::authentication::SpotifyAuth::PKCE(auth_object) = auth_object {
+        tokio_test::block_on(auth_object.refresh(&request_client)).unwrap();
+    }
 }
 
 // #[test]
