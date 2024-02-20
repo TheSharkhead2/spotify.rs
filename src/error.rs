@@ -11,6 +11,10 @@ pub enum Error {
     UnexpectedStatusCode(u16),           // response returned status code that doesn't make sense
     AuthenticationError(String, String), // Arbitrary authentication error
     InvalidState,                        // State returned with access code doesn't match.
+    MalformedUri(String),                // URI provided is invalid
+    InvalidUriType(String, String), // provided URI that should be of a certain type (first string) but is actually of the second type
+    InvalidUrl(url::ParseError),    // the Spotify URL passed wasn't recognized as a URL
+    MalformedUrl(String),           // The Spotify URL provided was invalid
 
     #[cfg(feature = "local_auth")]
     BrowserFailure(std::io::Error), // failed to open browser
@@ -56,6 +60,34 @@ impl fmt::Display for Error {
                 write!(f, "State returned with authentication code is invalid. Please try authenticating again.")
             }
 
+            Error::MalformedUri(uri) => {
+                write!(
+                    f,
+                    "{}",
+                    format!("The Spotify URI provided is invalid: {}", uri)
+                )
+            }
+
+            Error::InvalidUriType(expected, got) => {
+                write!(
+                    f,
+                    "{}",
+                    format!("The Spotify URI provided was expected to be of type '{}' but got one of type '{}'", expected, got)
+                )
+            }
+
+            Error::InvalidUrl(..) => {
+                write!(f, "Unable to parse the given Spotify URL")
+            }
+
+            Error::MalformedUrl(url) => {
+                write!(
+                    f,
+                    "{}",
+                    format!("The Spotfiy URL provided is invalid: {}", url)
+                )
+            }
+
             #[cfg(feature = "local_auth")]
             Error::BrowserFailure(..) => {
                 write!(f, "Encountered error opening the browser.")
@@ -88,6 +120,10 @@ impl error::Error for Error {
             Error::UnexpectedStatusCode(..) => None,
             Error::AuthenticationError(..) => None,
             Error::InvalidState => None,
+            Error::MalformedUri(..) => None,
+            Error::InvalidUriType(..) => None,
+            Error::InvalidUrl(ref e) => Some(e),
+            Error::MalformedUrl(..) => None,
 
             #[cfg(feature = "local_auth")]
             Error::BrowserFailure(ref e) => Some(e),
@@ -108,5 +144,12 @@ impl error::Error for Error {
 impl From<reqwest::Error> for Error {
     fn from(err: reqwest::Error) -> Error {
         Error::RequestError(err)
+    }
+}
+
+/// Implements convertion from `url::ParseError` to `Error`.
+impl From<url::ParseError> for Error {
+    fn from(err: url::ParseError) -> Error {
+        Error::InvalidUrl(err)
     }
 }
