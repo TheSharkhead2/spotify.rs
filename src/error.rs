@@ -15,6 +15,7 @@ pub enum Error {
     InvalidUriType(String, String), // provided URI that should be of a certain type (first string) but is actually of the second type
     InvalidUrl(url::ParseError),    // the Spotify URL passed wasn't recognized as a URL
     MalformedUrl(String),           // The Spotify URL provided was invalid
+    InvalidUrlType(String, String),         // The Spotify URL supplied is for the wrong type of object
 
     #[cfg(feature = "local_auth")]
     BrowserFailure(std::io::Error), // failed to open browser
@@ -88,6 +89,14 @@ impl fmt::Display for Error {
                 )
             }
 
+            Error::InvalidUrlType(expected, got) => {
+                write!(
+                    f, 
+                    "{}",
+                    format!("The Spotify URL provided was expected to be of type '{}' but got one of type '{}'", expected, got)
+                )
+            }
+
             #[cfg(feature = "local_auth")]
             Error::BrowserFailure(..) => {
                 write!(f, "Encountered error opening the browser.")
@@ -124,6 +133,7 @@ impl error::Error for Error {
             Error::InvalidUriType(..) => None,
             Error::InvalidUrl(ref e) => Some(e),
             Error::MalformedUrl(..) => None,
+            Error::InvalidUrlType(..) => None,
 
             #[cfg(feature = "local_auth")]
             Error::BrowserFailure(ref e) => Some(e),
