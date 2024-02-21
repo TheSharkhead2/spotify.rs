@@ -16,6 +16,7 @@ pub enum Error {
     InvalidUrl(url::ParseError),    // the Spotify URL passed wasn't recognized as a URL
     MalformedUrl(String),           // The Spotify URL provided was invalid
     InvalidUrlType(String, String),         // The Spotify URL supplied is for the wrong type of object
+    InvalidId(String), // The provided Spotify ID cannot be interpreted
 
     #[cfg(feature = "local_auth")]
     BrowserFailure(std::io::Error), // failed to open browser
@@ -97,6 +98,14 @@ impl fmt::Display for Error {
                 )
             }
 
+            Error::InvalidId(id) => {
+                write!(
+                    f, 
+                    "{}",
+                    format!("The Spotify ID provided could bot be interpreted: '{}'", id)
+                )
+            }
+
             #[cfg(feature = "local_auth")]
             Error::BrowserFailure(..) => {
                 write!(f, "Encountered error opening the browser.")
@@ -134,6 +143,7 @@ impl error::Error for Error {
             Error::InvalidUrl(ref e) => Some(e),
             Error::MalformedUrl(..) => None,
             Error::InvalidUrlType(..) => None,
+            Error::InvalidId(..) => None,
 
             #[cfg(feature = "local_auth")]
             Error::BrowserFailure(ref e) => Some(e),

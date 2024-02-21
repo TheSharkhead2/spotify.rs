@@ -13,7 +13,7 @@ impl AlbumId {
         &self.id[..]
     }
 
-    /// Constructs `AlbumId` object from a Spotify ID
+    /// Constructs `AlbumId` object from a Spotify ID. Will not check validity
     pub fn from_id(id: &str) -> Self {
         AlbumId { id: id.to_owned() }
     }
@@ -100,5 +100,36 @@ impl AlbumId {
             // here can't parse segments, so somehow invalid
             Err(Error::MalformedUrl(url.to_owned()))
         }
+    }
+}
+
+impl TryInto<AlbumId> for &str {
+    type Error = crate::Error;
+
+    /// Attempts to convert provided string into AlbumId object. Will try to test for some pitfalls.
+    fn try_into(self) -> Result<AlbumId, Self::Error> {
+        // first try to convert to url
+        if let Ok(album_id) = AlbumId::from_url(self) {
+            // it worked, so return
+            return Ok(album_id);
+        }
+
+        // try uri
+        if let Ok(album_id) = AlbumId::from_uri(self) {
+            // if it worked, return
+            return Ok(album_id);
+        }
+
+        // check for empty string
+        if self == "" {
+            return Err(Error::InvalidId(self.to_owned()));
+        }
+
+        // Spotify requires that IDs are Base62, equivalent to checking alphanumeric
+        if !self.chars().all(char::is_alphanumeric) {
+            return Err(Error::InvalidId(self.to_owned()));
+        }
+
+        Ok(AlbumId::from_id(self))
     }
 }
