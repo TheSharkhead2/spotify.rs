@@ -1,3 +1,4 @@
+use std::convert::Infallible;
 use std::error;
 use std::fmt;
 
@@ -30,6 +31,8 @@ pub enum Error {
 
     #[cfg(feature = "local_auth")]
     UnexpectedAuthCode, // didn't get both a code and a state upon user authorization
+
+    Infallible, // Shouldn't exist
 }
 
 impl fmt::Display for Error {
@@ -134,7 +137,16 @@ impl fmt::Display for Error {
             Error::UnexpectedAuthCode => {
                 write!(f, "Didn't get a code and a state when user authenticated with the API. Could another request have been sent to the port?")
             }
+
+            Error::Infallible => {
+                write!(
+                    f, 
+                    "{}",
+                    "An impossible error has occured"
+                )
+            }
         }
+
     }
 }
 
@@ -166,6 +178,8 @@ impl error::Error for Error {
 
             #[cfg(feature = "local_auth")]
             Error::UnexpectedAuthCode => None,
+
+            Error::Infallible => None,
         }
     }
 }
@@ -181,5 +195,12 @@ impl From<reqwest::Error> for Error {
 impl From<url::ParseError> for Error {
     fn from(err: url::ParseError) -> Error {
         Error::InvalidUrl(err)
+    }
+}
+
+/// Shouldn't ever actually happen, but for types to work
+impl From<Infallible> for Error {
+    fn from(_: Infallible) -> Self {
+        Error::Infallible
     }
 }

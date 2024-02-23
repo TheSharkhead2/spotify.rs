@@ -9,3 +9,6 @@ pub use error::Error;
 
 // album exports
 pub use albums::AlbumId;
+
+// other object exports
+pub use objects::Market;
