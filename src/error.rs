@@ -17,6 +17,7 @@ pub enum Error {
     MalformedUrl(String),           // The Spotify URL provided was invalid
     InvalidUrlType(String, String),         // The Spotify URL supplied is for the wrong type of object
     InvalidId(String), // The provided Spotify ID cannot be interpreted
+    InvalidMarket(String), // The supplied ISO 3166-1 alpha-2 market code
 
     #[cfg(feature = "local_auth")]
     BrowserFailure(std::io::Error), // failed to open browser
@@ -106,6 +107,14 @@ impl fmt::Display for Error {
                 )
             }
 
+            Error::InvalidMarket(market) => {
+                write!(
+                    f, 
+                    "{}",
+                    format!("The provided market code '{}' is not a valid ISO 3166-1 alpha-2 country code", market)
+                )
+            }
+
             #[cfg(feature = "local_auth")]
             Error::BrowserFailure(..) => {
                 write!(f, "Encountered error opening the browser.")
@@ -144,6 +153,7 @@ impl error::Error for Error {
             Error::MalformedUrl(..) => None,
             Error::InvalidUrlType(..) => None,
             Error::InvalidId(..) => None,
+            Error::InvalidMarket(..) => None,
 
             #[cfg(feature = "local_auth")]
             Error::BrowserFailure(ref e) => Some(e),
