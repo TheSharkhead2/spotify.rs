@@ -1,3 +1,5 @@
+use reqwest::header::HeaderMap;
+
 use crate::authentication::PkceAuth;
 use crate::Error;
 
@@ -280,4 +282,24 @@ where
 /// Authentication object for the Spotify API, keeping track of authentication type in enum.
 pub enum SpotifyAuth {
     PKCE(PkceAuth),
+}
+
+impl SpotifyAuth {
+    /// Creates a headermap and adds authorization information for request
+    pub fn get_base_auth_header_map(self) -> HeaderMap {
+        match self {
+            SpotifyAuth::PKCE(pkce_auth) => {
+                let mut headers = HeaderMap::new();
+
+                headers.insert(
+                    "Authorization",
+                    format!("Bearer {}", pkce_auth.get_access_token())
+                        .parse()
+                        .unwrap(),
+                );
+
+                headers
+            }
+        }
+    }
 }

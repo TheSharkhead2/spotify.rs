@@ -11,14 +11,17 @@ pub enum Error {
     UnrecognizedStatusCode(u16),         // spotify returned an  unrecognized status code
     UnexpectedStatusCode(u16),           // response returned status code that doesn't make sense
     AuthenticationError(String, String), // Arbitrary authentication error
+    ReauthenticateUser(String),          // User is no longer authenticated, reauthenticate
+    BadOAuthRequest(String),             // Bad OAuth request
+    ExceededRateLimits(String),          // App has exceeded rate limits
     InvalidState,                        // State returned with access code doesn't match.
     MalformedUri(String),                // URI provided is invalid
-    InvalidUriType(String, String), // provided URI that should be of a certain type (first string) but is actually of the second type
-    InvalidUrl(url::ParseError),    // the Spotify URL passed wasn't recognized as a URL
-    MalformedUrl(String),           // The Spotify URL provided was invalid
-    InvalidUrlType(String, String),         // The Spotify URL supplied is for the wrong type of object
-    InvalidId(String), // The provided Spotify ID cannot be interpreted
-    InvalidMarket(String), // The supplied ISO 3166-1 alpha-2 market code
+    InvalidUriType(String, String),      // provided URI that should be of a certain type (first string) but is actually of the second type
+    InvalidUrl(url::ParseError),         // the Spotify URL passed wasn't recognized as a URL
+    MalformedUrl(String),                // The Spotify URL provided was invalid
+    InvalidUrlType(String, String),      // The Spotify URL supplied is for the wrong type of object
+    InvalidId(String),                   // The provided Spotify ID cannot be interpreted
+    InvalidMarket(String),               // The supplied ISO 3166-1 alpha-2 market code
 
     #[cfg(feature = "local_auth")]
     BrowserFailure(std::io::Error), // failed to open browser
@@ -62,6 +65,31 @@ impl fmt::Display for Error {
                     format!("Encountered an authentication error with Spotify API: {}. Specifically: {}", error, error_description)
                 )
             }
+
+            Error::ReauthenticateUser(error) => {
+                write!(
+                    f, 
+                    "{}",
+                    format!("The user is no longer authenticated, reauthenticate. Specifically: {}", error)
+                )
+            }
+
+            Error::BadOAuthRequest(error) => {
+                write!(
+                    f,
+                    "{}",
+                    format!("Bad OAuth Request: {}", error)
+                )
+            }
+
+            Error::ExceededRateLimits(error) => {
+                write!(
+                    f,
+                    "{}",
+                    format!("App has exceeded rate limits: {}", error)
+                )
+            }
+            
             Error::InvalidState => {
                 write!(f, "State returned with authentication code is invalid. Please try authenticating again.")
             }
@@ -158,6 +186,9 @@ impl error::Error for Error {
             Error::UnrecognizedStatusCode(..) => None,
             Error::UnexpectedStatusCode(..) => None,
             Error::AuthenticationError(..) => None,
+            Error::ReauthenticateUser(..) => None,
+            Error::BadOAuthRequest(..) => None,
+            Error::ExceededRateLimits(..) => None,
             Error::InvalidState => None,
             Error::MalformedUri(..) => None,
             Error::InvalidUriType(..) => None,

@@ -1,6 +1,45 @@
+use serde::Deserialize;
+
 use crate::Error;
 
 pub(crate) const BASE_API_URL: &'static str = "https://api.spotify.com/v1/";
+
+/// Temporary object to Deserialize into representing the external_urls field
+#[derive(Deserialize, Debug)]
+pub(crate) struct TempExternalUrls {
+    spotify: String,
+}
+
+/// Temporary object to Deserialize into represnting the images in Spotify
+#[derive(Deserialize, Debug)]
+pub(crate) struct TempImageObject {
+    url: String,
+    height: Option<i32>,
+    width: Option<i32>,
+}
+
+/// Temporary object to Deserialize into representing a Spotify restriction
+#[derive(Deserialize, Debug)]
+pub(crate) struct TempRestriction {
+    reason: String,
+}
+
+/// Temporary object to  Deserialize into representing copyright object
+#[derive(Deserialize, Debug)]
+pub(crate) struct TempCopyrightObject {
+    text: String,
+
+    #[serde(alias = "type")]
+    copyright_type: String,
+}
+
+/// Temporary object to  Deserialize into representing external ids
+#[derive(Deserialize, Debug)]
+pub(crate) struct TempExternalIds {
+    isrc: String, // International Standard Recording Code
+    ean: String,  // International Article Number
+    upc: String,  // Univeral Product Code
+}
 
 /// Object representing a market (ISO 3166-1 alpha-2 codes)
 /// See: <https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2>

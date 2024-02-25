@@ -16,10 +16,15 @@ fn album_id_constructs_properly() -> Result<(), Error> {
     let album_id_from_url_other: AlbumId =
         AlbumId::from_url("open.spotify.com/album/2up3OPMp9Tb4dAKM2erWXQ")?;
 
+    // create same album id but with other slightly different url
+    let album_id_from_url_other2: AlbumId =
+        AlbumId::from_url("https://open.spotify.com/album/2up3OPMp9Tb4dAKM2erWXQ")?;
+
     // make sure they are actually the same
     assert_eq!(album_id_from_id.id(), album_id_from_uri.id());
     assert_eq!(album_id_from_id.id(), album_id_from_url.id());
     assert_eq!(album_id_from_id.id(), album_id_from_url_other.id());
+    assert_eq!(album_id_from_id.id(), album_id_from_url_other2.id());
 
     Ok(())
 }

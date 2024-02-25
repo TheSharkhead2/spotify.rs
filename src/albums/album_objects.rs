@@ -1,5 +1,9 @@
+use serde::Deserialize;
 use url::Url;
 
+use crate::artists::TempSimplifiedArtistObject;
+use crate::objects::{TempCopyrightObject, TempExternalUrls, TempImageObject, TempRestriction};
+use crate::tracks::TempTracks;
 use crate::Error;
 
 /// Object representing a Spotify album id
@@ -158,4 +162,31 @@ impl TryFrom<String> for AlbumId {
         // call logic for &str
         (&value[..]).try_into()
     }
+}
+
+/// Object that serde can turn Spotify Album JSON into, inbetween actual Spotify object
+#[derive(Deserialize, Debug)]
+pub(crate) struct TempSpotifyAlbum {
+    album_type: String,
+    total_tracks: i32,
+    available_markets: Vec<String>,
+    external_urls: TempExternalUrls,
+    href: String,
+    id: String,
+    images: Vec<TempImageObject>,
+    name: String,
+    release_date: String,
+    release_date_precision: String,
+    restrictions: Option<TempRestriction>,
+
+    #[serde(alias = "type")]
+    _type: String,
+
+    uri: String,
+    artists: Vec<TempSimplifiedArtistObject>,
+    tracks: TempTracks,
+    copyrights: TempCopyrightObject,
+    genres: Vec<String>,
+    label: String,
+    popularity: i32,
 }

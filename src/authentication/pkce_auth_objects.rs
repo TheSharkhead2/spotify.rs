@@ -27,6 +27,10 @@ impl PkceAuth {
             expires_at,
         }
     }
+
+    pub(crate) fn get_access_token(self) -> String {
+        self.access_token
+    }
 }
 
 impl RefreshAccess for PkceAuth {

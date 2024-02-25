@@ -9,6 +9,7 @@ use tokio_test;
 
 use spotifyrs::authentication;
 use spotifyrs::authentication::RefreshAccess;
+use spotifyrs::get_album;
 
 // FOR TESTS WITH PRINTING: `cargo test -- --nocapture`
 
@@ -33,6 +34,8 @@ fn local_auth_test() {
     if let spotifyrs::authentication::SpotifyAuth::PKCE(auth_object) = auth_object {
         tokio_test::block_on(auth_object.refresh(&request_client)).unwrap();
     }
+
+    get_album(&request_client, auth_object, "4aawyAB9vmqN3uQ7FjRGTy");
 }
 
 // #[test]
