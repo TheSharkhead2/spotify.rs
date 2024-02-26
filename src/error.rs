@@ -235,3 +235,4 @@ impl From<Infallible> for Error {
         Error::Infallible
     }
 }
+

@@ -10,8 +10,8 @@ use crate::{AlbumId, Error, Market};
 pub async fn get_album(
     request_client: &reqwest::Client,
     spotify: SpotifyAuth,
-    album_id: impl TryInto<AlbumId>,
-    market: Option<impl TryInto<Market>>,
+    album_id: impl TryInto<AlbumId, Error = Error>,
+    market: Option<impl TryInto<Market, Error = Error>>,
 ) -> Result<(), Error> {
     // convert to AlbumId to catch some errors here
     let albumid: AlbumId = album_id.try_into()?;
