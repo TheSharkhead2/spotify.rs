@@ -2,9 +2,9 @@ use serde::Deserialize;
 use url::Url;
 
 use crate::artists::TempSimplifiedArtistObject;
-use crate::objects::{TempCopyrightObject, TempExternalUrls, TempImageObject, TempRestriction};
+use crate::objects::{SpotifyImage, TempCopyrightObject, TempExternalUrls, TempRestriction};
 use crate::tracks::TempTracks;
-use crate::Error;
+use crate::{Error, Market};
 
 /// Object representing a Spotify album id
 pub struct AlbumId {
@@ -169,24 +169,44 @@ impl TryFrom<String> for AlbumId {
 pub(crate) struct TempSpotifyAlbum {
     album_type: String,
     total_tracks: i32,
-    available_markets: Vec<String>,
+    available_markets: Option<Vec<String>>,
     external_urls: TempExternalUrls,
     href: String,
     id: String,
-    images: Vec<TempImageObject>,
+    images: Vec<SpotifyImage>,
     name: String,
     release_date: String,
     release_date_precision: String,
     restrictions: Option<TempRestriction>,
 
-    #[serde(alias = "type")]
+    #[serde(rename = "type")]
     _type: String,
 
     uri: String,
     artists: Vec<TempSimplifiedArtistObject>,
     tracks: TempTracks,
-    copyrights: TempCopyrightObject,
+    copyrights: Vec<TempCopyrightObject>,
     genres: Vec<String>,
     label: String,
     popularity: i32,
+}
+
+/// Enum representing the type of a Spotify album
+pub enum AlbumType {
+    Album,
+    Single,
+    Compilation,
+}
+
+/// Object representing a Spotify album
+pub struct Album {
+    album_type: AlbumType,
+    total_tracks: i32,
+    available_markets: Option<Vec<Market>>,
+    // no reason to have external_urls, can just be kept in a general `id` field
+    href: String,
+    id: AlbumId,
+    images: Vec<SpotifyImage>,
+    name: String,
+    // TODO: NOT DONE
 }

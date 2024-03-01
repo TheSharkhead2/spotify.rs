@@ -10,7 +10,7 @@ pub(crate) struct TempSimplifiedArtistObject {
     id: String,
     name: String,
 
-    #[serde(alias = "type")]
+    #[serde(rename = "type")]
     _type: String,
 
     uri: String,

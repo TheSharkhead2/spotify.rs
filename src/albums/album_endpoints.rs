@@ -7,21 +7,27 @@ use crate::requests::{general_request, RequestMethod, SpotifyStatus};
 use crate::utils::{process_endpoint_status_code_errors, EndpointRequestError};
 use crate::{AlbumId, Error, Market};
 
-pub async fn get_album(
+pub async fn get_album<T, S>(
     request_client: &reqwest::Client,
     spotify: SpotifyAuth,
-    album_id: impl TryInto<AlbumId, Error = Error>,
-    market: Option<impl TryInto<Market, Error = Error>>,
-) -> Result<(), Error> {
+    album_id: T,
+    market: Option<S>,
+) -> Result<(), Error>
+where
+    T: TryInto<AlbumId>,
+    T::Error: Into<Error>,
+    S: TryInto<Market>,
+    S::Error: Into<Error>, // error conversion woes solved by: https://users.rust-lang.org/t/impl-tryinto-as-an-argument-in-a-function-complains-about-the-error-conversion/34004
+{
     // convert to AlbumId to catch some errors here
-    let albumid: AlbumId = album_id.try_into()?;
+    let albumid: AlbumId = album_id.try_into().map_err(Into::into)?;
 
     // create base url with album id
     let mut request_url = format!("{}albums/{}", BASE_API_URL, albumid.id());
 
     if let Some(market) = market {
         // convert to market object to avoid issues
-        let market_obj: Market = market.try_into()?;
+        let market_obj: Market = market.try_into().map_err(Into::into)?;
 
         request_url.push_str(&format!("?market={}", market_obj.code()))
     }
@@ -41,8 +47,6 @@ pub async fn get_album(
             // all OK, process response
 
             let album: TempSpotifyAlbum = response.json().await?;
-
-            println!("{:?}", album);
         }
         status_code => {
             // parse error from Spotify

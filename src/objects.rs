@@ -1,5 +1,8 @@
 use serde::Deserialize;
 
+use serde_json::Value;
+use std::collections::HashMap;
+
 use crate::Error;
 
 pub(crate) const BASE_API_URL: &'static str = "https://api.spotify.com/v1/";
@@ -10,9 +13,9 @@ pub(crate) struct TempExternalUrls {
     spotify: String,
 }
 
-/// Temporary object to Deserialize into represnting the images in Spotify
+/// Object to Deserialize into represnting the images in Spotify
 #[derive(Deserialize, Debug)]
-pub(crate) struct TempImageObject {
+pub struct SpotifyImage {
     url: String,
     height: Option<i32>,
     width: Option<i32>,
@@ -29,8 +32,11 @@ pub(crate) struct TempRestriction {
 pub(crate) struct TempCopyrightObject {
     text: String,
 
-    #[serde(alias = "type")]
+    #[serde(rename = "type")]
     copyright_type: String,
+
+    #[serde(flatten)]
+    extra: HashMap<String, Value>, // this was problem solution?
 }
 
 /// Temporary object to  Deserialize into representing external ids

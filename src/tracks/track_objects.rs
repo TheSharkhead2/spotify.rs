@@ -12,6 +12,7 @@ pub(crate) struct TempTracks {
     offset: i32,
     previous: Option<String>,
     total: i32,
+    items: Vec<TempSimplifiedTrackObject>,
 }
 
 /// Object representing track linked from to Deserialize into
@@ -21,7 +22,7 @@ pub(crate) struct TempTrackLinkedFrom {
     href: String,
     id: String,
 
-    #[serde(alias = "type")]
+    #[serde(rename = "type")]
     _type: String,
 
     uri: String,
@@ -36,12 +37,12 @@ pub(crate) struct TempSimplifiedTrackObject {
     id: String,
     is_playable: Option<bool>,
     linked_from: Option<TempTrackLinkedFrom>,
-    restrictions: TempRestriction,
+    restrictions: Option<TempRestriction>,
     name: String,
     preview_url: Option<String>,
     track_number: i32,
 
-    #[serde(alias = "type")]
+    #[serde(rename = "type")]
     _type: String,
 
     uri: String,

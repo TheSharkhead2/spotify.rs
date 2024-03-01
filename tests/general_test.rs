@@ -17,6 +17,8 @@ use spotifyrs::get_album;
 #[cfg(feature = "local_auth")]
 #[test]
 fn local_auth_test() {
+    use spotifyrs::Market;
+
     let scope = authentication::Scope::new(vec![authentication::Scopes::UserReadPrivate]);
     let client_id = dotenv::var("CLIENT_ID").unwrap(); // grab client_id from .env
     let redirect_port = String::from("8888");
@@ -31,11 +33,20 @@ fn local_auth_test() {
     ))
     .unwrap();
 
-    if let spotifyrs::authentication::SpotifyAuth::PKCE(auth_object) = auth_object {
+    if let spotifyrs::authentication::SpotifyAuth::PKCE(ref auth_object) = auth_object {
         tokio_test::block_on(auth_object.refresh(&request_client)).unwrap();
     }
 
-    get_album(&request_client, auth_object, "4aawyAB9vmqN3uQ7FjRGTy");
+    println!(
+        "{:?}",
+        tokio_test::block_on(get_album(
+            &request_client,
+            auth_object,
+            "4aawyAB9vmqN3uQ7FjRGTy",
+            Some(Market::US)
+        ))
+        .unwrap()
+    );
 }
 
 // #[test]
